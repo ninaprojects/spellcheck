@@ -719,10 +719,16 @@ async function readChartScreenshot(file){
     const text = (data && data.text) ? data.text : '';
     const signAlternation = SIGNS.join('|');
     const findSign = (keywordPattern)=>{
-      const re = new RegExp('('+keywordPattern+')[^A-Za-z]{0,20}('+signAlternation+')', 'i');
-      const m = text.match(re);
-      if(!m) return null;
-      return SIGNS.find(s=>s.toLowerCase()===m[2].toLowerCase()) || null;
+      // Some apps write "Sun ... Aquarius" (label first), others write
+      // "Aquarius ... ASCENDANT" (sign first, e.g. Co-Star's table view).
+      // Check both orders before giving up.
+      const reAfter = new RegExp('('+keywordPattern+')[^A-Za-z]{0,20}('+signAlternation+')', 'i');
+      const reBefore = new RegExp('('+signAlternation+')[^A-Za-z]{0,20}('+keywordPattern+')', 'i');
+      let m = text.match(reAfter);
+      if(m) return SIGNS.find(s=>s.toLowerCase()===m[2].toLowerCase()) || null;
+      m = text.match(reBefore);
+      if(m) return SIGNS.find(s=>s.toLowerCase()===m[1].toLowerCase()) || null;
+      return null;
     };
     return {
       sun: findSign('Sun'),
