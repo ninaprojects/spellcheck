@@ -518,12 +518,23 @@
 // STEP 1: paste your own Firebase project config here.
 // See README.md for exactly how to get this (takes ~5 minutes).
 // ============================================================
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://PASTE_YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "PASTE_YOUR_PROJECT"
+  apiKey: "AIzaSyBMsNA93P1g8ND5OLMPFh6uSBSEDlOz8mk",
+  authDomain: "cast-and-check.firebaseapp.com",
+  projectId: "cast-and-check",
+  storageBucket: "cast-and-check.firebasestorage.app",
+  messagingSenderId: "936031353099",
+  appId: "1:936031353099:web:312bb33e8939843497ca0e"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
