@@ -730,10 +730,35 @@ async function readChartScreenshot(file){
       if(m) return SIGNS.find(s=>s.toLowerCase()===m[1].toLowerCase()) || null;
       return null;
     };
+    const matchedSun = findSign('Sun');
+    const matchedMoon = findSign('Moon');
+    const matchedRising = findSign('Rising|Ascendant');
+
+    // Fallback: some apps (Co-Star's summary row) show Sun/Moon/Rising as a
+    // row of icons with no readable label, e.g. the source image literally
+    // has "☉ Aquarius ☽ Aquarius ↑ Sagittarius", and OCR can't recognize
+    // those icons, it just outputs garbage in their place. If the labeled
+    // search above came up short, look for three sign names sitting in a
+    // row near the very start of the scan and guess Sun, Moon, Rising in
+    // that order, that's Co-Star's specific layout convention, not a safe
+    // assumption for every app, so these come back tagged as "guessed"
+    // rather than blended in as if they were a real label match.
+    let guessedSun = null, guessedMoon = null, guessedRising = null;
+    if(!matchedSun || !matchedMoon || !matchedRising){
+      const headSlice = text.slice(0, 200);
+      const tripleRe = new RegExp('('+signAlternation+')[^A-Za-z]{0,6}('+signAlternation+')[^A-Za-z]{0,6}('+signAlternation+')', 'i');
+      const m = headSlice.match(tripleRe);
+      if(m){
+        const norm = (s)=> SIGNS.find(x=>x.toLowerCase()===s.toLowerCase()) || null;
+        if(!matchedSun) guessedSun = norm(m[1]);
+        if(!matchedMoon) guessedMoon = norm(m[2]);
+        if(!matchedRising) guessedRising = norm(m[3]);
+      }
+    }
+
     return {
-      sun: findSign('Sun'),
-      moon: findSign('Moon'),
-      rising: findSign('Rising|Ascendant'),
+      sun: matchedSun, moon: matchedMoon, rising: matchedRising,
+      guessedSun, guessedMoon, guessedRising,
       rawText: text.trim()
     };
   }catch(e){
@@ -812,7 +837,21 @@ function todayInfo(){
 
 function elapsedDays(){
   const ti = todayInfo();
-  return ti.state==="during" ? ti.dayNum : (ti.state==="after" ? 31 : 0);
+  let elapsed = ti.state==="during" ? ti.dayNum : (ti.state==="after" ? 31 : 0);
+  // Don't let already-entered data disappear just because the real calendar
+  // hasn't caught up yet. If someone's toggled Day 5 (testing ahead, or
+  // backfilling), that day should still count even if today's date says
+  // the challenge hasn't reached it.
+  let maxDayWithData = 0;
+  PEOPLE.forEach(p=>{
+    const pd = allData[p];
+    if(!pd) return;
+    for(let n=1; n<=31; n++){
+      const d = pd.days[n];
+      if(d && (d.journaled || d.noPhone) && n>maxDayWithData) maxDayWithData = n;
+    }
+  });
+  return Math.max(elapsed, maxDayWithData);
 }
 
 function formatTimestamp(iso){
@@ -1089,11 +1128,15 @@ function renderPlacements(){
     if(!file) return;
     statusEl.textContent = 'Reading your chart... 0%';
     const result = await readChartScreenshot(file);
-    const filled = [];
+    const matched = [];
+    const guessed = [];
     if(result){
-      if(result.sun){ pl.sun = result.sun; filled.push('Sun'); }
-      if(result.moon){ pl.moon = result.moon; filled.push('Moon'); }
-      if(result.rising){ pl.rising = result.rising; filled.push('Rising'); }
+      if(result.sun){ pl.sun = result.sun; matched.push('Sun'); }
+      else if(result.guessedSun){ pl.sun = result.guessedSun; guessed.push('Sun'); }
+      if(result.moon){ pl.moon = result.moon; matched.push('Moon'); }
+      else if(result.guessedMoon){ pl.moon = result.guessedMoon; guessed.push('Moon'); }
+      if(result.rising){ pl.rising = result.rising; matched.push('Rising'); }
+      else if(result.guessedRising){ pl.rising = result.guessedRising; guessed.push('Rising'); }
       if(result.rawText){
         pl.notes = pl.notes && pl.notes.trim()
           ? pl.notes.trim() + '\n\n(raw scanned text, check by hand)\n' + result.rawText
@@ -1103,9 +1146,12 @@ function renderPlacements(){
     }
     renderPlacements();
     const freshStatus = document.getElementById('chartUploadStatus');
-    freshStatus.textContent = filled.length
-      ? `Guessed ${filled.join(', ')} from scanned text. This is basic OCR, not real understanding, so double check every field against the actual image, and skim the raw text now in your notes below for anything it missed.`
-      : `Couldn't confidently match Sun/Moon/Rising from that text. If it found any text at all, it's now in your notes below, check it and fill in manually.`;
+    const parts = [];
+    if(matched.length) parts.push(`Matched ${matched.join(', ')} from labeled text in the image.`);
+    if(guessed.length) parts.push(`Read ${guessed.join(', ')} off the icon row near the top (Co-Star's layout).`);
+    freshStatus.textContent = parts.length
+      ? parts.join(' ') + ' This is basic OCR, not real understanding, so double check every field, and skim the raw text now in your notes below for anything else it missed.'
+      : `Couldn't confidently match or guess Sun/Moon/Rising from that image. If it found any text at all, it's now in your notes below, check it and fill in manually.`;
   };
 }
 
