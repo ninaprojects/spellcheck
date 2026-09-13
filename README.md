@@ -1,0 +1,2 @@
+# spellcheck
+practical magic
