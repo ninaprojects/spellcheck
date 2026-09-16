@@ -584,58 +584,59 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW registration failed', e));
   });
 }
-const CHALLENGE_START = new Date(2026,8,14); // Sep 14 2026
-const CHALLENGE_END = new Date(2026,9,14);   // Oct 14 2026
+const CHALLENGE_START = new Date(2026,8,16); // Sep 16 2026
+const CHALLENGE_END = new Date(2026,9,16);   // Oct 16 2026
 
 const DAYS = [
-  {n:1,d:"Sep 14",wd:"Mon",ch:1,prompt:"Okay, we're doing this. Before anything else: think back on yesterday, hour by hour if you can stand it, and circle the parts where you were just... on autopilot. Not judging, just noticing. That's the whole game this week."},
-  {n:2,d:"Sep 15",wd:"Tue",ch:1,prompt:"Pick one relationship, one habit, one thought you keep looping on. For each, name the version that's quietly draining you. You don't have to fix anything today. Just say it out loud, even if it's only to yourself."},
-  {n:3,d:"Sep 16",wd:"Wed",ch:1,prompt:"What's something you do on autopilot that you'd absolutely stop mid-action if someone you actually respected walked into the room? Sit with that one for a second."},
-  {n:4,d:"Sep 17",wd:"Thu",ch:1,prompt:"What's the sentence you say to yourself the most? Now ask: would you ever say that to your best friend? If not, why are you the exception?"},
-  {n:5,d:"Sep 18",wd:"Fri",ch:1,prompt:"Look at your calendar this week. What's one thing on there you said yes to for the wrong reason? No shame, just notice it."},
-  {n:6,d:"Sep 19",wd:"Sat",ch:1,prompt:"No prompt today, witches. Just move your body because it feels good, not because you have to, and notice what it's like to do it without narrating it for anyone.",rest:true},
-  {n:7,d:"Sep 20",wd:"Sun",ch:1,prompt:"Zoom out on the week. What pattern kept showing up, even in small ways?"},
-  {n:8,d:"Sep 21",wd:"Mon",ch:1,prompt:"Last day of The Audit. Write down one thing you're done explaining yourself for. Just one. Let it be dramatic if it wants to be."},
-  {n:9,d:"Sep 22",wd:"Tue",ch:2,tag:"Equinox \u2014 Sun enters Libra",prompt:"This one's not a solo journal day, it's a group one. Get on a call, grab dinner, go on a walk, whatever's realistic for four busy witches. Each of you says one thing from The Audit you're ready to let go of, and one thing you're calling in for the stretch ahead. Out loud, to each other. That's the assignment."},
-  {n:10,d:"Sep 23",wd:"Wed",ch:3,prompt:"Libra season, day one. Where in your life does the give and take feel genuinely lopsided right now? Say it plainly. No diplomacy today."},
-  {n:11,d:"Sep 24",wd:"Thu",ch:3,prompt:"There's a request you've been softening before you send it. Send it today, soften it or don't, your call, but send it."},
-  {n:12,d:"Sep 25",wd:"Fri",ch:3,prompt:"What do you actually find beautiful, not what performs well online? Go do one thing today purely because it's beautiful to you, no other reason required."},
-  {n:13,d:"Sep 26",wd:"Sat",ch:3,tag:"Full Harvest Moon \u2014 Aries",prompt:"Full moon in Aries tonight, and she does not want your reflections, she wants your action. Whatever you've been circling all week, go do the thing before midnight."},
-  {n:14,d:"Sep 27",wd:"Sun",ch:3,prompt:"Full moon hangover day. What did you let go of last night, even if it happened kind of by accident?"},
-  {n:15,d:"Sep 28",wd:"Mon",ch:3,prompt:"Chapter's closing. In one sentence: what has balance actually meant to you this week? Not the dictionary definition, your definition."},
-  {n:16,d:"Sep 29",wd:"Tue",ch:4,prompt:"New stretch, new values check. Write your top three values in an actual order. No ties, the universe wants a real answer."},
-  {n:17,d:"Sep 30",wd:"Wed",ch:4,prompt:"Where did you choose harmony over honesty this week? Was it worth it, or are you still a little annoyed about it?"},
-  {n:18,d:"Oct 1",wd:"Thu",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of those rules out loud, even if it's just to yourself in this journal."},
-  {n:19,d:"Oct 2",wd:"Fri",ch:4,prompt:"Who do you become around people you don't fully trust? Write about her in third person, like she's a character."},
-  {n:20,d:"Oct 3",wd:"Sat",ch:4,prompt:"Rest day. Do one thing today with absolutely no audience, not even yourself watching and narrating it.",rest:true},
-  {n:21,d:"Oct 4",wd:"Sun",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if you're honest?"},
-  {n:22,d:"Oct 5",wd:"Mon",ch:4,prompt:"Ten days till the reset. What do you want to be true about your life by October 9th that isn't true yet?"},
-  {n:23,d:"Oct 6",wd:"Tue",ch:4,prompt:"Write the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself."},
-  {n:24,d:"Oct 7",wd:"Wed",ch:4,prompt:"What have you outgrown this cycle that you haven't said out loud yet? Say it now, even quietly."},
-  {n:25,d:"Oct 8",wd:"Thu",ch:4,prompt:"Last day before the new moon. Clear something real: an email, a drawer, a text thread that's overstayed its welcome."},
-  {n:26,d:"Oct 9",wd:"Fri",ch:5,tag:"New Moon \u2014 Libra",prompt:"New moon in Libra tonight. Write one intention for after this challenge ends, present tense, one sentence, like it's already true."},
-  {n:27,d:"Oct 10",wd:"Sat",ch:5,prompt:"Who's one person you want more real balance with going forward? Get specific about what that would actually look like."},
-  {n:28,d:"Oct 11",wd:"Sun",ch:5,prompt:"Go back and read your Day 1 energy audit. What's actually different now, honestly?"},
-  {n:29,d:"Oct 12",wd:"Mon",ch:5,prompt:"What's the thing you're proudest of from this whole cycle that literally nobody else would think to ask about?"},
-  {n:30,d:"Oct 13",wd:"Tue",ch:5,prompt:"One more day. What's one commitment from this challenge you actually want to keep going after tomorrow?"},
-  {n:31,d:"Oct 14",wd:"Wed",ch:5,prompt:"Last day, witches. Write a short letter to future-you, the one who'll need this again someday. Share whatever part of it you're comfortable sharing with the group."},
+  {n:1,d:"Sep 16",wd:"Wed",ch:1,prompt:"Okay, we're doing this. Before anything else: think back on yesterday, hour by hour if you can stand it, and circle the parts where you were just... on autopilot. Not judging, just noticing. That's the whole game this week."},
+  {n:2,d:"Sep 17",wd:"Thu",ch:1,prompt:"Pick one relationship, one habit, one thought you keep looping on. For each, name the version that's quietly draining you. You don't have to fix anything today. Just say it out loud, even if it's only to yourself."},
+  {n:3,d:"Sep 18",wd:"Fri",ch:1,prompt:"What's the sentence you say to yourself the most? Now ask: would you ever say that to your best friend? If not, why are you the exception?"},
+  {n:4,d:"Sep 19",wd:"Sat",ch:1,prompt:"No prompt today, witches. Just move your body because it feels good, not because you have to, and notice what it's like to do it without narrating it for anyone.",rest:true},
+  {n:5,d:"Sep 20",wd:"Sun",ch:1,prompt:"Zoom out on the week. What pattern kept showing up, even in small ways?"},
+  {n:6,d:"Sep 21",wd:"Mon",ch:1,prompt:"Last day of The Audit. Write down one thing you're done explaining yourself for. Just one. Let it be dramatic if it wants to be."},
+  {n:7,d:"Sep 22",wd:"Tue",ch:2,tag:"Equinox \u2014 Sun enters Libra",prompt:"This one's not a solo journal day, it's a group one. Get on a call, grab dinner, go on a walk, whatever's realistic for four busy witches. Each of you says one thing from The Audit you're ready to let go of, and one thing you're calling in for the stretch ahead. Out loud, to each other. That's the assignment."},
+  {n:8,d:"Sep 23",wd:"Wed",ch:3,prompt:"Libra season, day one. Where in your life does the give and take feel genuinely lopsided right now? Say it plainly. No diplomacy today."},
+  {n:9,d:"Sep 24",wd:"Thu",ch:3,prompt:"There's a request you've been softening before you send it. Send it today, soften it or don't, your call, but send it."},
+  {n:10,d:"Sep 25",wd:"Fri",ch:3,prompt:"What do you actually find beautiful, not what performs well online? Go do one thing today purely because it's beautiful to you, no other reason required."},
+  {n:11,d:"Sep 26",wd:"Sat",ch:3,tag:"Full Harvest Moon \u2014 Aries",prompt:"Full moon in Aries tonight, and she does not want your reflections, she wants your action. Whatever you've been circling all week, go do the thing before midnight."},
+  {n:12,d:"Sep 27",wd:"Sun",ch:3,prompt:"Full moon hangover day. What did you let go of last night, even if it happened kind of by accident?"},
+  {n:13,d:"Sep 28",wd:"Mon",ch:3,prompt:"Chapter's closing. In one sentence: what has balance actually meant to you this week? Not the dictionary definition, your definition."},
+  {n:14,d:"Sep 29",wd:"Tue",ch:4,prompt:"New stretch, new values check. Write your top three values in an actual order. No ties, the universe wants a real answer."},
+  {n:15,d:"Sep 30",wd:"Wed",ch:4,prompt:"Where did you choose harmony over honesty this week? Was it worth it, or are you still a little annoyed about it?"},
+  {n:16,d:"Oct 1",wd:"Thu",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of those rules out loud, even if it's just to yourself in this journal."},
+  {n:17,d:"Oct 2",wd:"Fri",ch:4,tag:"Venus stations retrograde",prompt:"Venus turns retrograde today, in Libra and Scorpio, through mid-November, so love, money, and values get a little slippery for a while. Fitting timing: who do you become around people you don't fully trust? Write about her in third person, like she's a character."},
+  {n:18,d:"Oct 3",wd:"Sat",ch:4,prompt:"Rest day. Do one thing today with absolutely no audience, not even yourself watching and narrating it.",rest:true},
+  {n:19,d:"Oct 4",wd:"Sun",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if you're honest?"},
+  {n:20,d:"Oct 5",wd:"Mon",ch:4,prompt:"Four days till the reset. What do you want to be true about your life by October 9th that isn't true yet?"},
+  {n:21,d:"Oct 6",wd:"Tue",ch:4,prompt:"Write the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself."},
+  {n:22,d:"Oct 7",wd:"Wed",ch:4,prompt:"What have you outgrown this cycle that you haven't said out loud yet? Say it now, even quietly."},
+  {n:23,d:"Oct 8",wd:"Thu",ch:4,prompt:"Last day before the new moon. Clear something real: an email, a drawer, a text thread that's overstayed its welcome."},
+  {n:24,d:"Oct 9",wd:"Fri",ch:5,tag:"New Moon \u2014 Libra",prompt:"New moon in Libra tonight. Write one intention for after this challenge ends, present tense, one sentence, like it's already true."},
+  {n:25,d:"Oct 10",wd:"Sat",ch:5,prompt:"Who's one person you want more real balance with going forward? Get specific about what that would actually look like."},
+  {n:26,d:"Oct 11",wd:"Sun",ch:5,prompt:"Go back and read your Day 1 energy audit. What's actually different now, honestly?"},
+  {n:27,d:"Oct 12",wd:"Mon",ch:5,prompt:"What's the thing you're proudest of from this whole cycle that literally nobody else would think to ask about?"},
+  {n:28,d:"Oct 13",wd:"Tue",ch:5,prompt:"What's one commitment from this challenge you actually want to keep going, well past the last day?"},
+  {n:29,d:"Oct 14",wd:"Wed",ch:5,prompt:"Mercury goes retrograde in ten days. Before things get a little chaotic, is there one message, one apology, one loose end you should close out now instead of later?"},
+  {n:30,d:"Oct 15",wd:"Thu",ch:5,prompt:"You started this on September 16th. What's different about how you spend your first hour awake now versus then?"},
+  {n:31,d:"Oct 16",wd:"Fri",ch:5,tag:"Last clear signal before Mercury retrograde",prompt:"Last day, witches. Mercury turns retrograde in one week, so consider tonight your last clean signal for a while. Write a short letter to future-you, the one who'll need this again someday. Share whatever part of it you're comfortable sharing with the group."},
 ];
 
 const CHAPTERS = [
-  {id:1,name:"The Audit",range:"Sep 14\u201321",blurb:"Virgo season's still wrapping up, which means the universe is basically begging you to Marie Kondo your own brain. Not a full life overhaul, just an honest look at where your energy's actually going.",cls:"g1"},
+  {id:1,name:"The Audit",range:"Sep 16\u201321",blurb:"Virgo season's still wrapping up, which means the universe is basically begging you to Marie Kondo your own brain. Not a full life overhaul, just an honest look at where your energy's actually going.",cls:"g1"},
   {id:2,name:"The Equinox Shift",range:"Sep 22",blurb:"The sun crosses into Libra today: balance, beauty, and please, for the love of god, put the phone down and talk to each other in person.",cls:"g2"},
   {id:3,name:"The Charge",range:"Sep 23\u201328",blurb:"Libra season is officially here (balance, relationships, main character aesthetics), and on the 26th a Full Harvest Moon in Aries shows up to make sure none of us just think about our feelings without doing something about them.",cls:"g3"},
-  {id:4,name:"The Align",range:"Sep 29\u2013Oct 8",blurb:"Libra season keeps going, and we're using it to figure out what alignment actually feels like, not just keeping the peace because it's easier.",cls:"g4"},
-  {id:5,name:"The Reset",range:"Oct 9\u201314",blurb:"New Moon in Libra on the 9th means fresh intentions, real balance, and the universe basically handing us a clean slate right as this whole thing wraps up.",cls:"g5"},
+  {id:4,name:"The Align",range:"Sep 29\u2013Oct 8",blurb:"Libra season keeps going, and we're using it to figure out what alignment actually feels like, not just keeping the peace because it's easier. Venus stations retrograde partway through, so expect love, money, and values to get a little messy right on schedule.",cls:"g4"},
+  {id:5,name:"The Reset",range:"Oct 9\u201316",blurb:"New Moon in Libra on the 9th means fresh intentions and real balance, and the extra days on the tail end are borrowed time before Mercury turns retrograde on the 24th, use them.",cls:"g5"},
 ];
 
-// weeks: Mon-Sun starting Sep 14 (a Monday)
+// weeks: real Mon-Sun calendar weeks, so the first and last are partial
+// since Sep 16 (a Wednesday) doesn't line up with a Monday
 const WEEKS = [
-  {label:"Week 1",range:"Sep 14\u201320",days:[1,2,3,4,5,6,7]},
-  {label:"Week 2",range:"Sep 21\u201327",days:[8,9,10,11,12,13,14]},
-  {label:"Week 3",range:"Sep 28\u2013Oct 4",days:[15,16,17,18,19,20,21]},
-  {label:"Week 4",range:"Oct 5\u201311",days:[22,23,24,25,26,27,28]},
-  {label:"Week 5 (short)",range:"Oct 12\u201314",days:[29,30,31]},
+  {label:"Week 1",range:"Sep 16\u201320",days:[1,2,3,4,5]},
+  {label:"Week 2",range:"Sep 21\u201327",days:[6,7,8,9,10,11,12]},
+  {label:"Week 3",range:"Sep 28\u2013Oct 4",days:[13,14,15,16,17,18,19]},
+  {label:"Week 4",range:"Oct 5\u201311",days:[20,21,22,23,24,25,26]},
+  {label:"Week 5 (short)",range:"Oct 12\u201316",days:[27,28,29,30,31]},
 ];
 
 let currentPerson = PEOPLE[0];
