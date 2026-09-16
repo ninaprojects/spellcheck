@@ -1,0 +1,1722 @@
+<!doctype html>
+<html lang="en">
+<!--
+  NAMING NOTE, read before this goes anywhere public:
+  "Practical Magic" is used below as a private nickname for this challenge,
+  among Nina, Kellye, Lauren, and Carolina only. It is a real, currently
+  owned title (Alice Hoffman's novel, and the Warner Bros. film). Fine for
+  private use among the four of us. NOT to be used on a public-facing site,
+  an app, marketing, or anything visible outside this group.
+  If this ever grows past the four of us, or becomes a real product,
+  rename it back to "Spell Check" (or something new) before it goes public.
+  The footer trademark note ("Cast & Check(TM), pending") is tied to
+  Spell Check, the actual public-facing name, not to Practical Magic,
+  and should stay that way regardless of what this file is called day to day.
+
+  This copy in particular is the one meant for GitHub Pages, a real public
+  URL. Worth re-reading the note above before pushing this live under this
+  name.
+-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practical Magic</title>
+
+<!-- PWA: makes this installable as an app on phones/desktop -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Practical Magic">
+<meta name="theme-color" content="#1A1A1A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Display:ital,wght@0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- Firebase (free tier) holds the shared data -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<!-- Tesseract.js (free, runs in the browser) reads chart screenshots -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+  :root{
+    --bg:#FFFEFD;
+    --text-primary:#1A1A1A;
+    --text-secondary:#767066;
+    --yellow:#FFC94F;
+    --pink:#FF6FA8;
+    --blue:#4FA8FF;
+    --line:#E9E4DA;
+    --track-off:#ECE8E0;
+    --track-off-line:#D8D2C6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text-secondary);
+    font-family:'Inter',Arial,sans-serif;
+    font-weight:300;
+    font-size:15px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:700px;margin:0 auto;padding:48px 24px 100px;}
+
+  /* header */
+  .masthead{margin-bottom:36px;}
+  .masthead h1{
+    font-family:'Noto Serif Display',Georgia,serif;
+    font-weight:600;
+    color:var(--text-primary);
+    font-size:clamp(38px,7vw,58px);
+    line-height:1.02;
+    margin:0 0 16px;
+  }
+  .tagline{
+    font-family:'Noto Serif Display',Georgia,serif;
+    font-style:italic;
+    font-weight:400;
+    color:var(--text-primary);
+    border-bottom:4px solid var(--yellow);
+    padding-bottom:3px;
+    display:inline-block;
+    font-size:17px;
+  }
+  .masthead p.sub{margin:14px 0 0;color:var(--text-secondary);font-size:14px;max-width:62ch;font-weight:300;line-height:1.75;}
+  .masthead p.lede{color:var(--text-primary);font-weight:500;font-size:17px;margin-top:20px;}
+
+  /* person tabs */
+  .people{display:flex;gap:22px;margin:34px 0 6px;border-bottom:1px solid var(--line);}
+  .people button{
+    background:none;border:none;color:var(--text-secondary);
+    font-family:'Inter';font-size:14px;font-weight:500;cursor:pointer;
+    padding:0 0 12px;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .people button.active{color:var(--text-primary);border-bottom:2px solid var(--pink);}
+
+  .status{font-size:13px;color:var(--text-secondary);margin:16px 0 30px;font-weight:300;}
+  .status strong{color:var(--text-primary);font-weight:600;}
+
+  /* timeline */
+  .timeline{margin-bottom:34px;}
+  .timeline-track{display:flex;height:6px;overflow:hidden;background:var(--track-off);margin-bottom:10px;position:relative;}
+  .seg{border-right:2px solid var(--bg);}
+  .seg:last-child{border-right:none;}
+  .seg.g1{background:#D8D2C6;}
+  .seg.g2{background:#B9B2A2;}
+  .seg.g3{background:#9A927E;}
+  .seg.g4{background:#7B7362;}
+  .seg.g5{background:#1A1A1A;}
+  .marker{position:absolute;top:-4px;width:2px;height:14px;background:var(--text-primary);}
+  .timeline-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);font-weight:400;}
+
+  /* section headings — Inter Semibold, all-caps, wide tracking */
+  .section-title{
+    font-family:'Inter';font-weight:600;font-size:14px;letter-spacing:0.22em;
+    text-transform:uppercase;color:var(--text-primary);margin:44px 0 16px;
+  }
+  .section-title.with-sub{margin-bottom:4px;}
+  .section-subnote{font-size:12px;color:var(--text-secondary);font-weight:300;margin:0 0 16px;letter-spacing:0;text-transform:none;}
+
+  /* weekly panel */
+  .week-panel{border:1px solid var(--line);padding:22px 24px;}
+  .week-panel-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;}
+  .week-panel-head h3{
+    font-family:'Inter';font-weight:500;font-size:16px;color:var(--text-primary);margin:0;
+  }
+  .week-nav{display:flex;gap:6px;}
+  .week-nav button{background:none;border:1px solid var(--line);color:var(--text-secondary);padding:5px 11px;cursor:pointer;font-size:13px;}
+  .week-nav button:hover{border-color:var(--text-primary);color:var(--text-primary);}
+  .week-range{font-size:12px;color:var(--text-secondary);}
+  .commit-row{padding:16px 0;border-top:1px solid var(--line);}
+  .commit-row:first-of-type{border-top:none;}
+  .commit-row.flex{display:flex;align-items:center;justify-content:space-between;}
+  .commit-label{font-family:'Inter';font-weight:500;font-size:14px;color:var(--text-primary);}
+  .commit-sub{font-size:12px;color:var(--text-secondary);margin-top:3px;font-weight:300;}
+  .toggle{
+    width:40px;height:22px;border-radius:11px;background:var(--track-off);
+    border:1px solid var(--track-off-line);position:relative;cursor:pointer;flex-shrink:0;
+  }
+  .toggle.on{background:var(--text-primary);border-color:var(--text-primary);}
+  .toggle::after{content:'';position:absolute;top:1px;left:1px;width:18px;height:18px;border-radius:50%;background:var(--bg);transition:transform .12s;}
+  .toggle.on::after{transform:translateX(18px);}
+  input.article-input, input.article-label-input{
+    width:100%;margin-top:10px;background:var(--bg);border:1px solid var(--line);
+    color:var(--text-primary);padding:9px 11px;font-family:'Inter';font-weight:300;font-size:13px;
+  }
+  input.article-input::placeholder, input.article-label-input::placeholder{color:var(--text-secondary);}
+  .article-inputs{display:flex;gap:8px;flex-wrap:wrap;}
+  .article-inputs input{flex:1;min-width:160px;}
+
+  .link-preview{
+    display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;
+    border:1px solid var(--line);text-decoration:none;
+  }
+  .link-preview img{width:18px;height:18px;flex-shrink:0;}
+  .link-preview .lp-text{overflow:hidden;}
+  .link-preview .lp-title{font-family:'Inter';font-weight:500;font-size:13px;color:var(--text-primary);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .link-preview .lp-domain{font-size:11px;color:var(--text-secondary);}
+
+  /* session rows (movement proof) */
+  .session-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);}
+  .session-row:first-of-type{border-top:none;}
+  .session-info{flex:1;}
+  .session-label{font-family:'Inter';font-weight:500;font-size:13px;color:var(--text-primary);}
+  .session-meta{font-size:11px;color:var(--text-secondary);margin-top:2px;}
+  .session-actions{display:flex;align-items:center;gap:10px;}
+  .session-photo-input{display:none;}
+  .session-photo-btn{
+    font-family:'Inter';font-size:11px;color:var(--text-secondary);background:none;
+    border:1px solid var(--line);padding:5px 9px;cursor:pointer;white-space:nowrap;
+  }
+  .session-photo-btn:hover{border-color:var(--text-primary);color:var(--text-primary);}
+  .session-photo-preview{margin-top:8px;max-width:100%;border:1px solid var(--line);}
+
+  /* chapter blocks */
+  .chapter{margin-bottom:8px;}
+  .chapter-head{
+    display:flex;align-items:center;justify-content:space-between;padding:18px 20px;
+    background:var(--bg);border:1px solid var(--line);cursor:pointer;
+  }
+  .chapter-head:hover{border-color:var(--text-primary);}
+  .chapter-head h3{
+    font-family:'Inter';font-weight:500;font-size:16px;color:var(--text-primary);margin:0;
+  }
+  .chapter-head .range{font-size:12px;color:var(--blue);margin-top:3px;font-weight:400;}
+  .chapter-blurb{font-size:12px;color:var(--text-secondary);margin-top:6px;max-width:48ch;font-weight:300;}
+  .chapter-chevron{color:var(--text-secondary);font-size:14px;}
+  .chapter-body{display:none;}
+  .chapter-body.open{display:block;}
+
+  /* day row */
+  .day{border:1px solid var(--line);border-top:none;padding:16px 20px;background:var(--bg);}
+  .day.today{border-left:3px solid var(--text-primary);}
+  .day-head{display:flex;align-items:baseline;gap:12px;cursor:pointer;}
+  .day-num{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;color:var(--text-primary);min-width:26px;}
+  .day-date{font-size:12px;color:var(--text-secondary);min-width:86px;font-weight:400;}
+  .day-dot{color:var(--blue);}
+  .day-tag{font-size:11px;color:var(--text-primary);font-weight:500;letter-spacing:.02em;}
+  .day-prompt{font-size:14px;margin:12px 0 14px;color:var(--text-primary);font-weight:400;line-height:1.6;}
+  .day-checks{display:flex;flex-direction:column;gap:12px;}
+  .check-row{display:flex;align-items:center;gap:10px;}
+  .check-row label{font-size:13px;color:var(--text-secondary);font-weight:300;}
+  .gratitude-input{
+    width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text-primary);
+    padding:9px 11px;font-family:'Inter';font-weight:300;font-size:13px;margin-top:4px;
+  }
+  .grat-label{font-size:12px;color:var(--text-secondary);font-weight:300;display:block;margin-bottom:2px;}
+  .day-full{display:none;}
+  .day-full.open{display:block;}
+
+  /* placements */
+  .placements{border:1px solid var(--line);padding:22px 24px;}
+  .placements textarea{
+    width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text-primary);
+    padding:10px 11px;font-family:'Inter';font-weight:300;font-size:13px;min-height:56px;resize:vertical;
+  }
+  .placements p{font-size:12px;color:var(--text-secondary);margin:10px 0 0;font-weight:300;}
+  .chart-upload-row input[type=file]{
+    font-family:'Inter';font-weight:300;font-size:12px;color:var(--text-secondary);margin-top:8px;
+  }
+  #chartUploadStatus{margin-top:8px;}
+  .big3-row{display:flex;gap:16px;margin:18px 0 4px;flex-wrap:wrap;}
+  .big3-field{flex:1;min-width:120px;}
+  .big3-field select{
+    width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text-primary);
+    padding:9px 11px;font-family:'Inter';font-weight:400;font-size:13px;
+  }
+
+  /* leaderboard */
+  .leaderboard-row{display:flex;align-items:center;gap:16px;padding:14px 18px;border-top:1px solid var(--line);}
+  .leaderboard-row:first-of-type{border-top:none;}
+  .lb-rank{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;color:var(--text-primary);min-width:22px;}
+  .lb-name{font-family:'Inter';font-weight:500;font-size:14px;color:var(--text-primary);flex:1;}
+  .lb-name.me{border-bottom:2px solid var(--pink);}
+  .lb-score{font-family:'Inter';font-weight:600;font-size:14px;color:var(--text-primary);}
+  .lb-score-label{font-size:11px;color:var(--text-secondary);font-weight:300;margin-left:4px;}
+
+  /* overview table */
+  table.overview{width:100%;border-collapse:collapse;font-size:13px;}
+  table.overview th{
+    text-align:left;color:var(--text-primary);font-weight:600;font-size:11px;
+    letter-spacing:.08em;text-transform:uppercase;padding:12px 14px;border-bottom:1px solid var(--line);
+  }
+  table.overview td{padding:12px 14px;border-bottom:1px solid var(--line);color:var(--text-secondary);font-weight:400;}
+  table.overview tr:last-child td{border-bottom:none;}
+  table.overview td:first-child{color:var(--text-primary);font-weight:500;}
+  .mini-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--track-off-line);margin-right:5px;}
+  .mini-dot.on{background:var(--text-primary);}
+
+  .footnote{font-size:12px;color:var(--text-secondary);margin-top:48px;border-top:1px solid var(--line);padding-top:18px;font-weight:300;}
+
+  /* photo journal */
+  .gallery-toggle{display:flex;gap:8px;margin-bottom:14px;}
+  .gallery-toggle-btn{
+    background:none;border:1px solid var(--line);color:var(--text-secondary);
+    padding:6px 14px;font-family:'Inter';font-size:12px;font-weight:500;cursor:pointer;
+  }
+  .gallery-toggle-btn.active{background:var(--text-primary);border-color:var(--text-primary);color:var(--bg);}
+  .photo-gallery{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;min-height:40px;
+  }
+  .photo-gallery .empty-note{grid-column:1/-1;font-size:13px;color:var(--text-secondary);font-weight:300;padding:20px 0;}
+  .gallery-cell{position:relative;aspect-ratio:1;background:var(--track-off);cursor:pointer;overflow:hidden;}
+  .gallery-cell img{width:100%;height:100%;object-fit:cover;display:block;}
+  .gallery-cell .cell-caption{
+    position:absolute;bottom:0;left:0;right:0;padding:4px 6px;font-size:10px;
+    color:#fff;background:rgba(0,0,0,0.45);font-family:'Inter';font-weight:500;
+  }
+  .gallery-cell .cell-loading{display:flex;align-items:center;justify-content:center;height:100%;font-size:11px;color:var(--text-secondary);}
+  .photo-modal{
+    display:none;position:fixed;inset:0;background:rgba(20,18,15,0.88);
+    align-items:center;justify-content:center;padding:32px;cursor:zoom-out;z-index:100;
+  }
+  .photo-modal.open{display:flex;}
+  .photo-modal img{max-width:100%;max-height:100%;box-shadow:none;}
+
+  /* identity lock */
+  .identity-banner{font-size:13px;color:var(--text-secondary);font-weight:300;margin:14px 0 30px;}
+  .identity-banner strong{color:var(--text-primary);font-weight:600;}
+  .identity-banner a{color:var(--text-primary);border-bottom:1px solid var(--pink);text-decoration:none;}
+  .identity-gate{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .toggle.locked{opacity:.4;pointer-events:none;cursor:not-allowed;}
+  input:disabled, select:disabled, textarea:disabled{opacity:.5;cursor:not-allowed;}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* bookend cards: Kickoff Call / Closing Celebration */
+  .bookend-card{border:2px solid var(--text-primary);padding:30px 28px;margin:30px 0;}
+  .bookend-label{font-family:'Inter';font-weight:600;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:10px;}
+  .bookend-card h3{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:26px;color:var(--text-primary);margin:0 0 14px;}
+  .bookend-card p{font-size:14px;color:var(--text-secondary);font-weight:300;line-height:1.75;margin:0 0 18px;max-width:62ch;}
+
+  /* currently into */
+  .currently-row{display:flex;gap:16px;flex-wrap:wrap;}
+  .currently-field{flex:1;min-width:140px;}
+
+  .trademark-note{font-size:10px;color:var(--text-secondary);opacity:.6;margin-top:10px;font-weight:300;}
+
+  /* ---- Chapter Receipts: scoped dark theme, isolated from the vars above ---- */
+  .receipt-scope{
+    --r-ink:#1B1526; --r-ink-mid:#2E2240; --r-ink-dark:#150F1D;
+    --r-paper:#F6EFE4; --r-paper-dim:#D9CFC0;
+    --r-gold:#E8BE6E; --r-gold-bright:#F3D57B;
+    --r-lavender:#C9A9E0; --r-rose:#E8879E;
+    --r-line: rgba(232,190,110,0.25);
+    display:flex; justify-content:center; padding:28px 12px;
+    background:#0E0B14;
+  }
+  .receipt-scope .card{
+    background: radial-gradient(ellipse at 30% 0%, var(--r-ink-mid) 0%, var(--r-ink) 55%, var(--r-ink-dark) 100%);
+    border-radius:22px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; color:var(--r-paper);
+    font-family:'Space Grotesk',sans-serif;
+    box-shadow:0 30px 60px rgba(0,0,0,0.5);
+  }
+  .receipt-scope .card.format-square{ width:340px; aspect-ratio:4/5; padding:32px 28px 26px; }
+  .receipt-scope .card.format-story{ width:300px; aspect-ratio:9/16; padding:40px 26px 30px; }
+  .receipt-scope .stars{
+    position:absolute; inset:0; opacity:.85; pointer-events:none;
+    background-image:
+      radial-gradient(1.5px 1.5px at 18% 10%, var(--r-gold-bright) 100%, transparent),
+      radial-gradient(1px 1px at 70% 6%, var(--r-lavender) 100%, transparent),
+      radial-gradient(1px 1px at 45% 16%, var(--r-paper) 100%, transparent),
+      radial-gradient(1.5px 1.5px at 85% 22%, var(--r-gold) 100%, transparent),
+      radial-gradient(1px 1px at 8% 30%, var(--r-lavender) 100%, transparent),
+      radial-gradient(1px 1px at 60% 34%, var(--r-paper) 100%, transparent),
+      radial-gradient(1.5px 1.5px at 25% 78%, var(--r-gold-bright) 100%, transparent),
+      radial-gradient(1px 1px at 90% 82%, var(--r-paper) 100%, transparent),
+      radial-gradient(1px 1px at 38% 88%, var(--r-lavender) 100%, transparent);
+  }
+  .receipt-scope .top-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:2;}
+  .receipt-scope .wordmark{font-family:'Fraunces',serif;font-style:italic;font-weight:500;color:var(--r-lavender);}
+  .receipt-scope .card.format-square .wordmark{font-size:14px;}
+  .receipt-scope .card.format-story .wordmark{font-size:16px;}
+  .receipt-scope .moon-date{font-size:11px;color:var(--r-paper-dim);text-align:right;line-height:1.4;}
+  .receipt-scope .chapter{position:relative;z-index:2;}
+  .receipt-scope .card.format-square .chapter{margin-top:20px;}
+  .receipt-scope .card.format-story .chapter{margin-top:36px;}
+  .receipt-scope .chapter-eyebrow{font-size:11px;color:var(--r-gold-bright);letter-spacing:.04em;}
+  .receipt-scope .chapter-title{font-family:'Fraunces',serif;font-weight:600;color:var(--r-paper);line-height:1.08;margin-top:6px;}
+  .receipt-scope .card.format-square .chapter-title{font-size:30px;}
+  .receipt-scope .card.format-story .chapter-title{font-size:38px;}
+  .receipt-scope .chapter-dates{font-size:12px;color:var(--r-paper-dim);margin-top:6px;}
+  .receipt-scope .divider{height:1px;background:var(--r-line);margin:20px 0;position:relative;z-index:2;}
+  .receipt-scope .stats{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;position:relative;z-index:2;}
+  .receipt-scope .stat-num{font-family:'Fraunces',serif;font-weight:600;font-size:24px;color:var(--r-gold-bright);line-height:1;}
+  .receipt-scope .stat-label{font-size:10.5px;color:var(--r-paper-dim);margin-top:4px;line-height:1.3;}
+  .receipt-scope .quote-block{margin-top:auto;padding-top:18px;position:relative;z-index:2;}
+  .receipt-scope .quote{font-family:'Fraunces',serif;font-style:italic;font-size:14px;line-height:1.5;color:var(--r-rose);}
+  .receipt-scope .quote-who{font-size:11px;color:var(--r-paper-dim);margin-top:8px;}
+  .receipt-scope .footer-row{display:flex;justify-content:space-between;align-items:center;margin-top:18px;position:relative;z-index:2;gap:10px;}
+  .receipt-scope .coven{font-size:11px;color:var(--r-paper-dim);letter-spacing:.03em;}
+  .receipt-scope .coven span{color:var(--r-gold-bright);}
+
+  .receipt-format-toggle{display:flex;gap:8px;margin:16px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <h1>Practical Magic</h1>
+    <div class="tagline">checking in on your own spells</div>
+    <p class="sub lede">31 days, four witches.</p>
+    <p class="sub">We're not trying to become new people, we're just finally letting ourselves pay attention, out loud, together. Call it manifesting, but make it accountability. Call it girl math, but for the soul. Whatever you call it, it's four of us deciding to actually do the things we keep saying we'll do, and letting the sky hold us to it.</p>
+    <p class="sub">So we'll journal when we don't feel like it. Move our bodies because it feels good, not because we have to. Spend a little less. Touch some grass before we touch our phones. And talk to each other through all of it: the wins, the spirals, the 2am realizations, all of it. Nothing here is that deep and also all of it is that deep.</p>
+    <p class="sub">By the time the New Moon in Libra rolls around, we want receipts. Proof we actually did the thing. The sky's just here to keep us honest, and honestly, she's better at it than any app.</p>
+    <p class="sub">This is Practical Magic. Consider it your monthly reminder to check in on your own spells.</p>
+  </div>
+
+  <div class="people" id="people"></div>
+  <div class="status" id="status"></div>
+  <div id="identityBanner"></div>
+
+  <div class="timeline">
+    <div class="timeline-track" id="timelineTrack"></div>
+    <div class="timeline-labels">
+      <span>The Audit</span><span>Equinox</span><span>The Charge</span><span>The Align</span><span>The Reset</span>
+    </div>
+  </div>
+
+  <div class="section-title">Leaderboard</div>
+  <div class="section-subnote">One point per thing done: a journal, a phone-free morning, a movement session, an article sent, a no-spend day. Just for fun.</div>
+  <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
+
+  <div class="section-title">Your placements (optional)</div>
+  <div class="placements">
+    <div class="chart-upload-row">
+      <label class="grat-label">Upload a screenshot of your chart, this scans for text and guesses your Big 3, rougher than it sounds</label>
+      <input type="file" id="chartFileInput" accept="image/*">
+      <div id="chartUploadStatus" class="commit-sub"></div>
+    </div>
+    <div class="big3-row">
+      <div class="big3-field">
+        <label class="grat-label">Sun *</label>
+        <select id="sunSelect"></select>
+      </div>
+      <div class="big3-field">
+        <label class="grat-label">Moon *</label>
+        <select id="moonSelect"></select>
+      </div>
+      <div class="big3-field">
+        <label class="grat-label">Rising *</label>
+        <select id="risingSelect"></select>
+      </div>
+    </div>
+    <div id="big3Warning" class="commit-sub" style="margin-top:2px;"></div>
+    <label class="grat-label" style="margin-top:16px;display:block;">Everything else (Mercury, Venus, Mars, houses, whatever's on the screenshot)</label>
+    <textarea id="placementsNotes" placeholder="Optional, or filled in automatically from your screenshot"></textarea>
+    <p>This app isn't running a real ephemeris, and the screenshot reader is free basic text-scanning, not real image understanding, so it's rougher than a proper reading. Always check it against the actual screenshot.</p>
+  </div>
+
+  <div class="section-title">Currently...</div>
+  <div class="placements">
+    <div class="currently-row">
+      <div class="currently-field">
+        <label class="grat-label">Reading</label>
+        <input type="text" id="currentlyReading" class="gratitude-input" placeholder="Whatever you're reading">
+      </div>
+      <div class="currently-field">
+        <label class="grat-label">Watching</label>
+        <input type="text" id="currentlyWatching" class="gratitude-input" placeholder="Whatever you're watching">
+      </div>
+      <div class="currently-field">
+        <label class="grat-label">Listening</label>
+        <input type="text" id="currentlyListening" class="gratitude-input" placeholder="Whatever you're listening to">
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">This week's commitments</div>
+  <div class="week-panel">
+    <div class="week-panel-head">
+      <div>
+        <h3 id="weekTitle">Week 1</h3>
+        <div class="week-range" id="weekRange"></div>
+      </div>
+      <div class="week-nav">
+        <button id="weekPrev">&larr;</button>
+        <button id="weekNext">&rarr;</button>
+      </div>
+    </div>
+
+    <div class="commit-row">
+      <div class="commit-label">Move, with intent</div>
+      <div class="commit-sub" style="margin-bottom:6px;">1 hour, 3 times this week. Mark it done and drop in proof if you've got it, time is stamped automatically.</div>
+      <div id="sessionsList"></div>
+    </div>
+
+    <div class="commit-row">
+      <div class="commit-label">Send the group something</div>
+      <div class="commit-sub">An article, an opinion, a weird fact. Whatever's actually interesting.</div>
+      <div class="article-inputs">
+        <input class="article-input" id="articleUrlInput" placeholder="Paste the link">
+        <input class="article-label-input" id="articleLabelInput" placeholder="Short label (optional)">
+      </div>
+      <div id="articlePreview"></div>
+    </div>
+
+    <div class="commit-row flex">
+      <div>
+        <div class="commit-label">No-spend day</div>
+        <div class="commit-sub">Pick one. Fixed bills don't count against you.</div>
+      </div>
+      <div class="toggle" id="noSpendToggle"></div>
+    </div>
+  </div>
+
+  <div class="bookend-card">
+    <div class="bookend-label">Before Day 1</div>
+    <h3>Kickoff Call</h3>
+    <p>Before any of this starts, get everyone together, call, couch, voice memo marathon in the group chat, whatever's realistic for four busy witches, and say your intention out loud. Not written first, not overthought, just said out loud to people who'll actually remember you said it. Drop a line of it below after, so future-you has a receipt.</p>
+    <label class="grat-label">My intention going in</label>
+    <input type="text" id="kickoffInput" class="gratitude-input" placeholder="Say it out loud first, then write it">
+  </div>
+
+  <div class="section-title">The 31 days</div>
+  <div id="chapters"></div>
+
+  <div class="bookend-card">
+    <div class="bookend-label">After Day 31</div>
+    <h3>Closing Celebration</h3>
+    <p>This one's not a debrief. Get together and actually celebrate: toast to whatever happened, the wins, the days you skipped, the 2am texts, all of it. You did a whole moon cycle together. That's worth celebrating loudly, not grading quietly.</p>
+    <label class="grat-label">My toast</label>
+    <input type="text" id="closingInput" class="gratitude-input" placeholder="What are you toasting to">
+  </div>
+
+  <div class="section-title with-sub">Photo Journal</div>
+  <div class="section-subnote">Whatever anyone's added, day by day. This is the thing you'll actually want to look back at.</div>
+  <div class="gallery-toggle">
+    <button id="galleryEveryone" class="gallery-toggle-btn active">Everyone</button>
+    <button id="galleryMine" class="gallery-toggle-btn">Just me</button>
+  </div>
+  <div id="photoGallery" class="photo-gallery"></div>
+  <div id="photoModal" class="photo-modal"><img id="photoModalImg" src=""></div>
+
+  <div class="section-title">Chapter Receipts</div>
+  <div class="section-subnote">Real numbers, pulled live. Add a quote whenever someone says something worth keeping, then download it in whichever shape you need.</div>
+  <div class="week-panel">
+    <div class="week-panel-head">
+      <div><h3>Pick a chapter</h3></div>
+      <select id="receiptChapterSelect"></select>
+    </div>
+    <label class="grat-label">Quote for this chapter, submitted anonymously, anyone can add or change it</label>
+    <input type="text" id="receiptQuoteInput" class="gratitude-input" placeholder="Drop a good line from the group chat">
+    <div class="receipt-format-toggle">
+      <button id="formatCardBtn" type="button" class="gallery-toggle-btn active">Square</button>
+      <button id="formatStoryBtn" type="button" class="gallery-toggle-btn">Story</button>
+    </div>
+    <div id="receiptPreviewWrap"></div>
+    <button id="downloadReceiptBtn" type="button" class="session-photo-btn" style="margin-top:16px;">Download PNG</button>
+  </div>
+
+  <div class="section-title">How's everyone doing</div>
+  <div class="section-subnote">Journaled and no-phone are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
+  <div class="week-panel" style="padding:0;overflow-x:auto;">
+    <table class="overview" id="overviewTable"></table>
+  </div>
+
+  <div class="footnote">Your entries, photos, and links are visible to the other three people using this. Data is shared across the group, not private.</div>
+  <div class="trademark-note">Cast &amp; Check&trade; (pending)</div>
+</div>
+
+<script>
+// ============================================================
+// STEP 1: paste your own Firebase project config here.
+// See README.md for exactly how to get this (takes ~5 minutes).
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBMsNA93P1g8ND5OLMPFh6uSBSEDlOz8mk",
+  authDomain: "cast-and-check.firebaseapp.com",
+  projectId: "cast-and-check",
+  storageBucket: "cast-and-check.firebasestorage.app",
+  messagingSenderId: "936031353099",
+  appId: "1:936031353099:web:312bb33e8939843497ca0e",
+  databaseURL: "https://cast-and-check-default-rtdb.firebaseio.com/"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Same shape as Claude's window.storage, so the rest of the app
+// below didn't need to change: get/set/delete(key, shared).
+// shared=false -> this browser only (localStorage).
+// shared=true  -> everyone using the site (Firebase Realtime Database).
+const storage = {
+  async get(key, shared){
+    if(!shared){
+      const v = localStorage.getItem(key);
+      return v===null ? null : {key, value:v, shared};
+    }
+    try{
+      const snap = await db.ref('recalData/'+key).once('value');
+      if(!snap.exists()) return null;
+      return {key, value: snap.val(), shared};
+    }catch(e){
+      console.error('firebase get failed', e);
+      return null;
+    }
+  },
+  async set(key, value, shared){
+    if(!shared){
+      localStorage.setItem(key, value);
+      return {key, value, shared};
+    }
+    await db.ref('recalData/'+key).set(value);
+    return {key, value, shared};
+  },
+  async delete(key, shared){
+    if(!shared){
+      localStorage.removeItem(key);
+      return {key, deleted:true, shared};
+    }
+    await db.ref('recalData/'+key).remove();
+    return {key, deleted:true, shared};
+  }
+};
+
+const PEOPLE = ["Nina","Kellye","Lauren","Carolina"];
+
+// Register the service worker, this is what actually makes "Add to Home
+// Screen" / "Install" available in the browser.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW registration failed', e));
+  });
+}
+const CHALLENGE_START = new Date(2026,8,14); // Sep 14 2026
+const CHALLENGE_END = new Date(2026,9,14);   // Oct 14 2026
+
+const DAYS = [
+  {n:1,d:"Sep 14",wd:"Mon",ch:1,prompt:"Okay, we're doing this. Before anything else: think back on yesterday, hour by hour if you can stand it, and circle the parts where you were just... on autopilot. Not judging, just noticing. That's the whole game this week."},
+  {n:2,d:"Sep 15",wd:"Tue",ch:1,prompt:"Pick one relationship, one habit, one thought you keep looping on. For each, name the version that's quietly draining you. You don't have to fix anything today. Just say it out loud, even if it's only to yourself."},
+  {n:3,d:"Sep 16",wd:"Wed",ch:1,prompt:"What's something you do on autopilot that you'd absolutely stop mid-action if someone you actually respected walked into the room? Sit with that one for a second."},
+  {n:4,d:"Sep 17",wd:"Thu",ch:1,prompt:"What's the sentence you say to yourself the most? Now ask: would you ever say that to your best friend? If not, why are you the exception?"},
+  {n:5,d:"Sep 18",wd:"Fri",ch:1,prompt:"Look at your calendar this week. What's one thing on there you said yes to for the wrong reason? No shame, just notice it."},
+  {n:6,d:"Sep 19",wd:"Sat",ch:1,prompt:"No prompt today, witches. Just move your body because it feels good, not because you have to, and notice what it's like to do it without narrating it for anyone.",rest:true},
+  {n:7,d:"Sep 20",wd:"Sun",ch:1,prompt:"Zoom out on the week. What pattern kept showing up, even in small ways?"},
+  {n:8,d:"Sep 21",wd:"Mon",ch:1,prompt:"Last day of The Audit. Write down one thing you're done explaining yourself for. Just one. Let it be dramatic if it wants to be."},
+  {n:9,d:"Sep 22",wd:"Tue",ch:2,tag:"Equinox \u2014 Sun enters Libra",prompt:"This one's not a solo journal day, it's a group one. Get on a call, grab dinner, go on a walk, whatever's realistic for four busy witches. Each of you says one thing from The Audit you're ready to let go of, and one thing you're calling in for the stretch ahead. Out loud, to each other. That's the assignment."},
+  {n:10,d:"Sep 23",wd:"Wed",ch:3,prompt:"Libra season, day one. Where in your life does the give and take feel genuinely lopsided right now? Say it plainly. No diplomacy today."},
+  {n:11,d:"Sep 24",wd:"Thu",ch:3,prompt:"There's a request you've been softening before you send it. Send it today, soften it or don't, your call, but send it."},
+  {n:12,d:"Sep 25",wd:"Fri",ch:3,prompt:"What do you actually find beautiful, not what performs well online? Go do one thing today purely because it's beautiful to you, no other reason required."},
+  {n:13,d:"Sep 26",wd:"Sat",ch:3,tag:"Full Harvest Moon \u2014 Aries",prompt:"Full moon in Aries tonight, and she does not want your reflections, she wants your action. Whatever you've been circling all week, go do the thing before midnight."},
+  {n:14,d:"Sep 27",wd:"Sun",ch:3,prompt:"Full moon hangover day. What did you let go of last night, even if it happened kind of by accident?"},
+  {n:15,d:"Sep 28",wd:"Mon",ch:3,prompt:"Chapter's closing. In one sentence: what has balance actually meant to you this week? Not the dictionary definition, your definition."},
+  {n:16,d:"Sep 29",wd:"Tue",ch:4,prompt:"New stretch, new values check. Write your top three values in an actual order. No ties, the universe wants a real answer."},
+  {n:17,d:"Sep 30",wd:"Wed",ch:4,prompt:"Where did you choose harmony over honesty this week? Was it worth it, or are you still a little annoyed about it?"},
+  {n:18,d:"Oct 1",wd:"Thu",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of those rules out loud, even if it's just to yourself in this journal."},
+  {n:19,d:"Oct 2",wd:"Fri",ch:4,prompt:"Who do you become around people you don't fully trust? Write about her in third person, like she's a character."},
+  {n:20,d:"Oct 3",wd:"Sat",ch:4,prompt:"Rest day. Do one thing today with absolutely no audience, not even yourself watching and narrating it.",rest:true},
+  {n:21,d:"Oct 4",wd:"Sun",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if you're honest?"},
+  {n:22,d:"Oct 5",wd:"Mon",ch:4,prompt:"Ten days till the reset. What do you want to be true about your life by October 9th that isn't true yet?"},
+  {n:23,d:"Oct 6",wd:"Tue",ch:4,prompt:"Write the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself."},
+  {n:24,d:"Oct 7",wd:"Wed",ch:4,prompt:"What have you outgrown this cycle that you haven't said out loud yet? Say it now, even quietly."},
+  {n:25,d:"Oct 8",wd:"Thu",ch:4,prompt:"Last day before the new moon. Clear something real: an email, a drawer, a text thread that's overstayed its welcome."},
+  {n:26,d:"Oct 9",wd:"Fri",ch:5,tag:"New Moon \u2014 Libra",prompt:"New moon in Libra tonight. Write one intention for after this challenge ends, present tense, one sentence, like it's already true."},
+  {n:27,d:"Oct 10",wd:"Sat",ch:5,prompt:"Who's one person you want more real balance with going forward? Get specific about what that would actually look like."},
+  {n:28,d:"Oct 11",wd:"Sun",ch:5,prompt:"Go back and read your Day 1 energy audit. What's actually different now, honestly?"},
+  {n:29,d:"Oct 12",wd:"Mon",ch:5,prompt:"What's the thing you're proudest of from this whole cycle that literally nobody else would think to ask about?"},
+  {n:30,d:"Oct 13",wd:"Tue",ch:5,prompt:"One more day. What's one commitment from this challenge you actually want to keep going after tomorrow?"},
+  {n:31,d:"Oct 14",wd:"Wed",ch:5,prompt:"Last day, witches. Write a short letter to future-you, the one who'll need this again someday. Share whatever part of it you're comfortable sharing with the group."},
+];
+
+const CHAPTERS = [
+  {id:1,name:"The Audit",range:"Sep 14\u201321",blurb:"Virgo season's still wrapping up, which means the universe is basically begging you to Marie Kondo your own brain. Not a full life overhaul, just an honest look at where your energy's actually going.",cls:"g1"},
+  {id:2,name:"The Equinox Shift",range:"Sep 22",blurb:"The sun crosses into Libra today: balance, beauty, and please, for the love of god, put the phone down and talk to each other in person.",cls:"g2"},
+  {id:3,name:"The Charge",range:"Sep 23\u201328",blurb:"Libra season is officially here (balance, relationships, main character aesthetics), and on the 26th a Full Harvest Moon in Aries shows up to make sure none of us just think about our feelings without doing something about them.",cls:"g3"},
+  {id:4,name:"The Align",range:"Sep 29\u2013Oct 8",blurb:"Libra season keeps going, and we're using it to figure out what alignment actually feels like, not just keeping the peace because it's easier.",cls:"g4"},
+  {id:5,name:"The Reset",range:"Oct 9\u201314",blurb:"New Moon in Libra on the 9th means fresh intentions, real balance, and the universe basically handing us a clean slate right as this whole thing wraps up.",cls:"g5"},
+];
+
+// weeks: Mon-Sun starting Sep 14 (a Monday)
+const WEEKS = [
+  {label:"Week 1",range:"Sep 14\u201320",days:[1,2,3,4,5,6,7]},
+  {label:"Week 2",range:"Sep 21\u201327",days:[8,9,10,11,12,13,14]},
+  {label:"Week 3",range:"Sep 28\u2013Oct 4",days:[15,16,17,18,19,20,21]},
+  {label:"Week 4",range:"Oct 5\u201311",days:[22,23,24,25,26,27,28]},
+  {label:"Week 5 (short)",range:"Oct 12\u201314",days:[29,30,31]},
+];
+
+let currentPerson = PEOPLE[0];
+let currentWeekIdx = 0;
+let myIdentity = null;
+let allData = {}; // {person: {placements, days:{n:{journaled,noPhone,gratitude}}, weeks:{idx:{sessions:[{done,timestamp,hasPhoto,photoType}x3], article:{url,label}, noSpend}}}}
+
+function isEditable(){
+  return !!myIdentity && currentPerson === myIdentity;
+}
+
+async function loadIdentity(){
+  try{
+    const res = await storage.get('recal-whoami', false);
+    myIdentity = res ? res.value : null;
+  }catch(e){
+    myIdentity = null;
+  }
+}
+
+function renderIdentityBanner(){
+  const el = document.getElementById('identityBanner');
+  if(!myIdentity){
+    el.innerHTML = `<div class="identity-banner">Who's using this? Pick your name so only you can edit your own entries, everyone else's stays visible but locked.
+      <div class="identity-gate" id="identityGate"></div>
+    </div>`;
+    const gate = document.getElementById('identityGate');
+    PEOPLE.forEach(p=>{
+      const b = document.createElement('button');
+      b.className = 'gallery-toggle-btn';
+      b.textContent = p;
+      b.onclick = async ()=>{
+        myIdentity = p;
+        currentPerson = p;
+        try{ await storage.set('recal-whoami', p, false); }catch(e){ console.error(e); }
+        renderAll();
+      };
+      gate.appendChild(b);
+    });
+  } else {
+    el.innerHTML = `<div class="identity-banner">You're set up as <strong>${myIdentity}</strong>. <a href="#" id="switchIdentity">Not you?</a></div>`;
+    document.getElementById('switchIdentity').onclick = async (e)=>{
+      e.preventDefault();
+      try{ await storage.delete('recal-whoami', false); }catch(err){ /* nothing stored, fine */ }
+      myIdentity = null;
+      renderAll();
+    };
+  }
+}
+
+function emptyPersonData(){
+  return {
+    placements:{sun:"",moon:"",rising:"",notes:""},
+    currently:{reading:"",watching:"",listening:""},
+    kickoffIntention:"",
+    closingToast:"",
+    days:{}, weeks:{}
+  };
+}
+
+const SIGNS = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+
+function normalizedPlacements(p){
+  let pl = allData[p].placements;
+  if(typeof pl === 'string'){
+    pl = {sun:"",moon:"",rising:"",notes:pl};
+  }
+  if(!pl) pl = {sun:"",moon:"",rising:"",notes:""};
+  allData[p].placements = pl;
+  return pl;
+}
+
+function buildSignOptions(select, selected){
+  select.innerHTML = '<option value="">Select a sign</option>' +
+    SIGNS.map(s=>`<option value="${s}"${s===selected?' selected':''}>${s}</option>`).join('');
+}
+
+async function readChartScreenshot(file){
+  // Free, runs entirely in the browser via Tesseract.js. This is plain OCR,
+  // raw text extraction, not real image understanding, so it's a rougher
+  // pass than the Claude version. It won't parse layout, icons, or a chart
+  // wheel, only text it can literally read off the image. The raw scanned
+  // text gets surfaced too so people can catch what the regex below misses.
+  try{
+    if(typeof Tesseract === 'undefined'){
+      console.error('Tesseract.js did not load');
+      return null;
+    }
+    const statusEl = document.getElementById('chartUploadStatus');
+    const { data } = await Tesseract.recognize(file, 'eng', {
+      logger: m=>{
+        if(m.status==='recognizing text' && statusEl){
+          statusEl.textContent = `Reading your chart... ${Math.round((m.progress||0)*100)}%`;
+        }
+      }
+    });
+    const text = (data && data.text) ? data.text : '';
+    const signAlternation = SIGNS.join('|');
+    const findSign = (keywordPattern)=>{
+      // Some apps write "Sun ... Aquarius" (label first), others write
+      // "Aquarius ... ASCENDANT" (sign first, e.g. Co-Star's table view).
+      // Check both orders before giving up.
+      const reAfter = new RegExp('('+keywordPattern+')[^A-Za-z]{0,20}('+signAlternation+')', 'i');
+      const reBefore = new RegExp('('+signAlternation+')[^A-Za-z]{0,20}('+keywordPattern+')', 'i');
+      let m = text.match(reAfter);
+      if(m) return SIGNS.find(s=>s.toLowerCase()===m[2].toLowerCase()) || null;
+      m = text.match(reBefore);
+      if(m) return SIGNS.find(s=>s.toLowerCase()===m[1].toLowerCase()) || null;
+      return null;
+    };
+    const matchedSun = findSign('Sun');
+    const matchedMoon = findSign('Moon');
+    const matchedRising = findSign('Rising|Ascendant');
+
+    // Fallback: some apps (Co-Star's summary row) show Sun/Moon/Rising as a
+    // row of icons with no readable label, e.g. the source image literally
+    // has "☉ Aquarius ☽ Aquarius ↑ Sagittarius", and OCR can't recognize
+    // those icons, it just outputs garbage in their place. If the labeled
+    // search above came up short, look for three sign names sitting in a
+    // row near the very start of the scan and guess Sun, Moon, Rising in
+    // that order, that's Co-Star's specific layout convention, not a safe
+    // assumption for every app, so these come back tagged as "guessed"
+    // rather than blended in as if they were a real label match.
+    let guessedSun = null, guessedMoon = null, guessedRising = null;
+    if(!matchedSun || !matchedMoon || !matchedRising){
+      const headSlice = text.slice(0, 200);
+      const tripleRe = new RegExp('('+signAlternation+')[^A-Za-z]{0,6}('+signAlternation+')[^A-Za-z]{0,6}('+signAlternation+')', 'i');
+      const m = headSlice.match(tripleRe);
+      if(m){
+        const norm = (s)=> SIGNS.find(x=>x.toLowerCase()===s.toLowerCase()) || null;
+        if(!matchedSun) guessedSun = norm(m[1]);
+        if(!matchedMoon) guessedMoon = norm(m[2]);
+        if(!matchedRising) guessedRising = norm(m[3]);
+      }
+    }
+
+    return {
+      sun: matchedSun, moon: matchedMoon, rising: matchedRising,
+      guessedSun, guessedMoon, guessedRising,
+      rawText: text.trim()
+    };
+  }catch(e){
+    console.error('OCR failed', e);
+    return null;
+  }
+}
+
+async function loadAll(){
+  for(const p of PEOPLE){
+    try{
+      const res = await storage.get(`recal:${p}`, true);
+      allData[p] = res ? JSON.parse(res.value) : emptyPersonData();
+    }catch(e){
+      allData[p] = emptyPersonData();
+    }
+  }
+}
+
+async function savePerson(p){
+  try{
+    await storage.set(`recal:${p}`, JSON.stringify(allData[p]), true);
+  }catch(e){
+    console.error("save failed", e);
+  }
+}
+
+function dayData(p,n){
+  if(!allData[p].days[n]) allData[p].days[n] = {journaled:false,noPhone:false,gratitude:"",hasPhoto:false,photoType:null};
+  return allData[p].days[n];
+}
+
+function freshSessions(){
+  return [0,1,2].map(()=>({done:false,timestamp:null,hasPhoto:false,photoType:null}));
+}
+
+function weekData(p,idx){
+  let wd = allData[p].weeks[idx];
+  if(!wd){
+    wd = {sessions:freshSessions(), article:{url:"",label:"",timestamp:null}, noSpend:{done:false,timestamp:null}};
+    allData[p].weeks[idx] = wd;
+  }
+  // migrate from an older shape if present
+  if(typeof wd.exerciseCount === 'number' && !wd.sessions){
+    const s = freshSessions();
+    for(let i=0;i<wd.exerciseCount && i<3;i++) s[i].done = true;
+    wd.sessions = s;
+    delete wd.exerciseCount;
+  }
+  if(!wd.sessions) wd.sessions = freshSessions();
+  if(typeof wd.article === 'string'){
+    wd.article = {url: wd.article, label:"", timestamp:null};
+  }
+  if(!wd.article) wd.article = {url:"",label:"",timestamp:null};
+  if(typeof wd.article.timestamp === 'undefined') wd.article.timestamp = null;
+  if(typeof wd.noSpend === 'boolean'){
+    wd.noSpend = {done: wd.noSpend, timestamp:null};
+  }
+  if(!wd.noSpend) wd.noSpend = {done:false, timestamp:null};
+  return wd;
+}
+
+function todayInfo(){
+  const now = new Date();
+  const t = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if(t < CHALLENGE_START){
+    const diff = Math.round((CHALLENGE_START - t)/86400000);
+    return {state:"before",diff};
+  }
+  if(t > CHALLENGE_END){
+    return {state:"after"};
+  }
+  const diff = Math.round((t - CHALLENGE_START)/86400000)+1;
+  return {state:"during", dayNum:diff};
+}
+
+function elapsedDays(){
+  const ti = todayInfo();
+  let elapsed = ti.state==="during" ? ti.dayNum : (ti.state==="after" ? 31 : 0);
+  // Don't let already-entered data disappear just because the real calendar
+  // hasn't caught up yet. If someone's toggled Day 5 (testing ahead, or
+  // backfilling), that day should still count even if today's date says
+  // the challenge hasn't reached it.
+  let maxDayWithData = 0;
+  PEOPLE.forEach(p=>{
+    const pd = allData[p];
+    if(!pd) return;
+    for(let n=1; n<=31; n++){
+      const d = pd.days[n];
+      if(d && (d.journaled || d.noPhone) && n>maxDayWithData) maxDayWithData = n;
+    }
+  });
+  return Math.max(elapsed, maxDayWithData);
+}
+
+function formatTimestamp(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ', ' +
+    d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+}
+
+function renderPeopleTabs(){
+  const el = document.getElementById('people');
+  el.innerHTML = '';
+  PEOPLE.forEach(p=>{
+    const b = document.createElement('button');
+    b.textContent = p;
+    if(p===currentPerson) b.classList.add('active');
+    b.onclick = ()=>{ currentPerson = p; renderAll(); };
+    el.appendChild(b);
+  });
+}
+
+function renderStatus(){
+  const el = document.getElementById('status');
+  const ti = todayInfo();
+  if(ti.state==="before"){
+    el.innerHTML = `Starts in <strong>${ti.diff} day${ti.diff===1?'':'s'}</strong>.`;
+  } else if(ti.state==="during"){
+    el.innerHTML = `Day <strong>${ti.dayNum}</strong> of 31.`;
+  } else {
+    el.innerHTML = `Cycle complete. Nice work.`;
+  }
+}
+
+function renderTimeline(){
+  const track = document.getElementById('timelineTrack');
+  track.innerHTML = '';
+  const total = DAYS.length;
+  CHAPTERS.forEach(ch=>{
+    const count = DAYS.filter(d=>d.ch===ch.id).length;
+    const seg = document.createElement('div');
+    seg.className = `seg ${ch.cls}`;
+    seg.style.width = (count/total*100)+'%';
+    seg.title = ch.name;
+    track.appendChild(seg);
+  });
+  const ti = todayInfo();
+  if(ti.state==="during"){
+    const pct = ((ti.dayNum-0.5)/total*100);
+    const marker = document.createElement('div');
+    marker.className='marker';
+    marker.style.left = pct+'%';
+    track.style.position='relative';
+    track.appendChild(marker);
+  }
+}
+
+function currentWeekIndexForToday(){
+  const ti = todayInfo();
+  if(ti.state!=="during") return 0;
+  return WEEKS.findIndex(w=>w.days.includes(ti.dayNum));
+}
+
+function domainFromUrl(url){
+  try{
+    const u = new URL(url.match(/^https?:\/\//i) ? url : 'https://'+url);
+    return u.hostname.replace(/^www\./,'');
+  }catch(e){ return null; }
+}
+
+function renderArticlePreview(url, label){
+  const el = document.getElementById('articlePreview');
+  const domain = url ? domainFromUrl(url) : null;
+  if(!domain){ el.innerHTML=''; return; }
+  const href = url.match(/^https?:\/\//i) ? url : 'https://'+url;
+  const favicon = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+  el.innerHTML = `<a class="link-preview" href="${href}" target="_blank" rel="noopener">
+    <img src="${favicon}" alt="">
+    <div class="lp-text">
+      <div class="lp-title">${label && label.trim() ? label.trim() : domain}</div>
+      <div class="lp-domain">${domain}</div>
+    </div>
+  </a>`;
+}
+
+function renderWeekPanel(){
+  const w = WEEKS[currentWeekIdx];
+  document.getElementById('weekTitle').textContent = w.label;
+  document.getElementById('weekRange').textContent = w.range;
+
+  const wd = weekData(currentPerson, currentWeekIdx);
+
+  // sessions
+  const sessionsList = document.getElementById('sessionsList');
+  sessionsList.innerHTML = '';
+  wd.sessions.forEach((s, i)=>{
+    const row = document.createElement('div');
+    row.className = 'session-row';
+
+    const info = document.createElement('div');
+    info.className = 'session-info';
+    const label = document.createElement('div');
+    label.className = 'session-label';
+    label.textContent = `Session ${i+1}`;
+    const meta = document.createElement('div');
+    meta.className = 'session-meta';
+    meta.textContent = s.done ? `Done \u00b7 ${formatTimestamp(s.timestamp)}` : 'Not logged yet';
+    info.appendChild(label);
+    info.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'session-actions';
+
+    const toggle = document.createElement('div');
+    toggle.className = 'toggle'+(s.done?' on':'')+(isEditable()?'':' locked');
+    if(isEditable()){
+      toggle.onclick = ()=>{
+        s.done = !s.done;
+        s.timestamp = s.done ? new Date().toISOString() : null;
+        if(!s.done){ s.hasPhoto=false; s.photoType=null; }
+        savePerson(currentPerson);
+        renderWeekPanel();
+        renderOverview();
+        renderLeaderboard();
+        refreshReceiptsIfLoaded();
+      };
+    }
+    actions.appendChild(toggle);
+
+    const photoBtn = document.createElement('button');
+    photoBtn.type = 'button';
+    photoBtn.className = 'session-photo-btn';
+    photoBtn.textContent = s.hasPhoto ? 'View photo' : 'Add photo';
+    photoBtn.disabled = !s.hasPhoto && !isEditable();
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.className = 'session-photo-input';
+    fileInput.disabled = !isEditable();
+
+    const preview = document.createElement('img');
+    preview.className = 'session-photo-preview';
+    preview.style.display = 'none';
+
+    photoBtn.onclick = async ()=>{
+      if(s.hasPhoto && preview.style.display==='none'){
+        photoBtn.textContent = 'Loading...';
+        try{
+          const res = await storage.get(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, true);
+          if(res){ preview.src = res.value; preview.style.display='block'; }
+        }catch(e){ console.error(e); }
+        photoBtn.textContent = 'Hide photo';
+      } else if(s.hasPhoto && preview.style.display!=='none'){
+        preview.style.display='none';
+        photoBtn.textContent = 'View photo';
+      } else {
+        fileInput.click();
+      }
+    };
+
+    fileInput.onchange = async ()=>{
+      const file = fileInput.files[0];
+      if(!file) return;
+      if(!s.done){
+        s.done = true;
+        s.timestamp = new Date().toISOString();
+      }
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        const dataUrl = reader.result;
+        if(dataUrl.length > 4500000){
+          meta.textContent = "That image is too large, try a smaller photo";
+          return;
+        }
+        try{
+          await storage.set(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
+          s.hasPhoto = true;
+          s.photoType = file.type;
+          savePerson(currentPerson);
+          renderWeekPanel();
+          renderOverview();
+          renderLeaderboard();
+        }catch(e){ console.error(e); }
+      };
+      reader.readAsDataURL(file);
+    };
+
+    actions.appendChild(photoBtn);
+    actions.appendChild(fileInput);
+
+    row.appendChild(info);
+    row.appendChild(actions);
+    row.appendChild(preview);
+    sessionsList.appendChild(row);
+  });
+
+  // article link
+  const urlInput = document.getElementById('articleUrlInput');
+  const labelInput = document.getElementById('articleLabelInput');
+  urlInput.value = wd.article.url || '';
+  labelInput.value = wd.article.label || '';
+  urlInput.disabled = !isEditable();
+  labelInput.disabled = !isEditable();
+  renderArticlePreview(wd.article.url, wd.article.label);
+  const commitArticle = ()=>{
+    const newUrl = urlInput.value.trim();
+    if(newUrl && newUrl !== wd.article.url){
+      wd.article.timestamp = new Date().toISOString();
+    }
+    if(!newUrl){ wd.article.timestamp = null; }
+    wd.article.url = newUrl;
+    wd.article.label = labelInput.value.trim();
+    savePerson(currentPerson);
+    renderArticlePreview(wd.article.url, wd.article.label);
+    renderOverview();
+    renderLeaderboard();
+    refreshReceiptsIfLoaded();
+  };
+  urlInput.onchange = commitArticle;
+  labelInput.onchange = commitArticle;
+
+  const noSpendToggle = document.getElementById('noSpendToggle');
+  noSpendToggle.className = 'toggle'+(wd.noSpend.done?' on':'')+(isEditable()?'':' locked');
+  if(isEditable()){
+    noSpendToggle.onclick = ()=>{
+      wd.noSpend.done = !wd.noSpend.done;
+      wd.noSpend.timestamp = wd.noSpend.done ? new Date().toISOString() : null;
+      savePerson(currentPerson);
+      renderWeekPanel();
+      renderOverview();
+      renderLeaderboard();
+      refreshReceiptsIfLoaded();
+    };
+  }
+}
+
+document.getElementById('weekPrev').onclick = ()=>{ if(currentWeekIdx>0){currentWeekIdx--; renderWeekPanel();} };
+document.getElementById('weekNext').onclick = ()=>{ if(currentWeekIdx<WEEKS.length-1){currentWeekIdx++; renderWeekPanel();} };
+
+function renderPlacements(){
+  const pl = normalizedPlacements(currentPerson);
+
+  const sunSel = document.getElementById('sunSelect');
+  const moonSel = document.getElementById('moonSelect');
+  const risingSel = document.getElementById('risingSelect');
+  buildSignOptions(sunSel, pl.sun);
+  buildSignOptions(moonSel, pl.moon);
+  buildSignOptions(risingSel, pl.rising);
+  sunSel.disabled = !isEditable();
+  moonSel.disabled = !isEditable();
+  risingSel.disabled = !isEditable();
+  sunSel.onchange = ()=>{ pl.sun = sunSel.value; savePerson(currentPerson); };
+  moonSel.onchange = ()=>{ pl.moon = moonSel.value; savePerson(currentPerson); };
+  risingSel.onchange = ()=>{ pl.rising = risingSel.value; savePerson(currentPerson); };
+
+  const notes = document.getElementById('placementsNotes');
+  notes.value = pl.notes || '';
+  notes.disabled = !isEditable();
+  notes.onchange = ()=>{ pl.notes = notes.value; savePerson(currentPerson); };
+
+  const warningEl = document.getElementById('big3Warning');
+  const missing = [];
+  if(!pl.sun) missing.push('Sun');
+  if(!pl.moon) missing.push('Moon');
+  if(!pl.rising) missing.push('Rising');
+  warningEl.textContent = missing.length ? `Still need: ${missing.join(', ')}` : '';
+
+  const statusEl = document.getElementById('chartUploadStatus');
+  statusEl.textContent = isEditable() ? '' : "Switch to your own tab to add a chart.";
+  const fileInput = document.getElementById('chartFileInput');
+  fileInput.value = '';
+  fileInput.disabled = !isEditable();
+  fileInput.onchange = async ()=>{
+    const file = fileInput.files[0];
+    if(!file) return;
+    statusEl.textContent = 'Reading your chart... 0%';
+    const result = await readChartScreenshot(file);
+    const matched = [];
+    const guessed = [];
+    if(result){
+      if(result.sun){ pl.sun = result.sun; matched.push('Sun'); }
+      else if(result.guessedSun){ pl.sun = result.guessedSun; guessed.push('Sun'); }
+      if(result.moon){ pl.moon = result.moon; matched.push('Moon'); }
+      else if(result.guessedMoon){ pl.moon = result.guessedMoon; guessed.push('Moon'); }
+      if(result.rising){ pl.rising = result.rising; matched.push('Rising'); }
+      else if(result.guessedRising){ pl.rising = result.guessedRising; guessed.push('Rising'); }
+      if(result.rawText){
+        pl.notes = pl.notes && pl.notes.trim()
+          ? pl.notes.trim() + '\n\n(raw scanned text, check by hand)\n' + result.rawText
+          : '(raw scanned text, check by hand)\n' + result.rawText;
+      }
+      savePerson(currentPerson);
+    }
+    renderPlacements();
+    const freshStatus = document.getElementById('chartUploadStatus');
+    const parts = [];
+    if(matched.length) parts.push(`Matched ${matched.join(', ')} from labeled text in the image.`);
+    if(guessed.length) parts.push(`Read ${guessed.join(', ')} off the icon row near the top (Co-Star's layout).`);
+    freshStatus.textContent = parts.length
+      ? parts.join(' ') + ' This is basic OCR, not real understanding, so double check every field, and skim the raw text now in your notes below for anything else it missed.'
+      : `Couldn't confidently match or guess Sun/Moon/Rising from that image. If it found any text at all, it's now in your notes below, check it and fill in manually.`;
+  };
+}
+
+function renderCurrently(){
+  if(!allData[currentPerson].currently) allData[currentPerson].currently = {reading:"",watching:"",listening:""};
+  const cur = allData[currentPerson].currently;
+  const r = document.getElementById('currentlyReading');
+  const w = document.getElementById('currentlyWatching');
+  const l = document.getElementById('currentlyListening');
+  r.value = cur.reading || '';
+  w.value = cur.watching || '';
+  l.value = cur.listening || '';
+  r.disabled = w.disabled = l.disabled = !isEditable();
+  r.onchange = ()=>{ cur.reading = r.value; savePerson(currentPerson); };
+  w.onchange = ()=>{ cur.watching = w.value; savePerson(currentPerson); };
+  l.onchange = ()=>{ cur.listening = l.value; savePerson(currentPerson); };
+}
+
+function renderBookends(){
+  const kickoff = document.getElementById('kickoffInput');
+  const closing = document.getElementById('closingInput');
+  kickoff.value = allData[currentPerson].kickoffIntention || '';
+  closing.value = allData[currentPerson].closingToast || '';
+  kickoff.disabled = !isEditable();
+  closing.disabled = !isEditable();
+  kickoff.onchange = ()=>{ allData[currentPerson].kickoffIntention = kickoff.value; savePerson(currentPerson); };
+  closing.onchange = ()=>{ allData[currentPerson].closingToast = closing.value; savePerson(currentPerson); };
+}
+
+let openChapter = null;
+let openDay = null;
+let uiInitialized = false;
+
+function renderChapters(){
+  const el = document.getElementById('chapters');
+  el.innerHTML = '';
+  const ti = todayInfo();
+  const todayNum = ti.state==="during" ? ti.dayNum : null;
+
+  if(!uiInitialized){
+    openChapter = todayNum ? DAYS.find(d=>d.n===todayNum).ch : 1;
+    openDay = todayNum || null;
+    uiInitialized = true;
+  }
+
+  CHAPTERS.forEach(ch=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'chapter';
+
+    const head = document.createElement('div');
+    head.className = 'chapter-head';
+    head.innerHTML = `<div><h3>${ch.name}</h3><div class="range">${ch.range}</div><div class="chapter-blurb">${ch.blurb}</div></div><div class="chapter-chevron">${openChapter===ch.id?'\u2212':'+'}</div>`;
+    head.onclick = ()=>{ openChapter = (openChapter===ch.id)?null:ch.id; renderChapters(); };
+    wrap.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'chapter-body'+(openChapter===ch.id?' open':'');
+    DAYS.filter(d=>d.ch===ch.id).forEach(day=>{
+      body.appendChild(renderDayRow(day, day.n===todayNum));
+    });
+    wrap.appendChild(body);
+
+    el.appendChild(wrap);
+  });
+}
+
+function renderDayRow(day, isToday){
+  const row = document.createElement('div');
+  row.className = 'day'+(isToday?' today':'');
+
+  const head = document.createElement('div');
+  head.className = 'day-head';
+  head.innerHTML = `<div class="day-num">${day.n}</div><div class="day-date">${day.d} <span class="day-dot">&middot;</span> ${day.wd}</div>${day.tag?`<div class="day-tag">${day.tag}</div>`:''}`;
+  head.style.cursor='pointer';
+  head.onclick = ()=>{ openDay = (openDay===day.n)?null:day.n; renderChapters(); };
+  row.appendChild(head);
+
+  const full = document.createElement('div');
+  full.className = 'day-full'+(openDay===day.n?' open':'');
+
+  const promptEl = document.createElement('div');
+  promptEl.className = 'day-prompt';
+  promptEl.textContent = day.prompt;
+  full.appendChild(promptEl);
+
+  const dd = dayData(currentPerson, day.n);
+  const checks = document.createElement('div');
+  checks.className = 'day-checks';
+
+  if(!day.rest){
+    checks.appendChild(makeCheckRow('Journaled, 30 min', dd.journaled, (v)=>{dd.journaled=v; savePerson(currentPerson); renderOverview(); renderLeaderboard(); refreshReceiptsIfLoaded();}));
+  }
+  checks.appendChild(makeCheckRow('No phone, first hour', dd.noPhone, (v)=>{dd.noPhone=v; savePerson(currentPerson); renderOverview(); renderLeaderboard();}));
+
+  const gratRow = document.createElement('div');
+  const label = document.createElement('label');
+  label.className = 'grat-label';
+  label.textContent = 'Gratitude or intention, one line';
+  const gratInput = document.createElement('input');
+  gratInput.className='gratitude-input';
+  gratInput.value = dd.gratitude || '';
+  gratInput.disabled = !isEditable();
+  gratInput.onchange = ()=>{ dd.gratitude = gratInput.value; savePerson(currentPerson); };
+  gratRow.appendChild(label);
+  gratRow.appendChild(gratInput);
+  checks.appendChild(gratRow);
+
+  checks.appendChild(makePhotoRow(currentPerson, day.n, dd));
+
+  full.appendChild(checks);
+  row.appendChild(full);
+  return row;
+}
+
+function makePhotoRow(person, dayNum, dd){
+  const row = document.createElement('div');
+  row.className = 'session-row';
+
+  const info = document.createElement('div');
+  info.className = 'session-info';
+  const label = document.createElement('div');
+  label.className = 'session-label';
+  label.textContent = 'Photo for today (optional)';
+  const meta = document.createElement('div');
+  meta.className = 'session-meta';
+  meta.textContent = dd.hasPhoto ? 'Saved' : 'Nothing added yet';
+  info.appendChild(label);
+  info.appendChild(meta);
+
+  const actions = document.createElement('div');
+  actions.className = 'session-actions';
+
+  const key = `recal-daily-photo:${person}:${dayNum}`;
+  const preview = document.createElement('img');
+  preview.className = 'session-photo-preview';
+  preview.style.display = 'none';
+
+  const photoBtn = document.createElement('button');
+  photoBtn.type = 'button';
+  photoBtn.className = 'session-photo-btn';
+  photoBtn.textContent = dd.hasPhoto ? 'View photo' : 'Add photo';
+  photoBtn.disabled = !dd.hasPhoto && !isEditable();
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.className = 'session-photo-input';
+  fileInput.disabled = !isEditable();
+
+  photoBtn.onclick = async ()=>{
+    if(dd.hasPhoto && preview.style.display==='none'){
+      photoBtn.textContent = 'Loading...';
+      try{
+        const res = await storage.get(key, true);
+        if(res){ preview.src = res.value; preview.style.display='block'; photoCache[key]=res.value; }
+      }catch(e){ console.error(e); }
+      photoBtn.textContent = 'Hide photo';
+    } else if(dd.hasPhoto && preview.style.display!=='none'){
+      preview.style.display='none';
+      photoBtn.textContent = 'View photo';
+    } else {
+      fileInput.click();
+    }
+  };
+
+  fileInput.onchange = ()=>{
+    const file = fileInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async ()=>{
+      const dataUrl = reader.result;
+      if(dataUrl.length > 4500000){
+        meta.textContent = "That image is too large, try a smaller photo";
+        return;
+      }
+      try{
+        await storage.set(key, dataUrl, true);
+        dd.hasPhoto = true;
+        dd.photoType = file.type;
+        photoCache[key] = dataUrl;
+        savePerson(person);
+        meta.textContent = 'Saved';
+        photoBtn.textContent = 'View photo';
+        renderPhotoJournal();
+      }catch(e){ console.error(e); }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  actions.appendChild(photoBtn);
+  actions.appendChild(fileInput);
+  row.appendChild(info);
+  row.appendChild(actions);
+  row.appendChild(preview);
+  return row;
+}
+
+function makeCheckRow(labelText, checked, onChange){
+  const row = document.createElement('div');
+  row.className='check-row';
+  const toggle = document.createElement('div');
+  toggle.className='toggle'+(checked?' on':'')+(isEditable()?'':' locked');
+  const label = document.createElement('label');
+  label.textContent = labelText;
+  if(isEditable()){
+    toggle.onclick = ()=>{
+      const newVal = !toggle.classList.contains('on');
+      toggle.classList.toggle('on');
+      onChange(newVal);
+    };
+  }
+  row.appendChild(toggle);
+  row.appendChild(label);
+  return row;
+}
+
+function renderOverview(){
+  const table = document.getElementById('overviewTable');
+  const elapsed = elapsedDays();
+  const journalableCount = DAYS.filter(d=>d.n<=elapsed && !d.rest).length;
+
+  let html = `<tr><th>Person</th><th>Journaled</th><th>No phone</th><th>Move (this wk)</th><th>Article</th><th>No-spend</th></tr>`;
+  PEOPLE.forEach(p=>{
+    const pd = allData[p];
+    let journaledCount=0, noPhoneCount=0;
+    for(let n=1;n<=elapsed;n++){
+      const d = pd.days[n];
+      if(d){ if(d.journaled) journaledCount++; if(d.noPhone) noPhoneCount++; }
+    }
+    const wd = weekData(p, currentWeekIdx);
+    const sessionsDone = wd.sessions.filter(s=>s.done).length;
+    const hasArticle = !!(wd.article.url && wd.article.url.trim());
+    html += `<tr>
+      <td>${p}</td>
+      <td>${elapsed?journaledCount+'/'+journalableCount:'\u2014'}</td>
+      <td>${elapsed?noPhoneCount+'/'+elapsed:'\u2014'}</td>
+      <td>${sessionsDone}/3</td>
+      <td><span class="mini-dot${hasArticle?' on':''}"></span>${hasArticle?'sent':'\u2014'}</td>
+      <td><span class="mini-dot${wd.noSpend.done?' on':''}"></span>${wd.noSpend.done?'done':'\u2014'}</td>
+    </tr>`;
+  });
+  table.innerHTML = html;
+}
+
+function scoreFor(p){
+  const pd = allData[p];
+  const elapsed = elapsedDays();
+  let score = 0;
+  for(let n=1;n<=elapsed;n++){
+    const d = pd.days[n];
+    if(d){ if(d.journaled) score++; if(d.noPhone) score++; }
+  }
+  for(let idx=0; idx<WEEKS.length; idx++){
+    const wd = weekData(p, idx);
+    score += wd.sessions.filter(s=>s.done).length;
+    if(wd.article.url && wd.article.url.trim()) score++;
+    if(wd.noSpend.done) score++;
+  }
+  return score;
+}
+
+function renderLeaderboard(){
+  const el = document.getElementById('leaderboardPanel');
+  const ranked = PEOPLE.map(p=>({name:p, score:scoreFor(p)})).sort((a,b)=>b.score-a.score);
+  el.innerHTML = ranked.map((r,i)=>`
+    <div class="leaderboard-row">
+      <div class="lb-rank">${i+1}</div>
+      <div class="lb-name${r.name===currentPerson?' me':''}">${r.name}</div>
+      <div class="lb-score">${r.score}<span class="lb-score-label">pts</span></div>
+    </div>
+  `).join('');
+}
+
+let galleryMode = 'everyone';
+const photoCache = {};
+
+document.getElementById('galleryEveryone').onclick = ()=>{
+  galleryMode = 'everyone';
+  document.getElementById('galleryEveryone').classList.add('active');
+  document.getElementById('galleryMine').classList.remove('active');
+  renderPhotoJournal();
+};
+document.getElementById('galleryMine').onclick = ()=>{
+  galleryMode = 'mine';
+  document.getElementById('galleryMine').classList.add('active');
+  document.getElementById('galleryEveryone').classList.remove('active');
+  renderPhotoJournal();
+};
+
+document.getElementById('photoModal').onclick = ()=>{
+  document.getElementById('photoModal').classList.remove('open');
+};
+
+async function renderPhotoJournal(){
+  const el = document.getElementById('photoGallery');
+  const people = galleryMode==='mine' ? [currentPerson] : PEOPLE;
+
+  const items = [];
+  people.forEach(p=>{
+    DAYS.forEach(day=>{
+      const dd = allData[p] && allData[p].days[day.n];
+      if(dd && dd.hasPhoto){
+        items.push({person:p, day:day.n, dateLabel:day.d, key:`recal-daily-photo:${p}:${day.n}`});
+      }
+    });
+  });
+  items.sort((a,b)=> a.day-b.day || a.person.localeCompare(b.person));
+
+  if(!items.length){
+    el.innerHTML = `<div class="empty-note">No photos yet. Add one from any day above and it'll show up here.</div>`;
+    return;
+  }
+
+  el.innerHTML = '';
+  items.forEach(item=>{
+    const cell = document.createElement('div');
+    cell.className = 'gallery-cell';
+    cell.innerHTML = `<div class="cell-loading">Day ${item.day}</div>`;
+    el.appendChild(cell);
+
+    (async ()=>{
+      let dataUrl = photoCache[item.key];
+      if(!dataUrl){
+        try{
+          const res = await storage.get(item.key, true);
+          if(res){ dataUrl = res.value; photoCache[item.key] = dataUrl; }
+        }catch(e){ console.error(e); }
+      }
+      if(!dataUrl){ cell.innerHTML = `<div class="cell-loading">\u2014</div>`; return; }
+      const captionName = galleryMode==='everyone' ? `${item.person} \u00b7 Day ${item.day}` : `Day ${item.day}`;
+      cell.innerHTML = `<img src="${dataUrl}" alt=""><div class="cell-caption">${captionName}</div>`;
+      cell.onclick = ()=>{
+        document.getElementById('photoModalImg').src = dataUrl;
+        document.getElementById('photoModal').classList.add('open');
+      };
+    })();
+  });
+}
+
+const CHAPTER_ORDINALS = ['One','Two','Three','Four','Five'];
+const CHAPTER_META = {
+  1:{eyebrow:'Virgo season, closing out', subtitle:"Where the energy's been leaking"},
+  2:{eyebrow:'Sun enters Libra', subtitle:'The one we did out loud, together'},
+  3:{eyebrow:'Libra season, full moon in Aries', subtitle:'Feelings, but make them actions'},
+  4:{eyebrow:'Libra season deepens', subtitle:'Alignment over easy peace'},
+  5:{eyebrow:'New moon in Libra', subtitle:'Fresh intentions, real receipts'}
+};
+
+function chapterDateRange(chapterId){
+  const chDays = DAYS.filter(d=>d.ch===chapterId);
+  const firstN = chDays[0].n;
+  const lastN = chDays[chDays.length-1].n;
+  const start = new Date(CHALLENGE_START.getTime() + (firstN-1)*86400000);
+  const end = new Date(CHALLENGE_START.getTime() + lastN*86400000);
+  return {start, end, chDays};
+}
+
+function computeChapterStats(chapterId){
+  const {start, end, chDays} = chapterDateRange(chapterId);
+  const dayNums = chDays.map(d=>d.n);
+  let journalCount=0, workoutCount=0, noSpendCount=0, articleCount=0;
+  const journalableSlots = chDays.filter(d=>!d.rest).length * PEOPLE.length;
+
+  PEOPLE.forEach(p=>{
+    const pd = allData[p];
+    if(!pd) return;
+    dayNums.forEach(n=>{
+      const dd = pd.days[n];
+      if(dd && dd.journaled) journalCount++;
+    });
+    for(let idx=0; idx<WEEKS.length; idx++){
+      const wd = pd.weeks[idx];
+      if(!wd) continue;
+      (wd.sessions||[]).forEach(s=>{
+        if(s.done && s.timestamp){
+          const t = new Date(s.timestamp);
+          if(t>=start && t<end) workoutCount++;
+        }
+      });
+      if(wd.noSpend && wd.noSpend.done && wd.noSpend.timestamp){
+        const t = new Date(wd.noSpend.timestamp);
+        if(t>=start && t<end) noSpendCount++;
+      }
+      if(wd.article && wd.article.url && wd.article.timestamp){
+        const t = new Date(wd.article.timestamp);
+        if(t>=start && t<end) articleCount++;
+      }
+    }
+  });
+
+  const pct = journalableSlots ? journalCount/journalableSlots : 0;
+  const status = pct>=0.75 ? 'on track' : (pct>=0.4 ? 'getting there' : 'just getting started');
+  return {journalCount, workoutCount, noSpendCount, articleCount, status};
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+let receiptChapterId = 1;
+let receiptFormat = 'square';
+
+function populateReceiptChapterSelect(){
+  const sel = document.getElementById('receiptChapterSelect');
+  sel.innerHTML = CHAPTERS.map(ch=>`<option value="${ch.id}">${ch.name}</option>`).join('');
+  sel.value = receiptChapterId;
+  sel.onchange = ()=>{ receiptChapterId = parseInt(sel.value,10); loadAndRenderReceipt(); };
+}
+
+async function loadAndRenderReceipt(){
+  const quoteInput = document.getElementById('receiptQuoteInput');
+  let existingQuote = '';
+  try{
+    const res = await storage.get('recal-quote:'+receiptChapterId, true);
+    existingQuote = res ? res.value : '';
+  }catch(e){ existingQuote = ''; }
+  quoteInput.value = existingQuote;
+  renderReceiptCard(existingQuote);
+}
+
+function refreshReceiptsIfLoaded(){
+  const quoteInput = document.getElementById('receiptQuoteInput');
+  if(quoteInput) renderReceiptCard(quoteInput.value);
+}
+
+function renderReceiptCard(quoteText){
+  const ch = CHAPTERS.find(c=>c.id===receiptChapterId);
+  const meta = CHAPTER_META[receiptChapterId] || {eyebrow:'', subtitle:''};
+  const stats = computeChapterStats(receiptChapterId);
+  const ordinal = CHAPTER_ORDINALS[receiptChapterId-1];
+  const nextCh = CHAPTERS.find(c=>c.id===receiptChapterId+1);
+  const nextLabel = nextCh ? `next up: ${nextCh.name}` : 'next up: Closing Celebration';
+  const titleHtml = receiptFormat==='story' ? ch.name.replace(' ', '<br>') : ch.name;
+
+  const wrap = document.getElementById('receiptPreviewWrap');
+  wrap.innerHTML = `
+    <div class="receipt-scope">
+      <div class="card format-${receiptFormat}" id="receiptCardEl">
+        <div class="stars"></div>
+        <div class="top-row">
+          <div class="wordmark">Practical Magic</div>
+          <div class="moon-date">${ch.range}<br>Chapter ${ordinal}</div>
+        </div>
+        <div class="chapter">
+          <div class="chapter-eyebrow">${meta.eyebrow}</div>
+          <div class="chapter-title">${titleHtml}</div>
+          <div class="chapter-dates">${meta.subtitle}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="stats">
+          <div>
+            <div class="stat-num">${stats.journalCount}</div>
+            <div class="stat-label">journal entries, four witches combined</div>
+          </div>
+          <div>
+            <div class="stat-num">${stats.workoutCount}</div>
+            <div class="stat-label">workouts logged</div>
+          </div>
+          <div>
+            <div class="stat-num">${stats.noSpendCount}</div>
+            <div class="stat-label">no-spend days held</div>
+          </div>
+          <div>
+            <div class="stat-num">${stats.articleCount}</div>
+            <div class="stat-label">reads shared to the group</div>
+          </div>
+        </div>
+        ${quoteText ? `
+        <div class="quote-block">
+          <div class="quote">&ldquo;${escapeHtml(quoteText)}&rdquo;</div>
+          <div class="quote-who">&mdash; a witch</div>
+        </div>` : `<div class="quote-block"><div class="quote-who">No quote added for this chapter yet.</div></div>`}
+        <div class="footer-row">
+          <div class="coven">the coven is <span>${stats.status}</span></div>
+          <div class="moon-date">${nextLabel}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById('formatCardBtn').onclick = ()=>{
+  receiptFormat = 'square';
+  document.getElementById('formatCardBtn').classList.add('active');
+  document.getElementById('formatStoryBtn').classList.remove('active');
+  refreshReceiptsIfLoaded();
+};
+document.getElementById('formatStoryBtn').onclick = ()=>{
+  receiptFormat = 'story';
+  document.getElementById('formatStoryBtn').classList.add('active');
+  document.getElementById('formatCardBtn').classList.remove('active');
+  refreshReceiptsIfLoaded();
+};
+
+document.getElementById('receiptQuoteInput').onchange = async ()=>{
+  const val = document.getElementById('receiptQuoteInput').value.trim();
+  try{ await storage.set('recal-quote:'+receiptChapterId, val, true); }catch(e){ console.error(e); }
+  renderReceiptCard(val);
+};
+
+document.getElementById('downloadReceiptBtn').onclick = async ()=>{
+  const btn = document.getElementById('downloadReceiptBtn');
+  const cardEl = document.getElementById('receiptCardEl');
+  if(!cardEl || typeof html2canvas==='undefined'){
+    console.error('html2canvas not available');
+    return;
+  }
+  const original = btn.textContent;
+  btn.textContent = 'Rendering...';
+  btn.disabled = true;
+  try{
+    const canvas = await html2canvas(cardEl, {backgroundColor:null, scale:2});
+    const link = document.createElement('a');
+    link.download = `spell-check-chapter-${receiptChapterId}-${receiptFormat}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }catch(e){
+    console.error('download failed', e);
+  }
+  btn.textContent = original;
+  btn.disabled = false;
+};
+
+async function renderAll(){
+  renderPeopleTabs();
+  renderStatus();
+  renderIdentityBanner();
+  renderTimeline();
+  renderPlacements();
+  renderCurrently();
+  renderBookends();
+  renderWeekPanel();
+  renderChapters();
+  renderOverview();
+  renderLeaderboard();
+  renderPhotoJournal();
+  populateReceiptChapterSelect();
+  loadAndRenderReceipt();
+}
+
+(async function init(){
+  currentWeekIdx = currentWeekIndexForToday();
+  await loadAll();
+  await loadIdentity();
+  if(myIdentity && PEOPLE.includes(myIdentity)){ currentPerson = myIdentity; }
+  renderAll();
+})();
+</script>
+</body>
+</html>
