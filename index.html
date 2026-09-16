@@ -1,33 +1,29 @@
 <!doctype html>
 <html lang="en">
 <!--
-  NAMING NOTE, read before this goes anywhere public:
-  "Practical Magic" is used below as a private nickname for this challenge,
-  among Nina, Kellye, Lauren, and Carolina only. It is a real, currently
-  owned title (Alice Hoffman's novel, and the Warner Bros. film). Fine for
-  private use among the four of us. NOT to be used on a public-facing site,
-  an app, marketing, or anything visible outside this group.
-  If this ever grows past the four of us, or becomes a real product,
-  rename it back to "Spell Check" (or something new) before it goes public.
+  NAMING NOTE:
+  The site's actual name/title/wordmark is "Spell Check", the public-facing
+  name. "Practical Magic" now only appears once, in the tagline sentence
+  ("a month of practical magic"), a passing phrase, not the
+  app's identity. Worth knowing it's still a real, currently owned title
+  (Alice Hoffman's novel, the Warner Bros. film), so if that phrase ever
+  gets pulled out and used as a name, logo, or headline on its own, swap
+  it for something else first. Using it in a sentence like this is a much
+  lower-key situation than using it as the branding, but it's still there.
   The footer trademark note ("Cast & Check(TM), pending") is tied to
-  Spell Check, the actual public-facing name, not to Practical Magic,
-  and should stay that way regardless of what this file is called day to day.
-
-  This copy in particular is the one meant for GitHub Pages, a real public
-  URL. Worth re-reading the note above before pushing this live under this
-  name.
+  Spell Check, the real public name, unaffected by any of this.
 -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Practical Magic</title>
+<title>Spell Check</title>
 
 <!-- PWA: makes this installable as an app on phones/desktop -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Practical Magic">
+<meta name="apple-mobile-web-app-title" content="Spell Check">
 <meta name="theme-color" content="#1A1A1A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Display:ital,wght@0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -35,6 +31,7 @@
 <!-- Firebase (free tier) holds the shared data -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
 <!-- Tesseract.js (free, runs in the browser) reads chart screenshots -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
@@ -91,6 +88,7 @@
     background:none;border:none;color:var(--text-secondary);
     font-family:'Inter';font-size:14px;font-weight:500;cursor:pointer;
     padding:0 0 12px;border-bottom:2px solid transparent;margin-bottom:-1px;
+    display:flex;align-items:center;gap:6px;
   }
   .people button.active{color:var(--text-primary);border-bottom:2px solid var(--pink);}
 
@@ -346,6 +344,7 @@
   .receipt-scope .stat-num{font-family:'Fraunces',serif;font-weight:600;font-size:24px;color:var(--r-gold-bright);line-height:1;}
   .receipt-scope .stat-label{font-size:10.5px;color:var(--r-paper-dim);margin-top:4px;line-height:1.3;}
   .receipt-scope .quote-block{margin-top:auto;padding-top:18px;position:relative;z-index:2;}
+  .receipt-scope .chart-callout{font-size:10.5px;color:var(--r-lavender);margin-top:14px;position:relative;z-index:2;}
   .receipt-scope .quote{font-family:'Fraunces',serif;font-style:italic;font-size:14px;line-height:1.5;color:var(--r-rose);}
   .receipt-scope .quote-who{font-size:11px;color:var(--r-paper-dim);margin-top:8px;}
   .receipt-scope .footer-row{display:flex;justify-content:space-between;align-items:center;margin-top:18px;position:relative;z-index:2;gap:10px;}
@@ -359,18 +358,20 @@
 <div class="wrap">
 
   <div class="masthead">
-    <h1>Practical Magic</h1>
-    <div class="tagline">checking in on your own spells</div>
+    <h1>Spell Check</h1>
+    <div class="tagline">a month of practical magic</div>
     <p class="sub lede">31 days, four witches.</p>
     <p class="sub">We're not trying to become new people, we're just finally letting ourselves pay attention, out loud, together. Call it manifesting, but make it accountability. Call it girl math, but for the soul. Whatever you call it, it's four of us deciding to actually do the things we keep saying we'll do, and letting the sky hold us to it.</p>
     <p class="sub">So we'll journal when we don't feel like it. Move our bodies because it feels good, not because we have to. Spend a little less. Touch some grass before we touch our phones. And talk to each other through all of it: the wins, the spirals, the 2am realizations, all of it. Nothing here is that deep and also all of it is that deep.</p>
     <p class="sub">By the time the New Moon in Libra rolls around, we want receipts. Proof we actually did the thing. The sky's just here to keep us honest, and honestly, she's better at it than any app.</p>
-    <p class="sub">This is Practical Magic. Consider it your monthly reminder to check in on your own spells.</p>
+    <p class="sub">This is Spell Check. Consider it your monthly reminder to check in on your own spells.</p>
   </div>
 
   <div class="people" id="people"></div>
   <div class="status" id="status"></div>
   <div id="identityBanner"></div>
+  <div id="notifSection" style="margin-bottom:20px;"></div>
+  <div id="profilePicSection" style="margin-bottom:20px;"></div>
 
   <div class="timeline">
     <div class="timeline-track" id="timelineTrack"></div>
@@ -408,6 +409,8 @@
     <label class="grat-label" style="margin-top:16px;display:block;">Everything else (Mercury, Venus, Mars, houses, whatever's on the screenshot)</label>
     <textarea id="placementsNotes" placeholder="Optional, or filled in automatically from your screenshot"></textarea>
     <p>This app isn't running a real ephemeris, and the screenshot reader is free basic text-scanning, not real image understanding, so it's rougher than a proper reading. Always check it against the actual screenshot.</p>
+    <p style="margin-top:14px;">The "what today means for you" notes on each day also work at the sign level only (e.g. "3 signs apart, that's a square"), not exact degrees, which is what real astrology actually uses to judge how strong an aspect is. For a precise, degree-based read, check the Aspects tab in whatever app you used for your chart (Co-Star, The Pattern, etc.), or ask Claude directly with your real birth data, something like:</p>
+    <p style="font-style:italic;background:var(--track-off);padding:10px 12px;margin-top:8px;border:1px solid var(--line);">"Using my birth chart (born [date], [time], in [place]), give me a precise, degree-based reading of how [the event, e.g. the Full Moon in Aries on September 26] aspects my Sun, Moon, and Rising."</p>
   </div>
 
   <div class="section-title">Currently...</div>
@@ -518,6 +521,7 @@
   </div>
 
   <div class="footnote">Your entries, photos, and links are visible to the other three people using this. Data is shared across the group, not private.</div>
+  <div id="resetProgressWrap" style="margin-top:6px;"></div>
   <div class="trademark-note">Cast &amp; Check&trade; (pending)</div>
 </div>
 
@@ -622,12 +626,93 @@ const DAYS = [
 ];
 
 const CHAPTERS = [
-  {id:1,name:"The Audit",range:"Sep 16\u201321",blurb:"Virgo season's still wrapping up, which means the universe is basically begging you to Marie Kondo your own brain. Not a full life overhaul, just an honest look at where your energy's actually going.",cls:"g1"},
-  {id:2,name:"The Equinox Shift",range:"Sep 22",blurb:"The sun crosses into Libra today: balance, beauty, and please, for the love of god, put the phone down and talk to each other in person.",cls:"g2"},
-  {id:3,name:"The Charge",range:"Sep 23\u201328",blurb:"Libra season is officially here (balance, relationships, main character aesthetics), and on the 26th a Full Harvest Moon in Aries shows up to make sure none of us just think about our feelings without doing something about them.",cls:"g3"},
-  {id:4,name:"The Align",range:"Sep 29\u2013Oct 8",blurb:"Libra season keeps going, and we're using it to figure out what alignment actually feels like, not just keeping the peace because it's easier. Venus stations retrograde partway through, so expect love, money, and values to get a little messy right on schedule.",cls:"g4"},
-  {id:5,name:"The Reset",range:"Oct 9\u201316",blurb:"New Moon in Libra on the 9th means fresh intentions and real balance, and the extra days on the tail end are borrowed time before Mercury turns retrograde on the 24th, use them.",cls:"g5"},
+  {id:1,name:"The Audit",range:"Sep 16\u201321",blurb:"Virgo season's still wrapping up, which means the universe is basically begging you to Marie Kondo your own brain. Not a full life overhaul, just an honest look at where your energy's actually going.",cls:"g1",sign:"Virgo"},
+  {id:2,name:"The Equinox Shift",range:"Sep 22",blurb:"The sun crosses into Libra today: balance, beauty, and please, for the love of god, put the phone down and talk to each other in person.",cls:"g2",sign:"Libra"},
+  {id:3,name:"The Charge",range:"Sep 23\u201328",blurb:"Libra season is officially here (balance, relationships, main character aesthetics), and on the 26th a Full Harvest Moon in Aries shows up to make sure none of us just think about our feelings without doing something about them.",cls:"g3",sign:"Libra"},
+  {id:4,name:"The Align",range:"Sep 29\u2013Oct 8",blurb:"Libra season keeps going, and we're using it to figure out what alignment actually feels like, not just keeping the peace because it's easier. Venus stations retrograde partway through, so expect love, money, and values to get a little messy right on schedule.",cls:"g4",sign:"Libra"},
+  {id:5,name:"The Reset",range:"Oct 9\u201316",blurb:"New Moon in Libra on the 9th means fresh intentions and real balance, and the extra days on the tail end are borrowed time before Mercury turns retrograde on the 24th, use them.",cls:"g5",sign:"Libra"},
 ];
+
+const ZODIAC_ORDER = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+
+function signDistance(signA, signB){
+  const a = ZODIAC_ORDER.indexOf(signA);
+  const b = ZODIAC_ORDER.indexOf(signB);
+  if(a<0 || b<0) return null;
+  let d = Math.abs(a-b);
+  if(d>6) d = 12-d;
+  return d; // 0 through 6
+}
+
+function aspectForDistance(d){
+  if(d===0) return 'conjunction';
+  if(d===2) return 'sextile';
+  if(d===3) return 'square';
+  if(d===4) return 'trine';
+  if(d===6) return 'opposition';
+  return 'minor'; // 1 or 5 signs apart, semi-sextile/quincunx, genuinely minor
+}
+
+// Plain-language meaning per aspect, per placement. The technical term
+// stays in the sentence, but it's never left unexplained.
+const ASPECT_TEXT = {
+  conjunction: {
+    sun:"sits right on your Sun. Today's basically about you, lean into it.",
+    moon:"sits right on your Moon. Feelings are loud today, in a good way if you let them be.",
+    rising:"sits right on your Rising. How you're showing up today is main character energy."
+  },
+  sextile: {
+    sun:"sextiles your Sun. An easy, low-effort kind of support, take the opening if it shows up.",
+    moon:"sextiles your Moon. A gentle emotional assist, nothing dramatic, just easier.",
+    rising:"sextiles your Rising. People are a little easier to deal with than usual, use it."
+  },
+  square: {
+    sun:"squares your Sun. Some friction today, probably worth pushing through.",
+    moon:"squares your Moon. Moodier than usual, notice it before you act on it.",
+    rising:"squares your Rising. You might feel a step behind how you want to present today."
+  },
+  trine: {
+    sun:"trines your Sun. Things flow easier than usual, don't overthink it.",
+    moon:"trines your Moon. Emotionally, today should feel unusually smooth.",
+    rising:"trines your Rising. You're moving through the world with less friction than usual."
+  },
+  opposition: {
+    sun:"opposes your Sun. Someone or something's asking you to balance, not fight.",
+    moon:"opposes your Moon. A push-pull between what you want and what you need.",
+    rising:"opposes your Rising. Someone else's energy is very present today, notice whose."
+  },
+  minor: {
+    sun:"makes a quiet, easy-to-miss connection to your Sun. Nothing major, just a small adjustment.",
+    moon:"makes a quiet, easy-to-miss connection to your Moon. Nothing major, just a small adjustment.",
+    rising:"makes a quiet, easy-to-miss connection to your Rising. Nothing major, just a small adjustment."
+  }
+};
+
+// What's actually "active" that day: the Sun for ordinary season days,
+// but the real transiting body for the two one-day events (the Moon for
+// the Aries full moon, Venus for its retrograde station).
+function dayTransit(day){
+  if(day.n===11) return {sign:"Aries", body:"The Moon"};
+  if(day.n===17) return {sign:"Scorpio", body:"Venus"};
+  const ch = CHAPTERS.find(c=>c.id===day.ch);
+  return {sign:(ch && ch.sign) || "Libra", body:"The Sun"};
+}
+
+function personalizedAstroLines(day, person){
+  const pl = allData[person] && allData[person].placements;
+  if(!pl) return null;
+  const transit = dayTransit(day);
+  const lines = [];
+  [['sun','Sun'],['moon','Moon'],['rising','Rising']].forEach(([key,label])=>{
+    const natal = pl[key];
+    if(!natal) return;
+    const d = signDistance(transit.sign, natal);
+    if(d===null) return;
+    const aspect = aspectForDistance(d);
+    lines.push(`<strong>${label}</strong>: ${transit.body} in ${transit.sign} ${ASPECT_TEXT[aspect][key]}`);
+  });
+  return lines.length ? lines : null;
+}
 
 // weeks: real Mon-Sun calendar weeks, so the first and last are partial
 // since Sep 16 (a Wednesday) doesn't line up with a Monday
@@ -687,11 +772,140 @@ function renderIdentityBanner(){
   }
 }
 
+// ============================================================
+// STEP 2 (optional): paste your VAPID key here once you've generated
+// one in Firebase Console > Project Settings > Cloud Messaging >
+// Web Push certificates > Generate key pair. See README.md.
+// Notifications simply won't be offered until this is filled in.
+// ============================================================
+const VAPID_KEY = "BFYQPzHnQAhbYbntof-ChgmbOUONehSNglv8sGh-GIvFT5jfeplI1pKzX3Xa_vCL9b1QAP05dYv88BFutl5MRuE";
+
+async function renderNotifSection(){
+  const el = document.getElementById('notifSection');
+  if(!myIdentity){ el.innerHTML = ''; return; }
+  if(!('Notification' in window) || VAPID_KEY === "PASTE_YOUR_VAPID_KEY"){
+    el.innerHTML = '';
+    return;
+  }
+
+  const alreadyOn = Notification.permission === 'granted';
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  if(isIos && !isStandalone){
+    el.innerHTML = `<div class="identity-banner">On iPhone, notifications only work once this is added to your Home Screen through Safari, open it that way first, then come back here to turn them on.</div>`;
+    return;
+  }
+
+  if(alreadyOn){
+    el.innerHTML = `<div class="identity-banner">Notifications are on for this device.</div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="identity-banner">Want a heads up on your phone for big days?
+    <div class="identity-gate"><button id="enableNotifBtn" class="gallery-toggle-btn">Turn on notifications</button></div>
+  </div>`;
+  document.getElementById('enableNotifBtn').onclick = enableNotifications;
+}
+
+async function enableNotifications(){
+  const btn = document.getElementById('enableNotifBtn');
+  if(btn){ btn.textContent = 'Asking...'; btn.disabled = true; }
+  try{
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){
+      document.getElementById('notifSection').innerHTML =
+        `<div class="identity-banner">No worries, notifications stayed off. You can allow them later in your browser or phone's site settings.</div>`;
+      return;
+    }
+    const registration = await navigator.serviceWorker.ready;
+    const messaging = firebase.messaging();
+    const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+    if(token && myIdentity){
+      await storage.set('recal-fcm-token:'+myIdentity, token, true);
+    }
+    renderNotifSection();
+  }catch(e){
+    console.error('enable notifications failed', e);
+    document.getElementById('notifSection').innerHTML =
+      `<div class="identity-banner">Something went wrong turning notifications on. Try again, or check your browser's notification settings.</div>`;
+  }
+}
+
+// --- Profile pictures ---
+const profilePicCache = {};
+
+async function preloadProfilePics(){
+  for(const p of PEOPLE){
+    if(allData[p] && allData[p].hasProfilePic){
+      try{
+        const res = await storage.get(`recal-profile-pic:${p}`, true);
+        if(res) profilePicCache[p] = res.value;
+      }catch(e){ console.error(e); }
+    }
+  }
+}
+
+function avatarHtml(name, size){
+  const src = profilePicCache[name];
+  if(src){
+    return `<img src="${src}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;border:1px solid var(--line);vertical-align:middle;flex-shrink:0;">`;
+  }
+  const initial = name.charAt(0).toUpperCase();
+  const fontSize = Math.round(size*0.42);
+  return `<span style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:var(--track-off);color:var(--text-secondary);font-family:'Inter';font-weight:600;font-size:${fontSize}px;vertical-align:middle;flex-shrink:0;">${initial}</span>`;
+}
+
+function renderProfilePicSection(){
+  const el = document.getElementById('profilePicSection');
+  if(!myIdentity){ el.innerHTML = ''; return; }
+  const pd = allData[currentPerson];
+  const editable = isEditable();
+  const hasPic = !!profilePicCache[currentPerson];
+
+  el.innerHTML = `<div class="identity-banner" style="display:flex;align-items:center;gap:14px;">
+    <span id="profilePicPreviewWrap">${avatarHtml(currentPerson, 44)}</span>
+    <span style="flex:1;">
+      ${editable ? `<button id="profilePicBtn" class="gallery-toggle-btn" type="button">${hasPic?'Change photo':'Add a profile pic'}</button>
+      <input type="file" id="profilePicInput" accept="image/*" style="display:none;">` : `${currentPerson}'s photo`}
+    </span>
+  </div>`;
+
+  if(editable){
+    const btn = document.getElementById('profilePicBtn');
+    const input = document.getElementById('profilePicInput');
+    btn.onclick = ()=> input.click();
+    input.onchange = ()=>{
+      const file = input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        const dataUrl = reader.result;
+        if(dataUrl.length > 4500000){
+          btn.textContent = 'Too large, try a smaller photo';
+          return;
+        }
+        try{
+          await storage.set(`recal-profile-pic:${currentPerson}`, dataUrl, true);
+          pd.hasProfilePic = true;
+          profilePicCache[currentPerson] = dataUrl;
+          savePerson(currentPerson);
+          renderProfilePicSection();
+          renderPeopleTabs();
+          renderLeaderboard();
+        }catch(e){ console.error(e); }
+      };
+      reader.readAsDataURL(file);
+    };
+  }
+}
+
 function emptyPersonData(){
   return {
     placements:{sun:"",moon:"",rising:"",notes:""},
     currently:{reading:"",watching:"",listening:""},
     kickoffIntention:"",
+    hasProfilePic:false,
     closingToast:"",
     days:{}, weeks:{}
   };
@@ -803,6 +1017,26 @@ async function savePerson(p){
   }
 }
 
+async function resetMyProgress(){
+  if(!isEditable()) return;
+  const ok = confirm(`Reset all of ${currentPerson}'s day-by-day progress? This clears journal entries, no-phone toggles, movement sessions, shared reads, and no-spend days. Placements, notes, currently-into, and any profile pic stay exactly as they are.`);
+  if(!ok) return;
+  allData[currentPerson].days = {};
+  allData[currentPerson].weeks = {};
+  await savePerson(currentPerson);
+  renderAll();
+}
+
+function renderResetLink(){
+  const el = document.getElementById('resetProgressWrap');
+  if(!isEditable()){ el.innerHTML = ''; return; }
+  el.innerHTML = `<a href="#" id="resetProgressLink" style="color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;font-size:11px;">Reset ${currentPerson}'s day-by-day progress</a>`;
+  document.getElementById('resetProgressLink').onclick = (e)=>{
+    e.preventDefault();
+    resetMyProgress();
+  };
+}
+
 function dayData(p,n){
   if(!allData[p].days[n]) allData[p].days[n] = {journaled:false,noPhone:false,gratitude:"",hasPhoto:false,photoType:null};
   return allData[p].days[n];
@@ -883,7 +1117,7 @@ function renderPeopleTabs(){
   el.innerHTML = '';
   PEOPLE.forEach(p=>{
     const b = document.createElement('button');
-    b.textContent = p;
+    b.innerHTML = avatarHtml(p, 20) + `<span>${p}</span>`;
     if(p===currentPerson) b.classList.add('active');
     b.onclick = ()=>{ currentPerson = p; renderAll(); };
     el.appendChild(b);
@@ -1254,6 +1488,15 @@ function renderDayRow(day, isToday){
   promptEl.textContent = day.prompt;
   full.appendChild(promptEl);
 
+  const astroLines = personalizedAstroLines(day, currentPerson);
+  if(astroLines){
+    const astroWrap = document.createElement('div');
+    astroWrap.style.cssText = 'margin:-6px 0 16px;padding:12px 14px;border:1px solid var(--line);';
+    astroWrap.innerHTML = `<div style="font-family:'Inter';font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:8px;">What today means for ${currentPerson}</div>` +
+      astroLines.map(l=>`<div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin-bottom:4px;">${l}</div>`).join('');
+    full.appendChild(astroWrap);
+  }
+
   const dd = dayData(currentPerson, day.n);
   const checks = document.createElement('div');
   checks.className = 'day-checks';
@@ -1436,6 +1679,7 @@ function renderLeaderboard(){
   el.innerHTML = ranked.map((r,i)=>`
     <div class="leaderboard-row">
       <div class="lb-rank">${i+1}</div>
+      ${avatarHtml(r.name, 28)}
       <div class="lb-name${r.name===currentPerson?' me':''}">${r.name}</div>
       <div class="lb-score">${r.score}<span class="lb-score-label">pts</span></div>
     </div>
@@ -1596,6 +1840,27 @@ function refreshReceiptsIfLoaded(){
   if(quoteInput) renderReceiptCard(quoteInput.value);
 }
 
+function chapterAstroCallout(chapterId){
+  const chDays = DAYS.filter(d=>d.ch===chapterId);
+  // Prefer the chapter's headline event day (the Aries full moon, Venus's
+  // retrograde station) over the plain season baseline, when one of those
+  // falls inside this chapter, that's the actual point of the chapter.
+  const specialDay = chDays.find(d=>d.n===11 || d.n===17);
+  const transit = dayTransit(specialDay || chDays[0]);
+  const hits = [];
+  PEOPLE.forEach(p=>{
+    const pl = allData[p] && allData[p].placements;
+    if(!pl || !pl.sun) return;
+    const d = signDistance(transit.sign, pl.sun);
+    if(d===null) return;
+    const aspect = aspectForDistance(d);
+    if(aspect==='conjunction' || aspect==='opposition'){
+      hits.push(`${p} (Sun ${aspect})`);
+    }
+  });
+  return hits;
+}
+
 function renderReceiptCard(quoteText){
   const ch = CHAPTERS.find(c=>c.id===receiptChapterId);
   const meta = CHAPTER_META[receiptChapterId] || {eyebrow:'', subtitle:''};
@@ -1604,6 +1869,7 @@ function renderReceiptCard(quoteText){
   const nextCh = CHAPTERS.find(c=>c.id===receiptChapterId+1);
   const nextLabel = nextCh ? `next up: ${nextCh.name}` : 'next up: Closing Celebration';
   const titleHtml = receiptFormat==='story' ? ch.name.replace(' ', '<br>') : ch.name;
+  const astroHits = chapterAstroCallout(receiptChapterId);
 
   const wrap = document.getElementById('receiptPreviewWrap');
   wrap.innerHTML = `
@@ -1611,7 +1877,7 @@ function renderReceiptCard(quoteText){
       <div class="card format-${receiptFormat}" id="receiptCardEl">
         <div class="stars"></div>
         <div class="top-row">
-          <div class="wordmark">Practical Magic</div>
+          <div class="wordmark">Spell Check</div>
           <div class="moon-date">${ch.range}<br>Chapter ${ordinal}</div>
         </div>
         <div class="chapter">
@@ -1638,6 +1904,7 @@ function renderReceiptCard(quoteText){
             <div class="stat-label">reads shared to the group</div>
           </div>
         </div>
+        ${astroHits.length ? `<div class="chart-callout">lit up for: ${astroHits.join(', ')}</div>` : ''}
         ${quoteText ? `
         <div class="quote-block">
           <div class="quote">&ldquo;${escapeHtml(quoteText)}&rdquo;</div>
@@ -1698,6 +1965,9 @@ async function renderAll(){
   renderPeopleTabs();
   renderStatus();
   renderIdentityBanner();
+  renderNotifSection();
+  renderProfilePicSection();
+  renderResetLink();
   renderTimeline();
   renderPlacements();
   renderCurrently();
@@ -1714,6 +1984,7 @@ async function renderAll(){
 (async function init(){
   currentWeekIdx = currentWeekIndexForToday();
   await loadAll();
+  await preloadProfilePics();
   await loadIdentity();
   if(myIdentity && PEOPLE.includes(myIdentity)){ currentPerson = myIdentity; }
   renderAll();
