@@ -3,7 +3,7 @@ name: Daily Spell Check notification
 on:
   schedule:
     # 15:00 UTC = 8:00am Pacific Daylight Time. This whole challenge
-    # (Sep 16 - Oct 16) falls before Pacific switches back to Standard
+    # (Sep 18 - Oct 18) falls before Pacific switches back to Standard
     # Time in November, so this offset holds for the entire run.
     - cron: '0 15 * * *'
   workflow_dispatch: {}   # lets you trigger a test run by hand from the Actions tab
