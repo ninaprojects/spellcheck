@@ -18,6 +18,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spell Check</title>
 
+<!-- Link preview metadata, this is what shows up when the URL gets
+     shared in Messages, iMessage, or anywhere else that generates a
+     preview card. -->
+<meta property="og:title" content="Spell Check">
+<meta property="og:description" content="31 days, four witches. A month of practical magic.">
+<meta property="og:image" content="https://ninaprojects.github.io/spellcheck/icon-512.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spell Check">
+<meta name="twitter:description" content="31 days, four witches. A month of practical magic.">
+<meta name="twitter:image" content="https://ninaprojects.github.io/spellcheck/icon-512.png">
+
 <!-- PWA: makes this installable as an app on phones/desktop -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -107,6 +119,21 @@
   .seg.g5{background:#1A1A1A;}
   .marker{position:absolute;top:-4px;width:2px;height:14px;background:var(--text-primary);}
   .timeline-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);font-weight:400;}
+
+  /* jump nav: sticky, so a long page is easy to skip around in */
+  .jump-nav{
+    position:sticky;top:0;z-index:50;
+    display:flex;gap:18px;overflow-x:auto;white-space:nowrap;
+    background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:10px 2px;margin:0 0 34px;
+    -ms-overflow-style:none;scrollbar-width:none;
+  }
+  .jump-nav::-webkit-scrollbar{display:none;}
+  .jump-nav a{
+    font-family:'Inter';font-weight:500;font-size:12px;letter-spacing:.04em;
+    color:var(--text-secondary);text-decoration:none;flex-shrink:0;
+  }
+  .jump-nav a:hover{color:var(--text-primary);}
 
   /* section headings — Inter Semibold, all-caps, wide tracking */
   .section-title{
@@ -380,11 +407,21 @@
     </div>
   </div>
 
-  <div class="section-title">Leaderboard</div>
+  <nav class="jump-nav">
+    <a href="#nav-leaderboard">who's winning</a>
+    <a href="#nav-placements">the big 3</a>
+    <a href="#nav-week">✨ this week ✨</a>
+    <a href="#nav-days">the daily witchery</a>
+    <a href="#nav-photos">the evidence</a>
+    <a href="#nav-receipts">the receipts</a>
+    <a href="#nav-overview">the tea</a>
+  </nav>
+
+  <div class="section-title" id="nav-leaderboard">Leaderboard</div>
   <div class="section-subnote">One point per thing done: a journal, a phone-free hour, 8 glasses of water, a movement session, an article sent, a no-spend day. Just for fun.</div>
   <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
 
-  <div class="section-title">Your placements (optional)</div>
+  <div class="section-title" id="nav-placements">Your placements (optional)</div>
   <div class="placements">
     <div class="chart-upload-row">
       <label class="grat-label">Upload a screenshot of your chart, this scans for text and guesses your Big 3, rougher than it sounds</label>
@@ -413,7 +450,7 @@
     <p style="font-style:italic;background:var(--track-off);padding:10px 12px;margin-top:8px;border:1px solid var(--line);">"Using my birth chart (born [date], [time], in [place]), give me a precise, degree-based reading of how [the event, e.g. the Full Moon in Aries on September 26] aspects my Sun, Moon, and Rising."</p>
   </div>
 
-  <div class="section-title">Currently...</div>
+  <div class="section-title" id="nav-currently">Currently...</div>
   <div class="placements">
     <div class="currently-row">
       <div class="currently-field">
@@ -431,7 +468,7 @@
     </div>
   </div>
 
-  <div class="section-title">This week's commitments</div>
+  <div class="section-title" id="nav-week">This week's commitments</div>
   <div class="week-panel">
     <div class="week-panel-head">
       <div>
@@ -477,7 +514,7 @@
     <input type="text" id="kickoffInput" class="gratitude-input" placeholder="Say it out loud first, then write it">
   </div>
 
-  <div class="section-title">The 31 days</div>
+  <div class="section-title" id="nav-days">The 31 days</div>
   <div id="chapters"></div>
 
   <div class="bookend-card">
@@ -488,7 +525,7 @@
     <input type="text" id="closingInput" class="gratitude-input" placeholder="What are you toasting to">
   </div>
 
-  <div class="section-title with-sub">Photo Journal</div>
+  <div class="section-title with-sub" id="nav-photos">Photo Journal</div>
   <div class="section-subnote">Whatever anyone's added, day by day. This is the thing you'll actually want to look back at.</div>
   <div class="gallery-toggle">
     <button id="galleryEveryone" class="gallery-toggle-btn active">Everyone</button>
@@ -497,7 +534,7 @@
   <div id="photoGallery" class="photo-gallery"></div>
   <div id="photoModal" class="photo-modal"><div><img id="photoModalImg" src=""><div id="photoModalCaption" style="color:#fff;text-align:center;font-family:'Inter';font-size:13px;margin-top:10px;"></div></div></div>
 
-  <div class="section-title">Chapter Receipts</div>
+  <div class="section-title" id="nav-receipts">Chapter Receipts</div>
   <div class="section-subnote">Real numbers, pulled live. Add a quote whenever someone says something worth keeping, then download it in whichever shape you need.</div>
   <div class="week-panel">
     <div class="week-panel-head">
@@ -514,7 +551,7 @@
     <button id="downloadReceiptBtn" type="button" class="session-photo-btn" style="margin-top:16px;">Download PNG</button>
   </div>
 
-  <div class="section-title">How's everyone doing</div>
+  <div class="section-title" id="nav-overview">How's everyone doing</div>
   <div class="section-subnote">Journaled, no phone, and water are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
   <div class="week-panel" style="padding:0;overflow-x:auto;">
     <table class="overview" id="overviewTable"></table>
@@ -1586,7 +1623,7 @@ function renderDayRow(day, isToday){
     astroWrap.style.cssText = 'margin:-6px 0 16px;border:1px solid var(--line);';
     const astroHeader = document.createElement('div');
     astroHeader.style.cssText = 'padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:\'Inter\';font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);';
-    astroHeader.innerHTML = `<span>\u2726 What today means for ${currentPerson}</span><span id="astroToggle-${day.n}">+</span>`;
+    astroHeader.innerHTML = `<span>\u2728 What today means for ${currentPerson}</span><span id="astroToggle-${day.n}">+</span>`;
     const astroBody = document.createElement('div');
     astroBody.style.cssText = 'display:none;padding:0 14px 14px;';
     astroBody.innerHTML = astroLines.map(l=>`<div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin-bottom:4px;">${l}</div>`).join('');
