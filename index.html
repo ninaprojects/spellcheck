@@ -123,22 +123,30 @@
   /* jump nav: sticky, so a long page is easy to skip around in */
   .jump-nav{
     position:sticky;top:0;z-index:50;
-    display:flex;gap:18px;overflow-x:auto;white-space:nowrap;
-    background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:18px;overflow-x:auto;white-space:nowrap;
+    background:var(--track-off);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
     padding:10px 2px;margin:0 0 34px;
     -ms-overflow-style:none;scrollbar-width:none;
   }
   .jump-nav::-webkit-scrollbar{display:none;}
+  .jump-nav-label{
+    font-family:'Inter';font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--text-secondary);opacity:.65;flex-shrink:0;padding:0 12px 0 6px;
+    border-right:1px solid var(--track-off-line);margin-right:2px;
+  }
   .jump-nav a{
-    font-family:'Inter';font-weight:500;font-size:12px;letter-spacing:.04em;
+    font-family:'Inter';font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
     color:var(--text-secondary);text-decoration:none;flex-shrink:0;
+    padding-bottom:7px;border-bottom:2px solid transparent;
   }
   .jump-nav a:hover{color:var(--text-primary);}
+  .jump-nav a.active{color:var(--text-primary);border-bottom-color:var(--pink);}
 
   /* section headings — Inter Semibold, all-caps, wide tracking */
   .section-title{
     font-family:'Inter';font-weight:600;font-size:14px;letter-spacing:0.22em;
     text-transform:uppercase;color:var(--text-primary);margin:44px 0 16px;
+    scroll-margin-top:64px;
   }
   .section-title.with-sub{margin-bottom:4px;}
   .section-subnote{font-size:12px;color:var(--text-secondary);font-weight:300;margin:0 0 16px;letter-spacing:0;text-transform:none;}
@@ -251,6 +259,10 @@
     width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text-primary);
     padding:9px 11px;font-family:'Inter';font-weight:400;font-size:13px;
   }
+  .big3-compact-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .big3-compact-line{font-family:'Inter';font-size:14px;color:var(--text-primary);font-weight:500;}
+  .big3-toggle-link{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;}
+  .big3-toggle-link:hover{color:var(--text-primary);border-color:var(--text-primary);}
 
   /* leaderboard */
   .leaderboard-row{display:flex;align-items:center;gap:16px;padding:14px 18px;border-top:1px solid var(--line);}
@@ -408,6 +420,7 @@
   </div>
 
   <nav class="jump-nav">
+    <span class="jump-nav-label">Jump to</span>
     <a href="#nav-leaderboard">who's winning</a>
     <a href="#nav-placements">the big 3</a>
     <a href="#nav-week">✨ this week ✨</a>
@@ -422,51 +435,7 @@
   <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
 
   <div class="section-title" id="nav-placements">Your placements (optional)</div>
-  <div class="placements">
-    <div class="chart-upload-row">
-      <label class="grat-label">Upload a screenshot of your chart, this scans for text and guesses your Big 3, rougher than it sounds</label>
-      <input type="file" id="chartFileInput" accept="image/*">
-      <div id="chartUploadStatus" class="commit-sub"></div>
-    </div>
-    <div class="big3-row">
-      <div class="big3-field">
-        <label class="grat-label">Sun *</label>
-        <select id="sunSelect"></select>
-      </div>
-      <div class="big3-field">
-        <label class="grat-label">Moon *</label>
-        <select id="moonSelect"></select>
-      </div>
-      <div class="big3-field">
-        <label class="grat-label">Rising *</label>
-        <select id="risingSelect"></select>
-      </div>
-    </div>
-    <div id="big3Warning" class="commit-sub" style="margin-top:2px;"></div>
-    <label class="grat-label" style="margin-top:16px;display:block;">Everything else (Mercury, Venus, Mars, houses, whatever's on the screenshot)</label>
-    <textarea id="placementsNotes" placeholder="Optional, or filled in automatically from your screenshot"></textarea>
-    <p>This app isn't running a real ephemeris, and the screenshot reader is free basic text-scanning, not real image understanding, so it's rougher than a proper reading. Always check it against the actual screenshot.</p>
-    <p style="margin-top:14px;">The "what today means for you" notes on each day also work at the sign level only (e.g. "3 signs apart, that's a square"), not exact degrees, which is what real astrology actually uses to judge how strong an aspect is. For a precise, degree-based read, check the Aspects tab in whatever app you used for your chart (Co-Star, The Pattern, etc.), or ask Claude directly with your real birth data, something like:</p>
-    <p style="font-style:italic;background:var(--track-off);padding:10px 12px;margin-top:8px;border:1px solid var(--line);">"Using my birth chart (born [date], [time], in [place]), give me a precise, degree-based reading of how [the event, e.g. the Full Moon in Aries on September 26] aspects my Sun, Moon, and Rising."</p>
-  </div>
-
-  <div class="section-title" id="nav-currently">Currently...</div>
-  <div class="placements">
-    <div class="currently-row">
-      <div class="currently-field">
-        <label class="grat-label">Reading</label>
-        <input type="text" id="currentlyReading" class="gratitude-input" placeholder="Whatever you're reading">
-      </div>
-      <div class="currently-field">
-        <label class="grat-label">Watching</label>
-        <input type="text" id="currentlyWatching" class="gratitude-input" placeholder="Whatever you're watching">
-      </div>
-      <div class="currently-field">
-        <label class="grat-label">Listening</label>
-        <input type="text" id="currentlyListening" class="gratitude-input" placeholder="Whatever you're listening to">
-      </div>
-    </div>
-  </div>
+  <div class="placements" id="placementsPanel"></div>
 
   <div class="section-title" id="nav-week">This week's commitments</div>
   <div class="week-panel">
@@ -503,6 +472,25 @@
         <div class="commit-sub">Pick one. Fixed bills don't count against you.</div>
       </div>
       <div class="toggle" id="noSpendToggle"></div>
+    </div>
+
+    <div class="commit-row">
+      <div class="commit-label">Currently into</div>
+      <div class="commit-sub" style="margin-bottom:6px;">Optional. Update it whenever, any day this week, it's saved per week so you can look back and see what everyone was into.</div>
+      <div class="currently-row">
+        <div class="currently-field">
+          <label class="grat-label">Reading</label>
+          <input type="text" id="currentlyReading" class="gratitude-input" placeholder="Whatever you're reading">
+        </div>
+        <div class="currently-field">
+          <label class="grat-label">Watching</label>
+          <input type="text" id="currentlyWatching" class="gratitude-input" placeholder="Whatever you're watching">
+        </div>
+        <div class="currently-field">
+          <label class="grat-label">Listening</label>
+          <input type="text" id="currentlyListening" class="gratitude-input" placeholder="Whatever you're listening to">
+        </div>
+      </div>
     </div>
   </div>
 
@@ -766,6 +754,11 @@ let currentWeekIdx = 0;
 let myIdentity = null;
 let allData = {}; // {person: {placements, days:{n:{journaled,noPhone,gratitude}}, weeks:{idx:{sessions:[{done,timestamp,hasPhoto,photoType}x3], article:{url,label}, noSpend}}}}
 
+// Whether the current identity is actively editing their own Big 3 form
+// right now. null means "not decided yet"; renderPlacements() picks a
+// sensible default the first time it's needed (see placementsDefaultMode).
+let placementsEditingSelf = null;
+
 function isEditable(){
   return !!myIdentity && currentPerson === myIdentity;
 }
@@ -793,6 +786,7 @@ function renderIdentityBanner(){
       b.onclick = async ()=>{
         myIdentity = p;
         currentPerson = p;
+        placementsEditingSelf = null;
         try{ await storage.set('recal-whoami', p, false); }catch(e){ console.error(e); }
         renderAll();
       };
@@ -804,6 +798,7 @@ function renderIdentityBanner(){
       e.preventDefault();
       try{ await storage.delete('recal-whoami', false); }catch(err){ /* nothing stored, fine */ }
       myIdentity = null;
+      placementsEditingSelf = null;
       renderAll();
     };
   }
@@ -1035,6 +1030,28 @@ async function readChartScreenshot(file){
   }
 }
 
+// Currently reading/watching/listening used to be one ongoing field per
+// person. It's now per-week, so anyone's existing answer gets carried
+// into Week 1 once, rather than silently disappearing the first time
+// this loads after the update.
+function migrateLegacyCurrently(pd){
+  const legacy = pd.currently;
+  if(!legacy) return;
+  const hasLegacyValue = legacy.reading || legacy.watching || legacy.listening;
+  if(!hasLegacyValue) return;
+  if(!pd.weeks) pd.weeks = {};
+  if(!pd.weeks[0]){
+    pd.weeks[0] = {sessions:freshSessions(), article:{url:"",label:"",timestamp:null}, noSpend:{done:false,timestamp:null}, currently:{reading:"",watching:"",listening:""}};
+  }
+  if(!pd.weeks[0].currently) pd.weeks[0].currently = {reading:"",watching:"",listening:""};
+  const wCur = pd.weeks[0].currently;
+  if(!wCur.reading && !wCur.watching && !wCur.listening){
+    wCur.reading = legacy.reading || "";
+    wCur.watching = legacy.watching || "";
+    wCur.listening = legacy.listening || "";
+  }
+}
+
 async function loadAll(){
   for(const p of PEOPLE){
     try{
@@ -1043,6 +1060,7 @@ async function loadAll(){
     }catch(e){
       allData[p] = emptyPersonData();
     }
+    migrateLegacyCurrently(allData[p]);
   }
 }
 
@@ -1162,9 +1180,10 @@ function buildLocationRow(obj, onSaved){
 function weekData(p,idx){
   let wd = allData[p].weeks[idx];
   if(!wd){
-    wd = {sessions:freshSessions(), article:{url:"",label:"",timestamp:null}, noSpend:{done:false,timestamp:null}};
+    wd = {sessions:freshSessions(), article:{url:"",label:"",timestamp:null}, noSpend:{done:false,timestamp:null}, currently:{reading:"",watching:"",listening:""}};
     allData[p].weeks[idx] = wd;
   }
+  if(!wd.currently) wd.currently = {reading:"",watching:"",listening:""};
   // migrate from an older shape if present
   if(typeof wd.exerciseCount === 'number' && !wd.sessions){
     const s = freshSessions();
@@ -1465,13 +1484,120 @@ function renderWeekPanel(){
       refreshReceiptsIfLoaded();
     };
   }
+
+  // Currently reading/watching/listening, scoped to this week. Editable
+  // any day within the week, not just once, same autosave-on-change and
+  // "Saved" flash as every other field here.
+  const cur = wd.currently;
+  const curReading = document.getElementById('currentlyReading');
+  const curWatching = document.getElementById('currentlyWatching');
+  const curListening = document.getElementById('currentlyListening');
+  curReading.value = cur.reading || '';
+  curWatching.value = cur.watching || '';
+  curListening.value = cur.listening || '';
+  curReading.disabled = curWatching.disabled = curListening.disabled = !isEditable();
+  curReading.onchange = ()=>{ cur.reading = curReading.value; savePerson(currentPerson); flashSaved(curReading); };
+  curWatching.onchange = ()=>{ cur.watching = curWatching.value; savePerson(currentPerson); flashSaved(curWatching); };
+  curListening.onchange = ()=>{ cur.listening = curListening.value; savePerson(currentPerson); flashSaved(curListening); };
 }
 
 document.getElementById('weekPrev').onclick = ()=>{ if(currentWeekIdx>0){currentWeekIdx--; renderWeekPanel();} };
 document.getElementById('weekNext').onclick = ()=>{ if(currentWeekIdx<WEEKS.length-1){currentWeekIdx++; renderWeekPanel();} };
 
-function renderPlacements(){
-  const pl = normalizedPlacements(currentPerson);
+// Decide the default view (compact "done" summary vs the full edit form)
+// for a person's Big 3 the first time it's rendered this session. If all
+// three placements are already filled in, default to the compact view,
+// nothing left to fill in, no reason to show the form. Otherwise open
+// straight into edit mode so a brand new person isn't stuck clicking
+// Edit on an empty state.
+function placementsDefaultIsEdit(pl){
+  return !(pl.sun && pl.moon && pl.rising);
+}
+
+function renderPlacementsCompact(panel, pl, editableSelf){
+  const hasAny = pl.sun || pl.moon || pl.rising;
+  const line = hasAny
+    ? `\u2609 ${pl.sun||'\u2014'} &nbsp;\u00b7&nbsp; \u263d ${pl.moon||'\u2014'} &nbsp;\u00b7&nbsp; \u2191 ${pl.rising||'\u2014'}`
+    : 'Not added yet.';
+  panel.innerHTML = `
+    <div class="big3-compact-row">
+      <div class="big3-compact-line">${line}</div>
+      ${editableSelf ? `<button id="placementsEditBtn" class="gallery-toggle-btn" type="button">Edit</button>` : ''}
+    </div>
+  `;
+  if(editableSelf){
+    document.getElementById('placementsEditBtn').onclick = ()=>{
+      placementsEditingSelf = true;
+      renderPlacements();
+    };
+  }
+}
+
+function refreshBig3Warning(pl){
+  const warningEl = document.getElementById('big3Warning');
+  if(!warningEl) return;
+  const missing = [];
+  if(!pl.sun) missing.push('Sun');
+  if(!pl.moon) missing.push('Moon');
+  if(!pl.rising) missing.push('Rising');
+  warningEl.textContent = missing.length ? `Still need: ${missing.join(', ')}` : '';
+}
+
+function renderPlacementsEditForm(panel, pl){
+  panel.innerHTML = `
+    <a href="#" id="chartUploadToggle" class="big3-toggle-link">Or upload a chart screenshot to auto-fill &rarr;</a>
+    <div class="chart-upload-row" id="chartUploadRow" style="display:none;margin-top:10px;">
+      <label class="grat-label">Upload a screenshot of your chart, this scans for text and guesses your Big 3, rougher than it sounds</label>
+      <input type="file" id="chartFileInput" accept="image/*">
+      <div id="chartUploadStatus" class="commit-sub"></div>
+    </div>
+    <div class="big3-row" style="margin-top:16px;">
+      <div class="big3-field">
+        <label class="grat-label">Sun *</label>
+        <select id="sunSelect"></select>
+      </div>
+      <div class="big3-field">
+        <label class="grat-label">Moon *</label>
+        <select id="moonSelect"></select>
+      </div>
+      <div class="big3-field">
+        <label class="grat-label">Rising *</label>
+        <select id="risingSelect"></select>
+      </div>
+    </div>
+    <div id="big3Warning" class="commit-sub" style="margin-top:2px;"></div>
+    <label class="grat-label" style="margin-top:16px;display:block;">Everything else (Mercury, Venus, Mars, houses, whatever's on the screenshot)</label>
+    <textarea id="placementsNotes" placeholder="Optional, or filled in automatically from your screenshot"></textarea>
+    <a href="#" id="placementsInfoToggle" class="big3-toggle-link" style="display:block;margin-top:14px;">How this works &rarr;</a>
+    <div id="placementsInfoBody" style="display:none;margin-top:10px;">
+      <p>This app isn't running a real ephemeris, and the screenshot reader is free basic text-scanning, not real image understanding, so it's rougher than a proper reading. Always check it against the actual screenshot.</p>
+      <p style="margin-top:14px;">The "what today means for you" notes on each day also work at the sign level only (e.g. "3 signs apart, that's a square"), not exact degrees, which is what real astrology actually uses to judge how strong an aspect is. For a precise, degree-based read, check the Aspects tab in whatever app you used for your chart (Co-Star, The Pattern, etc.), or ask Claude directly with your real birth data, something like:</p>
+      <p style="font-style:italic;background:var(--track-off);padding:10px 12px;margin-top:8px;border:1px solid var(--line);">"Using my birth chart (born [date], [time], in [place]), give me a precise, degree-based reading of how [the event, e.g. the Full Moon in Aries on September 26] aspects my Sun, Moon, and Rising."</p>
+    </div>
+    <div style="margin-top:20px;text-align:right;">
+      <button id="placementsDoneBtn" class="gallery-toggle-btn" type="button">Done</button>
+    </div>
+  `;
+
+  document.getElementById('chartUploadToggle').onclick = (e)=>{
+    e.preventDefault();
+    const row = document.getElementById('chartUploadRow');
+    const toggle = document.getElementById('chartUploadToggle');
+    const open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'block';
+    toggle.style.display = open ? '' : 'none';
+  };
+  document.getElementById('placementsInfoToggle').onclick = (e)=>{
+    e.preventDefault();
+    const body = document.getElementById('placementsInfoBody');
+    body.style.display = body.style.display !== 'none' ? 'none' : 'block';
+  };
+  document.getElementById('placementsDoneBtn').onclick = ()=>{
+    placementsEditingSelf = false;
+    renderPlacements();
+    renderOverview();
+    renderLeaderboard();
+  };
 
   const sunSel = document.getElementById('sunSelect');
   const moonSel = document.getElementById('moonSelect');
@@ -1479,30 +1605,19 @@ function renderPlacements(){
   buildSignOptions(sunSel, pl.sun);
   buildSignOptions(moonSel, pl.moon);
   buildSignOptions(risingSel, pl.rising);
-  sunSel.disabled = !isEditable();
-  moonSel.disabled = !isEditable();
-  risingSel.disabled = !isEditable();
-  sunSel.onchange = ()=>{ pl.sun = sunSel.value; savePerson(currentPerson); flashSaved(sunSel); };
-  moonSel.onchange = ()=>{ pl.moon = moonSel.value; savePerson(currentPerson); flashSaved(moonSel); };
-  risingSel.onchange = ()=>{ pl.rising = risingSel.value; savePerson(currentPerson); flashSaved(risingSel); };
+  sunSel.onchange = ()=>{ pl.sun = sunSel.value; savePerson(currentPerson); flashSaved(sunSel); refreshBig3Warning(pl); };
+  moonSel.onchange = ()=>{ pl.moon = moonSel.value; savePerson(currentPerson); flashSaved(moonSel); refreshBig3Warning(pl); };
+  risingSel.onchange = ()=>{ pl.rising = risingSel.value; savePerson(currentPerson); flashSaved(risingSel); refreshBig3Warning(pl); };
 
   const notes = document.getElementById('placementsNotes');
   notes.value = pl.notes || '';
-  notes.disabled = !isEditable();
   notes.onchange = ()=>{ pl.notes = notes.value; savePerson(currentPerson); flashSaved(notes); };
 
-  const warningEl = document.getElementById('big3Warning');
-  const missing = [];
-  if(!pl.sun) missing.push('Sun');
-  if(!pl.moon) missing.push('Moon');
-  if(!pl.rising) missing.push('Rising');
-  warningEl.textContent = missing.length ? `Still need: ${missing.join(', ')}` : '';
+  refreshBig3Warning(pl);
 
   const statusEl = document.getElementById('chartUploadStatus');
-  statusEl.textContent = isEditable() ? '' : "Switch to your own tab to add a chart.";
+  statusEl.textContent = '';
   const fileInput = document.getElementById('chartFileInput');
-  fileInput.value = '';
-  fileInput.disabled = !isEditable();
   fileInput.onchange = async ()=>{
     const file = fileInput.files[0];
     if(!file) return;
@@ -1524,30 +1639,36 @@ function renderPlacements(){
       }
       savePerson(currentPerson);
     }
-    renderPlacements();
+    renderPlacementsEditForm(panel, pl);
     const freshStatus = document.getElementById('chartUploadStatus');
+    const freshRow = document.getElementById('chartUploadRow');
+    const freshToggle = document.getElementById('chartUploadToggle');
+    if(freshRow && freshToggle){ freshRow.style.display = 'block'; freshToggle.style.display = 'none'; }
     const parts = [];
     if(matched.length) parts.push(`Matched ${matched.join(', ')} from labeled text in the image.`);
     if(guessed.length) parts.push(`Read ${guessed.join(', ')} off the icon row near the top (Co-Star's layout).`);
-    freshStatus.textContent = parts.length
-      ? parts.join(' ') + ' This is basic OCR, not real understanding, so double check every field, and skim the raw text now in your notes below for anything else it missed.'
-      : `Couldn't confidently match or guess Sun/Moon/Rising from that image. If it found any text at all, it's now in your notes below, check it and fill in manually.`;
+    if(freshStatus){
+      freshStatus.textContent = parts.length
+        ? parts.join(' ') + ' This is basic OCR, not real understanding, so double check every field, and skim the raw text now in your notes below for anything else it missed.'
+        : `Couldn't confidently match or guess Sun/Moon/Rising from that image. If it found any text at all, it's now in your notes below, check it and fill in manually.`;
+    }
   };
 }
 
-function renderCurrently(){
-  if(!allData[currentPerson].currently) allData[currentPerson].currently = {reading:"",watching:"",listening:""};
-  const cur = allData[currentPerson].currently;
-  const r = document.getElementById('currentlyReading');
-  const w = document.getElementById('currentlyWatching');
-  const l = document.getElementById('currentlyListening');
-  r.value = cur.reading || '';
-  w.value = cur.watching || '';
-  l.value = cur.listening || '';
-  r.disabled = w.disabled = l.disabled = !isEditable();
-  r.onchange = ()=>{ cur.reading = r.value; savePerson(currentPerson); flashSaved(r); };
-  w.onchange = ()=>{ cur.watching = w.value; savePerson(currentPerson); flashSaved(w); };
-  l.onchange = ()=>{ cur.listening = l.value; savePerson(currentPerson); flashSaved(l); };
+function renderPlacements(){
+  const pl = normalizedPlacements(currentPerson);
+  const panel = document.getElementById('placementsPanel');
+  const editableSelf = isEditable();
+
+  if(editableSelf && placementsEditingSelf === null){
+    placementsEditingSelf = placementsDefaultIsEdit(pl);
+  }
+
+  if(editableSelf && placementsEditingSelf){
+    renderPlacementsEditForm(panel, pl);
+  } else {
+    renderPlacementsCompact(panel, pl, editableSelf);
+  }
 }
 
 function renderBookends(){
@@ -2124,6 +2245,56 @@ document.getElementById('downloadReceiptBtn').onclick = async ()=>{
   btn.disabled = false;
 };
 
+// Scrollspy: highlights whichever jump-nav link matches the section
+// currently sitting just under the sticky nav bar, and keeps it updated
+// as the page scrolls. A section counts as "current" once its title has
+// scrolled up to (or past) the bottom edge of the nav; the last one that's
+// crossed that line wins, so the highlight always tracks where you
+// actually are, not just where you last clicked.
+const JUMP_SECTIONS = ['nav-leaderboard','nav-placements','nav-week','nav-days','nav-photos','nav-receipts','nav-overview'];
+
+let lastActiveNavId = null;
+function updateActiveNavLink(){
+  const nav = document.querySelector('.jump-nav');
+  if(!nav) return;
+  // +24 (not just a few px) because .section-title's scroll-margin-top
+  // leaves a bigger gap under the nav than the nav's own height alone,
+  // so a plain "just past the nav" threshold would lag a step behind
+  // right after a jump-nav click lands.
+  const threshold = nav.getBoundingClientRect().bottom + 24;
+  let activeId = JUMP_SECTIONS[0];
+  for(const id of JUMP_SECTIONS){
+    const el = document.getElementById(id);
+    if(!el) continue;
+    if(el.getBoundingClientRect().top <= threshold){
+      activeId = id;
+    } else {
+      break;
+    }
+  }
+  document.querySelectorAll('.jump-nav a').forEach(a=>{
+    a.classList.toggle('active', a.getAttribute('href') === '#'+activeId);
+  });
+  // The nav itself scrolls sideways on narrow screens, so the active link
+  // can end up off to the right, out of view, which defeats the point of
+  // highlighting it. Only nudge the nav's own scroll position when the
+  // active section has actually changed, so it doesn't fight anyone who's
+  // mid-drag scrolling the nav strip by hand.
+  if(activeId !== lastActiveNavId){
+    lastActiveNavId = activeId;
+    const activeLink = nav.querySelector('a.active');
+    if(activeLink) activeLink.scrollIntoView({behavior:'smooth', inline:'nearest', block:'nearest'});
+  }
+}
+
+let navScrollTicking = false;
+window.addEventListener('scroll', ()=>{
+  if(navScrollTicking) return;
+  navScrollTicking = true;
+  requestAnimationFrame(()=>{ updateActiveNavLink(); navScrollTicking = false; });
+}, {passive:true});
+window.addEventListener('resize', updateActiveNavLink);
+
 async function renderAll(){
   renderPeopleTabs();
   renderStatus();
@@ -2133,7 +2304,6 @@ async function renderAll(){
   renderResetLink();
   renderTimeline();
   renderPlacements();
-  renderCurrently();
   renderBookends();
   renderWeekPanel();
   renderChapters();
@@ -2142,6 +2312,7 @@ async function renderAll(){
   renderPhotoJournal();
   populateReceiptChapterSelect();
   loadAndRenderReceipt();
+  updateActiveNavLink();
 }
 
 (async function init(){
