@@ -29,11 +29,11 @@ const SPECIAL = {
 const AFFIRMATIONS = {
   1:  "You're allowed to actually pay attention today.",
   2:  "Notice what's draining you before it decides for you.",
-  3:  "You don't owe anyone an explanation for choosing yourself.",
-  4:  "Rest is not falling behind.",
+  3:  "Talk to yourself like someone you actually respect.",
+  4:  "Move because it feels good. Nobody's watching, nobody has to be.",
   5:  "Patterns only have power when you don't name them.",
   6:  "You're done explaining yourself. Say it like you mean it.",
-  8:  "Fair isn't the same as equal. Notice the difference today.",
+  8:  "Name the imbalance today. Skip the diplomacy.",
   9:  "Send the message. Softened or not.",
   10: "Beauty doesn't need an audience to count.",
   12: "Letting go doesn't have to look graceful.",
@@ -50,7 +50,7 @@ const AFFIRMATIONS = {
   25: "Balance with someone specific, not balance in general.",
   26: "Compare today to Day 1. Notice what actually moved.",
   27: "Be proud of the thing nobody else would think to ask about.",
-  28: "Pick one commitment worth keeping past tomorrow.",
+  28: "Pick one commitment worth keeping well past the last day.",
   29: "Close the loop before Mercury gets messy.",
   30: "Notice your mornings. They're not the same as September 16th.",
   31: "Last clean signal for a while. Make it count."
@@ -86,7 +86,11 @@ async function main() {
         console.log('No token on file yet for', person, ', skipping.');
         continue;
       }
-      await admin.messaging().send({ token, notification: { title, body } });
+      // Sent as a data-only message on purpose. A "notification" message
+      // relies on the browser auto-displaying it, which iOS Safari doesn't
+      // reliably do. Data-only forces it through our own service worker
+      // code (see sw.js), which we fully control.
+      await admin.messaging().send({ token, data: { title, body } });
       console.log('Sent to', person);
     } catch (e) {
       console.error('Failed for', person, ':', e.message);
