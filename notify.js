@@ -18,42 +18,42 @@ const CHALLENGE_START_STR = '2026-09-16'; // must match index.html's CHALLENGE_S
 // naming the real event. Keep these in sync with index.html's DAYS array
 // if the day numbers ever change.
 const SPECIAL = {
-  7:  "Equinox today, Sun enters Libra. Get everyone on a call tonight, that's the Day 7 assignment.",
-  11: "Full Harvest Moon in Aries tonight. Do the thing you've been circling, don't just journal about it.",
-  17: "Venus stations retrograde today. Love, money, and values get a little weird for the next few weeks.",
-  24: "New Moon in Libra tonight. Set your intention for after this challenge ends."
+  7:  "Happy Equinox, witches \u2600\ufe0f Sun's in Libra now, day and night dead equal, balance made visible. Libra can't do that alone though, she needs a mirror. Get on a real call tonight, texting doesn't count and you know it.",
+  11: "Full moon in Aries tonight \ud83c\udf15 She did not pull up for your feelings, she pulled up for action. Go do the thing before you talk yourself out of it again.",
+  17: "Venus just went retrograde, so love and money are about to get messy on purpose. Notice who you become around someone you don't trust, she's been dying to make an appearance.",
+  24: "New moon in Libra tonight \ud83c\udf11\u2728 Say what you want like it's already yours, hesitation isn't a good look on you."
 };
 
-// One affirmation per day, matching that day's actual prompt in the app.
+// One line per day, matching that day's actual prompt in the app.
 // Used on every day that isn't one of the four SPECIAL days above.
 const AFFIRMATIONS = {
-  1:  "You're allowed to actually pay attention today.",
-  2:  "Notice what's draining you before it decides for you.",
-  3:  "Talk to yourself like someone you actually respect.",
-  4:  "Move because it feels good. Nobody's watching, nobody has to be.",
-  5:  "Patterns only have power when you don't name them.",
-  6:  "You're done explaining yourself. Say it like you mean it.",
-  8:  "Name the imbalance today. Skip the diplomacy.",
-  9:  "Send the message. Softened or not.",
-  10: "Beauty doesn't need an audience to count.",
-  12: "Letting go doesn't have to look graceful.",
-  13: "Balance, defined by you, not the dictionary.",
-  14: "Know your values in order. No ties allowed.",
-  15: "Honesty first. Harmony can wait its turn.",
-  16: "Say the unspoken rule out loud, even just to yourself.",
-  18: "No audience today. Not even yourself.",
-  19: "The compromise you're still mad about deserves a second look.",
-  20: "Four days to the reset. Get honest about what's not true yet.",
-  21: "Say the money thing out loud.",
-  22: "You've outgrown more than you've admitted.",
-  23: "Clear one loose end before the new moon.",
-  25: "Balance with someone specific, not balance in general.",
-  26: "Compare today to Day 1. Notice what actually moved.",
-  27: "Be proud of the thing nobody else would think to ask about.",
-  28: "Pick one commitment worth keeping well past the last day.",
-  29: "Close the loop before Mercury gets messy.",
-  30: "Notice your mornings. They're not the same as September 16th.",
-  31: "Last clean signal for a while. Make it count."
+  1:  "You get to actually pay attention to your own life today. Wild that you needed permission, but here it is.",
+  2:  "Whatever's quietly draining you, name it today. It's been getting away with way too much.",
+  3:  "Talk to yourself like your own hype girl today. Your inner critic's had the mic long enough.",
+  4:  "Move your body just because it feels good today. No audience, no notes, no apologizing for taking up space.",
+  5:  "You're gonna spot a pattern today, and it's honestly a little embarrassing how long it's been sitting there in plain sight.",
+  6:  "Done explaining yourself today. Took you long enough, and we mean that with love.",
+  8:  "Notice the lopsided thing in your life today. Diplomacy's had a whole career, let her retire.",
+  9:  "Send the message today. Whatever happens next isn't your problem anymore, it's theirs.",
+  10: "Do the beautiful thing today just because. You don't owe anyone a reason, especially not a good one.",
+  12: "However you let go last night, gently or in a full unhinged spiral, it counts. We don't need the details, just the receipts.",
+  13: "Your definition of balance wins today. Everyone else can take their opinion elsewhere.",
+  14: "Rank your values today, no ties. Pretending you can't choose is just avoidance in a cute outfit.",
+  15: "Pick honesty over harmony today. Harmony's had a good run, she can sit down now.",
+  16: "Say the unspoken thing out loud today, even just to yourself. It's been taking up way too much real estate in your head.",
+  18: "Rest today, actually rest. No performance today, not even for yourself.",
+  19: "Still mad about that compromise? Good. Say it out loud today, stop letting it live rent free.",
+  20: "Four days till the New Moon reset. Get honest now, before the sky does it for you, publicly, in front of everyone.",
+  21: "Say the money thing out loud today. Silence isn't saving you money, it's just costing you sleep.",
+  22: "You've outgrown more than you're saying. We noticed. Say it anyway.",
+  23: "Clear one loose end today. The new moon doesn't do clutter, and neither should you.",
+  25: "Get specific about the balance you want with someone you love. Vague wishes are just polite avoidance.",
+  26: "Compare today to Day 1. Honestly? Kind of a glow-up, and you should say so.",
+  27: "Say the thing you're proud of that nobody would think to ask about. We're asking. Don't make us beg.",
+  28: "Pick the commitment that's actually you today, not the one that sounds good at brunch and dies by Tuesday.",
+  29: "Tie up one loose end today, before Mercury shows up and drags it into the group chat.",
+  30: "Notice your mornings today. Past-you would not recognize this level of together.",
+  31: "Last quiet moment for a while, witches. Write future-you a letter tonight, then share it. Mercury's about to ruin everyone's peace, enjoy this while it lasts."
 };
 
 function getDayNumber() {
@@ -75,7 +75,7 @@ async function main() {
     return;
   }
 
-  const title = `\u2726 Day ${day} of Spells, Witches`;
+  const title = `\u2728 Day ${day} of Spells, Witches`;
   const body = SPECIAL[day] || AFFIRMATIONS[day] || `Day ${day} is live. Go check in.`;
 
   for (const person of PEOPLE) {
