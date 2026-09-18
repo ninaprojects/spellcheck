@@ -381,7 +381,7 @@
   </div>
 
   <div class="section-title">Leaderboard</div>
-  <div class="section-subnote">One point per thing done: a journal, a phone-free morning, a movement session, an article sent, a no-spend day. Just for fun.</div>
+  <div class="section-subnote">One point per thing done: a journal, a phone-free hour, 8 glasses of water, a movement session, an article sent, a no-spend day. Just for fun.</div>
   <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
 
   <div class="section-title">Your placements (optional)</div>
@@ -446,7 +446,7 @@
 
     <div class="commit-row">
       <div class="commit-label">Move, with intent</div>
-      <div class="commit-sub" style="margin-bottom:6px;">1 hour, 3 times this week. Mark it done and drop in proof if you've got it, time is stamped automatically.</div>
+      <div class="commit-sub" style="margin-bottom:6px;">3 times this week. Mark it done and drop in proof if you've got it, time is stamped automatically.</div>
       <div id="sessionsList"></div>
     </div>
 
@@ -495,7 +495,7 @@
     <button id="galleryMine" class="gallery-toggle-btn">Just me</button>
   </div>
   <div id="photoGallery" class="photo-gallery"></div>
-  <div id="photoModal" class="photo-modal"><img id="photoModalImg" src=""></div>
+  <div id="photoModal" class="photo-modal"><div><img id="photoModalImg" src=""><div id="photoModalCaption" style="color:#fff;text-align:center;font-family:'Inter';font-size:13px;margin-top:10px;"></div></div></div>
 
   <div class="section-title">Chapter Receipts</div>
   <div class="section-subnote">Real numbers, pulled live. Add a quote whenever someone says something worth keeping, then download it in whichever shape you need.</div>
@@ -515,7 +515,7 @@
   </div>
 
   <div class="section-title">How's everyone doing</div>
-  <div class="section-subnote">Journaled and no-phone are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
+  <div class="section-subnote">Journaled, no phone, and water are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
   <div class="week-panel" style="padding:0;overflow-x:auto;">
     <table class="overview" id="overviewTable"></table>
   </div>
@@ -592,37 +592,37 @@ const CHALLENGE_START = new Date(2026,8,16); // Sep 16 2026
 const CHALLENGE_END = new Date(2026,9,16);   // Oct 16 2026
 
 const DAYS = [
-  {n:1,d:"Sep 16",wd:"Wed",ch:1,prompt:"Okay, we're doing this. Before anything else: think back on yesterday, hour by hour if you can stand it, and circle the parts where you were just... on autopilot. Not judging, just noticing. That's the whole game this week."},
-  {n:2,d:"Sep 17",wd:"Thu",ch:1,prompt:"Pick one relationship, one habit, one thought you keep looping on. For each, name the version that's quietly draining you. You don't have to fix anything today. Just say it out loud, even if it's only to yourself."},
-  {n:3,d:"Sep 18",wd:"Fri",ch:1,prompt:"What's the sentence you say to yourself the most? Now ask: would you ever say that to your best friend? If not, why are you the exception?"},
-  {n:4,d:"Sep 19",wd:"Sat",ch:1,prompt:"No prompt today, witches. Just move your body because it feels good, not because you have to, and notice what it's like to do it without narrating it for anyone.",rest:true},
-  {n:5,d:"Sep 20",wd:"Sun",ch:1,prompt:"Zoom out on the week. What pattern kept showing up, even in small ways?"},
-  {n:6,d:"Sep 21",wd:"Mon",ch:1,prompt:"Last day of The Audit. Write down one thing you're done explaining yourself for. Just one. Let it be dramatic if it wants to be."},
-  {n:7,d:"Sep 22",wd:"Tue",ch:2,tag:"Equinox \u2014 Sun enters Libra",prompt:"This one's not a solo journal day, it's a group one. Get on a call, grab dinner, go on a walk, whatever's realistic for four busy witches. Each of you says one thing from The Audit you're ready to let go of, and one thing you're calling in for the stretch ahead. Out loud, to each other. That's the assignment."},
-  {n:8,d:"Sep 23",wd:"Wed",ch:3,prompt:"Libra season, day one. Where in your life does the give and take feel genuinely lopsided right now? Say it plainly. No diplomacy today."},
-  {n:9,d:"Sep 24",wd:"Thu",ch:3,prompt:"There's a request you've been softening before you send it. Send it today, soften it or don't, your call, but send it."},
-  {n:10,d:"Sep 25",wd:"Fri",ch:3,prompt:"What do you actually find beautiful, not what performs well online? Go do one thing today purely because it's beautiful to you, no other reason required."},
-  {n:11,d:"Sep 26",wd:"Sat",ch:3,tag:"Full Harvest Moon \u2014 Aries",prompt:"Full moon in Aries tonight, and she does not want your reflections, she wants your action. Whatever you've been circling all week, go do the thing before midnight."},
-  {n:12,d:"Sep 27",wd:"Sun",ch:3,prompt:"Full moon hangover day. What did you let go of last night, even if it happened kind of by accident?"},
-  {n:13,d:"Sep 28",wd:"Mon",ch:3,prompt:"Chapter's closing. In one sentence: what has balance actually meant to you this week? Not the dictionary definition, your definition."},
-  {n:14,d:"Sep 29",wd:"Tue",ch:4,prompt:"New stretch, new values check. Write your top three values in an actual order. No ties, the universe wants a real answer."},
-  {n:15,d:"Sep 30",wd:"Wed",ch:4,prompt:"Where did you choose harmony over honesty this week? Was it worth it, or are you still a little annoyed about it?"},
-  {n:16,d:"Oct 1",wd:"Thu",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of those rules out loud, even if it's just to yourself in this journal."},
-  {n:17,d:"Oct 2",wd:"Fri",ch:4,tag:"Venus stations retrograde",prompt:"Venus turns retrograde today, in Libra and Scorpio, through mid-November, so love, money, and values get a little slippery for a while. Fitting timing: who do you become around people you don't fully trust? Write about her in third person, like she's a character."},
-  {n:18,d:"Oct 3",wd:"Sat",ch:4,prompt:"Rest day. Do one thing today with absolutely no audience, not even yourself watching and narrating it.",rest:true},
-  {n:19,d:"Oct 4",wd:"Sun",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if you're honest?"},
-  {n:20,d:"Oct 5",wd:"Mon",ch:4,prompt:"Four days till the reset. What do you want to be true about your life by October 9th that isn't true yet?"},
-  {n:21,d:"Oct 6",wd:"Tue",ch:4,prompt:"Write the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself."},
-  {n:22,d:"Oct 7",wd:"Wed",ch:4,prompt:"What have you outgrown this cycle that you haven't said out loud yet? Say it now, even quietly."},
-  {n:23,d:"Oct 8",wd:"Thu",ch:4,prompt:"Last day before the new moon. Clear something real: an email, a drawer, a text thread that's overstayed its welcome."},
-  {n:24,d:"Oct 9",wd:"Fri",ch:5,tag:"New Moon \u2014 Libra",prompt:"New moon in Libra tonight. Write one intention for after this challenge ends, present tense, one sentence, like it's already true."},
-  {n:25,d:"Oct 10",wd:"Sat",ch:5,prompt:"Who's one person you want more real balance with going forward? Get specific about what that would actually look like."},
-  {n:26,d:"Oct 11",wd:"Sun",ch:5,prompt:"Go back and read your Day 1 energy audit. What's actually different now, honestly?"},
-  {n:27,d:"Oct 12",wd:"Mon",ch:5,prompt:"What's the thing you're proudest of from this whole cycle that literally nobody else would think to ask about?"},
-  {n:28,d:"Oct 13",wd:"Tue",ch:5,prompt:"What's one commitment from this challenge you actually want to keep going, well past the last day?"},
-  {n:29,d:"Oct 14",wd:"Wed",ch:5,prompt:"Mercury goes retrograde in ten days. Before things get a little chaotic, is there one message, one apology, one loose end you should close out now instead of later?"},
-  {n:30,d:"Oct 15",wd:"Thu",ch:5,prompt:"You started this on September 16th. What's different about how you spend your first hour awake now versus then?"},
-  {n:31,d:"Oct 16",wd:"Fri",ch:5,tag:"Last clear signal before Mercury retrograde",prompt:"Last day, witches. Mercury turns retrograde in one week, so consider tonight your last clean signal for a while. Write a short letter to future-you, the one who'll need this again someday. Share whatever part of it you're comfortable sharing with the group."},
+  {n:1,d:"Sep 16",wd:"Wed",ch:1,prompt:"Welcome in, witch! Virgo season loves a good audit, so let's ease into it: think back on yesterday, hour by hour, and circle the moments you were just on autopilot. No judgment, just curiosity. That's the whole game this week."},
+  {n:2,d:"Sep 17",wd:"Thu",ch:1,prompt:"Pick one relationship, one habit, one thought you keep circling back to. Give each one a name, gently. You don't have to fix a thing today, just noticing it out loud (even only to yourself) is real magic."},
+  {n:3,d:"Sep 18",wd:"Fri",ch:1,prompt:"What's the line you say to yourself on repeat? Would you ever say it to your best friend? Today's spell: talk to yourself like someone worth being kind to."},
+  {n:4,d:"Sep 19",wd:"Sat",ch:1,prompt:"No deep prompt today, witches, just movement. Dance in your kitchen, take the long walk, stretch out on the floor, whatever feels good. Nobody's watching, nobody has to be.",rest:true},
+  {n:5,d:"Sep 20",wd:"Sun",ch:1,prompt:"Zoom out on your week like you're reading your own chart. What pattern kept showing up, even in the small stuff?"},
+  {n:6,d:"Sep 21",wd:"Mon",ch:1,prompt:"Last day of The Audit! Write down one thing you're officially done explaining yourself for. Just one. Let it be dramatic if it wants to be, you earned it."},
+  {n:7,d:"Sep 22",wd:"Tue",ch:2,tag:"Equinox \u2014 Sun enters Libra",prompt:"Happy Equinox! This one's a group spell, not a solo one. Get on a call, grab dinner, go on a walk, whatever four busy witches can pull off. Each of you says one thing from The Audit you're letting go of, and one thing you're calling in. Out loud, to each other. That's the whole assignment, and it's a good one."},
+  {n:8,d:"Sep 23",wd:"Wed",ch:3,prompt:"Libra season has entered the chat! Where does the give and take in your life feel genuinely lopsided right now? Say it plainly, diplomacy can sit this one out."},
+  {n:9,d:"Sep 24",wd:"Thu",ch:3,prompt:"There's a request you've been quietly softening before you send it. Send it today, soften it or don't, that part's up to you, just send it."},
+  {n:10,d:"Sep 25",wd:"Fri",ch:3,prompt:"What do you actually find beautiful, not what performs well online? Go do one thing today purely because it delights you. No other reason needed, that's very Libra of you."},
+  {n:11,d:"Sep 26",wd:"Sat",ch:3,tag:"Full Harvest Moon \u2014 Aries",prompt:"Full moon in Aries tonight! She's not here for your reflections, she wants your action. Whatever you've been circling all week, go do the thing before midnight. She's rooting for you."},
+  {n:12,d:"Sep 27",wd:"Sun",ch:3,prompt:"Full moon hangover day, in the best way. What did you let go of last night, even if it happened kind of by accident?"},
+  {n:13,d:"Sep 28",wd:"Mon",ch:3,prompt:"Chapter's closing! In one sentence: what has balance actually meant to you this week? Not the dictionary's definition, yours."},
+  {n:14,d:"Sep 29",wd:"Tue",ch:4,prompt:"New stretch, new values check! Write your top three values in an actual order. No ties, the universe wants your real answer."},
+  {n:15,d:"Sep 30",wd:"Wed",ch:4,prompt:"Where did you choose harmony over honesty this week? Be honest now: was it worth it, or are you quietly still annoyed?"},
+  {n:16,d:"Oct 1",wd:"Thu",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of them out loud, even if it's just here, just to you."},
+  {n:17,d:"Oct 2",wd:"Fri",ch:4,tag:"Venus stations retrograde",prompt:"Venus turns retrograde today, drifting between Libra and Scorpio through mid-November, so love, money, and values might get a little slippery. Perfect timing to ask: who do you become around people you don't fully trust? Write about her like she's a character in a really good book."},
+  {n:18,d:"Oct 3",wd:"Sat",ch:4,prompt:"Rest day! Do one thing today with zero audience, not even yourself watching and narrating it. Just be, quietly, for once.",rest:true},
+  {n:19,d:"Oct 4",wd:"Sun",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if we're being honest?"},
+  {n:20,d:"Oct 5",wd:"Mon",ch:4,prompt:"Four days till the reset! What do you want to be true about your life by October 9th that isn't true yet? Say it like it's already on its way."},
+  {n:21,d:"Oct 6",wd:"Tue",ch:4,prompt:"Write out the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself. It'll feel lighter once it's out."},
+  {n:22,d:"Oct 7",wd:"Wed",ch:4,prompt:"What have you outgrown this cycle that you haven't said out loud yet? Say it now, even just in a whisper."},
+  {n:23,d:"Oct 8",wd:"Thu",ch:4,prompt:"Last day before the new moon! Clear something real: an email, a drawer, a text thread that's overstayed its welcome. Make room for what's coming."},
+  {n:24,d:"Oct 9",wd:"Fri",ch:5,tag:"New Moon \u2014 Libra",prompt:"New moon in Libra tonight! Write one intention for after this challenge ends, present tense, one sentence, like it's already true. Let the sky hear it."},
+  {n:25,d:"Oct 10",wd:"Sat",ch:5,prompt:"Who's one person you want more real balance with going forward? Get specific about what that would actually look like, details make spells stick."},
+  {n:26,d:"Oct 11",wd:"Sun",ch:5,prompt:"Go back and reread your Day 1 energy audit. What's actually different now? You've probably moved more than you think."},
+  {n:27,d:"Oct 12",wd:"Mon",ch:5,prompt:"What's the thing you're proudest of from this whole cycle that literally nobody else would think to ask about? Say it here, you deserve the credit."},
+  {n:28,d:"Oct 13",wd:"Tue",ch:5,prompt:"What's one commitment from this challenge you actually want to keep going, well past the last day? Pick the one that already feels like you."},
+  {n:29,d:"Oct 14",wd:"Wed",ch:5,prompt:"Mercury goes retrograde in ten days! Before things get a little chaotic, is there one message, one apology, one loose end worth closing now instead of later?"},
+  {n:30,d:"Oct 15",wd:"Thu",ch:5,prompt:"You started this on September 16th. What's different about how you spend your first hour awake now versus then? Notice it, that's the whole spell."},
+  {n:31,d:"Oct 16",wd:"Fri",ch:5,tag:"Last clear signal before Mercury retrograde",prompt:"Last day, witches! Mercury turns retrograde in one week, so tonight's your last clean signal for a while, use it well. Write a short letter to future-you, the one who'll need this again someday. Share whatever part of it feels right with the group."},
 ];
 
 const CHAPTERS = [
@@ -1038,12 +1038,88 @@ function renderResetLink(){
 }
 
 function dayData(p,n){
-  if(!allData[p].days[n]) allData[p].days[n] = {journaled:false,noPhone:false,gratitude:"",hasPhoto:false,photoType:null};
+  if(!allData[p].days[n]) allData[p].days[n] = {journaled:false,noPhone:false,water:false,gratitude:"",hasPhoto:false,photoType:null,photoCaption:"",photoLocation:""};
   return allData[p].days[n];
 }
 
 function freshSessions(){
-  return [0,1,2].map(()=>({done:false,timestamp:null,hasPhoto:false,photoType:null}));
+  return [0,1,2].map(()=>({done:false,timestamp:null,hasPhoto:false,photoType:null,photoCaption:"",photoLocation:""}));
+}
+
+// Brief "✓ Saved" confirmation under a field once its onchange actually
+// commits, so typing something doesn't feel like it vanished into nothing.
+function flashSaved(inputEl){
+  let flash = inputEl.nextElementSibling;
+  if(!flash || !flash.classList || !flash.classList.contains('save-flash')){
+    flash = document.createElement('div');
+    flash.className = 'save-flash';
+    flash.style.cssText = 'font-size:11px;color:var(--text-primary);margin-top:4px;opacity:0;transition:opacity .15s;';
+    flash.textContent = '\u2713 Saved';
+    inputEl.insertAdjacentElement('afterend', flash);
+  }
+  flash.style.opacity = '1';
+  clearTimeout(flash._timer);
+  flash._timer = setTimeout(()=>{ flash.style.opacity = '0'; }, 1400);
+}
+
+async function getLocationTag(){
+  if(!navigator.geolocation) return null;
+  try{
+    const pos = await new Promise((resolve, reject)=>{
+      navigator.geolocation.getCurrentPosition(resolve, reject, {timeout:8000});
+    });
+    const { latitude, longitude } = pos.coords;
+    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+    const data = await res.json();
+    const parts = [data.city || data.locality, data.principalSubdivision].filter(Boolean);
+    return parts.length ? parts.join(', ') : null;
+  }catch(e){
+    console.error('location lookup failed', e);
+    return null;
+  }
+}
+
+// Builds the small "Add location" / "📍 Chicago, Illinois · remove" row
+// used under both daily and session photos. `obj` is the record holding
+// photoLocation (a day's dayData, or a session), `onSaved` re-renders
+// whatever section needs to reflect the change.
+function buildLocationRow(obj, onSaved){
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'margin-top:8px;font-size:12px;color:var(--text-secondary);';
+
+  if(obj.photoLocation){
+    wrap.textContent = `\ud83d\udccd ${obj.photoLocation}`;
+    if(isEditable()){
+      const removeLink = document.createElement('a');
+      removeLink.href = '#';
+      removeLink.textContent = 'remove';
+      removeLink.style.cssText = 'color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;margin-left:8px;';
+      removeLink.onclick = (e)=>{ e.preventDefault(); obj.photoLocation=''; onSaved(); };
+      wrap.appendChild(removeLink);
+    }
+    return wrap;
+  }
+
+  if(!isEditable()) return wrap;
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'session-photo-btn';
+  btn.textContent = 'Add location';
+  btn.onclick = async ()=>{
+    btn.textContent = 'Locating...';
+    btn.disabled = true;
+    const loc = await getLocationTag();
+    if(loc){
+      obj.photoLocation = loc;
+      onSaved();
+    } else {
+      btn.textContent = 'Could not get location, try again';
+      btn.disabled = false;
+    }
+  };
+  wrap.appendChild(btn);
+  return wrap;
 }
 
 function weekData(p,idx){
@@ -1295,6 +1371,21 @@ function renderWeekPanel(){
     row.appendChild(info);
     row.appendChild(actions);
     row.appendChild(preview);
+
+    if(s.hasPhoto){
+      const captionInput = document.createElement('input');
+      captionInput.type = 'text';
+      captionInput.className = 'gratitude-input';
+      captionInput.style.marginTop = '8px';
+      captionInput.placeholder = 'Caption (optional)';
+      captionInput.value = s.photoCaption || '';
+      captionInput.disabled = !isEditable();
+      captionInput.onchange = ()=>{ s.photoCaption = captionInput.value; savePerson(currentPerson); flashSaved(captionInput); };
+      row.appendChild(captionInput);
+
+      row.appendChild(buildLocationRow(s, ()=>{ savePerson(currentPerson); renderWeekPanel(); }));
+    }
+
     sessionsList.appendChild(row);
   });
 
@@ -1319,6 +1410,7 @@ function renderWeekPanel(){
     renderOverview();
     renderLeaderboard();
     refreshReceiptsIfLoaded();
+    flashSaved(labelInput);
   };
   urlInput.onchange = commitArticle;
   labelInput.onchange = commitArticle;
@@ -1353,14 +1445,14 @@ function renderPlacements(){
   sunSel.disabled = !isEditable();
   moonSel.disabled = !isEditable();
   risingSel.disabled = !isEditable();
-  sunSel.onchange = ()=>{ pl.sun = sunSel.value; savePerson(currentPerson); };
-  moonSel.onchange = ()=>{ pl.moon = moonSel.value; savePerson(currentPerson); };
-  risingSel.onchange = ()=>{ pl.rising = risingSel.value; savePerson(currentPerson); };
+  sunSel.onchange = ()=>{ pl.sun = sunSel.value; savePerson(currentPerson); flashSaved(sunSel); };
+  moonSel.onchange = ()=>{ pl.moon = moonSel.value; savePerson(currentPerson); flashSaved(moonSel); };
+  risingSel.onchange = ()=>{ pl.rising = risingSel.value; savePerson(currentPerson); flashSaved(risingSel); };
 
   const notes = document.getElementById('placementsNotes');
   notes.value = pl.notes || '';
   notes.disabled = !isEditable();
-  notes.onchange = ()=>{ pl.notes = notes.value; savePerson(currentPerson); };
+  notes.onchange = ()=>{ pl.notes = notes.value; savePerson(currentPerson); flashSaved(notes); };
 
   const warningEl = document.getElementById('big3Warning');
   const missing = [];
@@ -1416,9 +1508,9 @@ function renderCurrently(){
   w.value = cur.watching || '';
   l.value = cur.listening || '';
   r.disabled = w.disabled = l.disabled = !isEditable();
-  r.onchange = ()=>{ cur.reading = r.value; savePerson(currentPerson); };
-  w.onchange = ()=>{ cur.watching = w.value; savePerson(currentPerson); };
-  l.onchange = ()=>{ cur.listening = l.value; savePerson(currentPerson); };
+  r.onchange = ()=>{ cur.reading = r.value; savePerson(currentPerson); flashSaved(r); };
+  w.onchange = ()=>{ cur.watching = w.value; savePerson(currentPerson); flashSaved(w); };
+  l.onchange = ()=>{ cur.listening = l.value; savePerson(currentPerson); flashSaved(l); };
 }
 
 function renderBookends(){
@@ -1428,8 +1520,8 @@ function renderBookends(){
   closing.value = allData[currentPerson].closingToast || '';
   kickoff.disabled = !isEditable();
   closing.disabled = !isEditable();
-  kickoff.onchange = ()=>{ allData[currentPerson].kickoffIntention = kickoff.value; savePerson(currentPerson); };
-  closing.onchange = ()=>{ allData[currentPerson].closingToast = closing.value; savePerson(currentPerson); };
+  kickoff.onchange = ()=>{ allData[currentPerson].kickoffIntention = kickoff.value; savePerson(currentPerson); flashSaved(kickoff); };
+  closing.onchange = ()=>{ allData[currentPerson].closingToast = closing.value; savePerson(currentPerson); flashSaved(closing); };
 }
 
 let openChapter = null;
@@ -1491,9 +1583,20 @@ function renderDayRow(day, isToday){
   const astroLines = personalizedAstroLines(day, currentPerson);
   if(astroLines){
     const astroWrap = document.createElement('div');
-    astroWrap.style.cssText = 'margin:-6px 0 16px;padding:12px 14px;border:1px solid var(--line);';
-    astroWrap.innerHTML = `<div style="font-family:'Inter';font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:8px;">What today means for ${currentPerson}</div>` +
-      astroLines.map(l=>`<div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin-bottom:4px;">${l}</div>`).join('');
+    astroWrap.style.cssText = 'margin:-6px 0 16px;border:1px solid var(--line);';
+    const astroHeader = document.createElement('div');
+    astroHeader.style.cssText = 'padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:\'Inter\';font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);';
+    astroHeader.innerHTML = `<span>\u2726 What today means for ${currentPerson}</span><span id="astroToggle-${day.n}">+</span>`;
+    const astroBody = document.createElement('div');
+    astroBody.style.cssText = 'display:none;padding:0 14px 14px;';
+    astroBody.innerHTML = astroLines.map(l=>`<div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin-bottom:4px;">${l}</div>`).join('');
+    astroHeader.onclick = ()=>{
+      const open = astroBody.style.display !== 'none';
+      astroBody.style.display = open ? 'none' : 'block';
+      document.getElementById(`astroToggle-${day.n}`).textContent = open ? '+' : '\u2212';
+    };
+    astroWrap.appendChild(astroHeader);
+    astroWrap.appendChild(astroBody);
     full.appendChild(astroWrap);
   }
 
@@ -1502,9 +1605,10 @@ function renderDayRow(day, isToday){
   checks.className = 'day-checks';
 
   if(!day.rest){
-    checks.appendChild(makeCheckRow('Journaled, 30 min', dd.journaled, (v)=>{dd.journaled=v; savePerson(currentPerson); renderOverview(); renderLeaderboard(); refreshReceiptsIfLoaded();}));
+    checks.appendChild(makeCheckRow('Journaled, 15 min', dd.journaled, (v)=>{dd.journaled=v; savePerson(currentPerson); renderOverview(); renderLeaderboard(); refreshReceiptsIfLoaded();}));
   }
-  checks.appendChild(makeCheckRow('No phone, first hour', dd.noPhone, (v)=>{dd.noPhone=v; savePerson(currentPerson); renderOverview(); renderLeaderboard();}));
+  checks.appendChild(makeCheckRow('No phone, 1 hour (any time today)', dd.noPhone, (v)=>{dd.noPhone=v; savePerson(currentPerson); renderOverview(); renderLeaderboard();}));
+  checks.appendChild(makeCheckRow('8 glasses of water', dd.water, (v)=>{dd.water=v; savePerson(currentPerson); renderOverview(); renderLeaderboard();}));
 
   const gratRow = document.createElement('div');
   const label = document.createElement('label');
@@ -1514,7 +1618,7 @@ function renderDayRow(day, isToday){
   gratInput.className='gratitude-input';
   gratInput.value = dd.gratitude || '';
   gratInput.disabled = !isEditable();
-  gratInput.onchange = ()=>{ dd.gratitude = gratInput.value; savePerson(currentPerson); };
+  gratInput.onchange = ()=>{ dd.gratitude = gratInput.value; savePerson(currentPerson); flashSaved(gratInput); };
   gratRow.appendChild(label);
   gratRow.appendChild(gratInput);
   checks.appendChild(gratRow);
@@ -1606,6 +1710,21 @@ function makePhotoRow(person, dayNum, dd){
   row.appendChild(info);
   row.appendChild(actions);
   row.appendChild(preview);
+
+  if(dd.hasPhoto){
+    const captionInput = document.createElement('input');
+    captionInput.type = 'text';
+    captionInput.className = 'gratitude-input';
+    captionInput.style.marginTop = '8px';
+    captionInput.placeholder = 'Caption (optional)';
+    captionInput.value = dd.photoCaption || '';
+    captionInput.disabled = !isEditable();
+    captionInput.onchange = ()=>{ dd.photoCaption = captionInput.value; savePerson(person); flashSaved(captionInput); };
+    row.appendChild(captionInput);
+
+    row.appendChild(buildLocationRow(dd, ()=>{ savePerson(person); renderChapters(); }));
+  }
+
   return row;
 }
 
@@ -1633,13 +1752,13 @@ function renderOverview(){
   const elapsed = elapsedDays();
   const journalableCount = DAYS.filter(d=>d.n<=elapsed && !d.rest).length;
 
-  let html = `<tr><th>Person</th><th>Journaled</th><th>No phone</th><th>Move (this wk)</th><th>Article</th><th>No-spend</th></tr>`;
+  let html = `<tr><th>Person</th><th>Journaled</th><th>No phone</th><th>Water</th><th>Move (this wk)</th><th>Article</th><th>No-spend</th></tr>`;
   PEOPLE.forEach(p=>{
     const pd = allData[p];
-    let journaledCount=0, noPhoneCount=0;
+    let journaledCount=0, noPhoneCount=0, waterCount=0;
     for(let n=1;n<=elapsed;n++){
       const d = pd.days[n];
-      if(d){ if(d.journaled) journaledCount++; if(d.noPhone) noPhoneCount++; }
+      if(d){ if(d.journaled) journaledCount++; if(d.noPhone) noPhoneCount++; if(d.water) waterCount++; }
     }
     const wd = weekData(p, currentWeekIdx);
     const sessionsDone = wd.sessions.filter(s=>s.done).length;
@@ -1648,6 +1767,7 @@ function renderOverview(){
       <td>${p}</td>
       <td>${elapsed?journaledCount+'/'+journalableCount:'\u2014'}</td>
       <td>${elapsed?noPhoneCount+'/'+elapsed:'\u2014'}</td>
+      <td>${elapsed?waterCount+'/'+elapsed:'\u2014'}</td>
       <td>${sessionsDone}/3</td>
       <td><span class="mini-dot${hasArticle?' on':''}"></span>${hasArticle?'sent':'\u2014'}</td>
       <td><span class="mini-dot${wd.noSpend.done?' on':''}"></span>${wd.noSpend.done?'done':'\u2014'}</td>
@@ -1662,7 +1782,7 @@ function scoreFor(p){
   let score = 0;
   for(let n=1;n<=elapsed;n++){
     const d = pd.days[n];
-    if(d){ if(d.journaled) score++; if(d.noPhone) score++; }
+    if(d){ if(d.journaled) score++; if(d.noPhone) score++; if(d.water) score++; }
   }
   for(let idx=0; idx<WEEKS.length; idx++){
     const wd = weekData(p, idx);
@@ -1715,7 +1835,7 @@ async function renderPhotoJournal(){
     DAYS.forEach(day=>{
       const dd = allData[p] && allData[p].days[day.n];
       if(dd && dd.hasPhoto){
-        items.push({person:p, day:day.n, dateLabel:day.d, key:`recal-daily-photo:${p}:${day.n}`});
+        items.push({person:p, day:day.n, dateLabel:day.d, caption:dd.photoCaption||'', location:dd.photoLocation||'', key:`recal-daily-photo:${p}:${day.n}`});
       }
     });
   });
@@ -1746,6 +1866,10 @@ async function renderPhotoJournal(){
       cell.innerHTML = `<img src="${dataUrl}" alt=""><div class="cell-caption">${captionName}</div>`;
       cell.onclick = ()=>{
         document.getElementById('photoModalImg').src = dataUrl;
+        const bits = [captionName];
+        if(item.caption) bits.push(item.caption);
+        if(item.location) bits.push('\ud83d\udccd '+item.location);
+        document.getElementById('photoModalCaption').textContent = bits.join(' \u2014 ');
         document.getElementById('photoModal').classList.add('open');
       };
     })();
@@ -1933,9 +2057,11 @@ document.getElementById('formatStoryBtn').onclick = ()=>{
 };
 
 document.getElementById('receiptQuoteInput').onchange = async ()=>{
-  const val = document.getElementById('receiptQuoteInput').value.trim();
+  const el = document.getElementById('receiptQuoteInput');
+  const val = el.value.trim();
   try{ await storage.set('recal-quote:'+receiptChapterId, val, true); }catch(e){ console.error(e); }
   renderReceiptCard(val);
+  flashSaved(el);
 };
 
 document.getElementById('downloadReceiptBtn').onclick = async ()=>{

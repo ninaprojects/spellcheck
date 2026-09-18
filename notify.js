@@ -75,7 +75,7 @@ async function main() {
     return;
   }
 
-  const title = `Spell Check \u00b7 Day ${day}`;
+  const title = `\u2726 Day ${day} of Spells, Witches`;
   const body = SPECIAL[day] || AFFIRMATIONS[day] || `Day ${day} is live. Go check in.`;
 
   for (const person of PEOPLE) {
