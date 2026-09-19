@@ -941,27 +941,28 @@ function renderProfilePicSection(){
     const btn = document.getElementById('profilePicBtn');
     const input = document.getElementById('profilePicInput');
     btn.onclick = ()=> input.click();
-    input.onchange = ()=>{
+    input.onchange = async ()=>{
       const file = input.files[0];
       if(!file) return;
-      const reader = new FileReader();
-      reader.onload = async ()=>{
-        const dataUrl = reader.result;
-        if(dataUrl.length > 4500000){
-          btn.textContent = 'Too large, try a smaller photo';
+      const originalLabel = btn.textContent;
+      btn.textContent = 'Processing photo...';
+      try{
+        const dataUrl = await compressImageFile(file);
+        if(dataUrl.length > PHOTO_MAX_DATAURL_LEN){
+          btn.textContent = 'Too large even compressed, try a different photo';
           return;
         }
-        try{
-          await storage.set(`recal-profile-pic:${currentPerson}`, dataUrl, true);
-          pd.hasProfilePic = true;
-          profilePicCache[currentPerson] = dataUrl;
-          savePerson(currentPerson);
-          renderProfilePicSection();
-          renderPeopleTabs();
-          renderLeaderboard();
-        }catch(e){ console.error(e); }
-      };
-      reader.readAsDataURL(file);
+        await storage.set(`recal-profile-pic:${currentPerson}`, dataUrl, true);
+        pd.hasProfilePic = true;
+        profilePicCache[currentPerson] = dataUrl;
+        savePerson(currentPerson);
+        renderProfilePicSection();
+        renderPeopleTabs();
+        renderLeaderboard();
+      }catch(e){
+        console.error(e);
+        btn.textContent = originalLabel;
+      }
     };
   }
 }
@@ -1483,24 +1484,24 @@ function renderWeekPanel(){
         s.done = true;
         s.timestamp = new Date().toISOString();
       }
-      const reader = new FileReader();
-      reader.onload = async ()=>{
-        const dataUrl = reader.result;
-        if(dataUrl.length > 4500000){
-          meta.textContent = "That image is too large, try a smaller photo";
+      meta.textContent = 'Processing photo...';
+      try{
+        const dataUrl = await compressImageFile(file);
+        if(dataUrl.length > PHOTO_MAX_DATAURL_LEN){
+          meta.textContent = "That image is too large even compressed, try a different photo";
           return;
         }
-        try{
-          await storage.set(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
-          s.hasPhoto = true;
-          s.photoType = file.type;
-          savePerson(currentPerson);
-          renderWeekPanel();
-          renderOverview();
-          renderLeaderboard();
-        }catch(e){ console.error(e); }
-      };
-      reader.readAsDataURL(file);
+        await storage.set(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
+        s.hasPhoto = true;
+        s.photoType = file.type;
+        savePerson(currentPerson);
+        renderWeekPanel();
+        renderOverview();
+        renderLeaderboard();
+      }catch(e){
+        console.error(e);
+        meta.textContent = "Something went wrong uploading that photo, try again";
+      }
     };
 
     actions.appendChild(photoBtn);
@@ -1934,6 +1935,66 @@ function renderDayRow(day, isToday){
   return row;
 }
 
+const PHOTO_MAX_DATAURL_LEN = 4500000; // ~3.3MB of actual photo, base64 overhead included
+const PHOTO_MAX_DIMENSION = 1600; // longest side, in pixels
+
+function readFileAsDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Modern phone photos routinely land well past the storage cap, since
+// they're stored as base64 text directly in the database rather than as
+// real files. Resize onto a canvas and re-encode as JPEG so a normal
+// photo just works instead of erroring; falls back to the original file
+// untouched if anything about this fails, so a photo never gets silently
+// dropped.
+async function compressImageFile(file){
+  try{
+    const originalDataUrl = await readFileAsDataURL(file);
+    if(!file.type || !file.type.startsWith('image/')) return originalDataUrl;
+    if(originalDataUrl.length <= PHOTO_MAX_DATAURL_LEN) return originalDataUrl;
+
+    const img = await new Promise((resolve, reject)=>{
+      const image = new Image();
+      image.onload = ()=> resolve(image);
+      image.onerror = reject;
+      image.src = originalDataUrl;
+    });
+
+    let width = img.naturalWidth || img.width;
+    let height = img.naturalHeight || img.height;
+    if(width > PHOTO_MAX_DIMENSION || height > PHOTO_MAX_DIMENSION){
+      const scale = PHOTO_MAX_DIMENSION / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+
+    let quality = 0.85;
+    let dataUrl = canvas.toDataURL('image/jpeg', quality);
+    let attempts = 0;
+    while(dataUrl.length > PHOTO_MAX_DATAURL_LEN && attempts < 5){
+      quality = Math.max(quality - 0.15, 0.3);
+      dataUrl = canvas.toDataURL('image/jpeg', quality);
+      attempts++;
+    }
+    return dataUrl;
+  }catch(e){
+    console.error('photo compression failed, falling back to original file', e);
+    return readFileAsDataURL(file);
+  }
+}
+
 function makePhotoRow(person, dayNum, dd){
   const row = document.createElement('div');
   row.className = 'session-row';
@@ -1985,28 +2046,28 @@ function makePhotoRow(person, dayNum, dd){
     }
   };
 
-  fileInput.onchange = ()=>{
+  fileInput.onchange = async ()=>{
     const file = fileInput.files[0];
     if(!file) return;
-    const reader = new FileReader();
-    reader.onload = async ()=>{
-      const dataUrl = reader.result;
-      if(dataUrl.length > 4500000){
-        meta.textContent = "That image is too large, try a smaller photo";
+    meta.textContent = 'Processing photo...';
+    try{
+      const dataUrl = await compressImageFile(file);
+      if(dataUrl.length > PHOTO_MAX_DATAURL_LEN){
+        meta.textContent = "That image is too large even compressed, try a different photo";
         return;
       }
-      try{
-        await storage.set(key, dataUrl, true);
-        dd.hasPhoto = true;
-        dd.photoType = file.type;
-        photoCache[key] = dataUrl;
-        savePerson(person);
-        meta.textContent = 'Saved';
-        photoBtn.textContent = 'View photo';
-        renderPhotoJournal();
-      }catch(e){ console.error(e); }
-    };
-    reader.readAsDataURL(file);
+      await storage.set(key, dataUrl, true);
+      dd.hasPhoto = true;
+      dd.photoType = file.type;
+      photoCache[key] = dataUrl;
+      savePerson(person);
+      meta.textContent = 'Saved';
+      photoBtn.textContent = 'View photo';
+      renderPhotoJournal();
+    }catch(e){
+      console.error(e);
+      meta.textContent = "Something went wrong uploading that photo, try again";
+    }
   };
 
   actions.appendChild(photoBtn);
