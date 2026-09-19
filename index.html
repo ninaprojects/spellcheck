@@ -123,30 +123,22 @@
   /* jump nav: sticky, so a long page is easy to skip around in */
   .jump-nav{
     position:sticky;top:0;z-index:50;
-    display:flex;align-items:center;gap:18px;overflow-x:auto;white-space:nowrap;
-    background:var(--track-off);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    display:flex;gap:18px;overflow-x:auto;white-space:nowrap;
+    background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
     padding:10px 2px;margin:0 0 34px;
     -ms-overflow-style:none;scrollbar-width:none;
   }
   .jump-nav::-webkit-scrollbar{display:none;}
-  .jump-nav-label{
-    font-family:'Inter';font-weight:600;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--text-secondary);opacity:.65;flex-shrink:0;padding:0 12px 0 6px;
-    border-right:1px solid var(--track-off-line);margin-right:2px;
-  }
   .jump-nav a{
-    font-family:'Inter';font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    font-family:'Inter';font-weight:500;font-size:12px;letter-spacing:.04em;
     color:var(--text-secondary);text-decoration:none;flex-shrink:0;
-    padding-bottom:7px;border-bottom:2px solid transparent;
   }
   .jump-nav a:hover{color:var(--text-primary);}
-  .jump-nav a.active{color:var(--text-primary);border-bottom-color:var(--pink);}
 
   /* section headings — Inter Semibold, all-caps, wide tracking */
   .section-title{
     font-family:'Inter';font-weight:600;font-size:14px;letter-spacing:0.22em;
     text-transform:uppercase;color:var(--text-primary);margin:44px 0 16px;
-    scroll-margin-top:64px;
   }
   .section-title.with-sub{margin-bottom:4px;}
   .section-subnote{font-size:12px;color:var(--text-secondary);font-weight:300;margin:0 0 16px;letter-spacing:0;text-transform:none;}
@@ -186,6 +178,8 @@
     border:1px solid var(--line);text-decoration:none;
   }
   .link-preview img{width:18px;height:18px;flex-shrink:0;}
+  .link-preview.media{margin-top:10px;}
+  .link-preview.media img{width:36px;height:36px;border-radius:3px;object-fit:cover;}
   .link-preview .lp-text{overflow:hidden;}
   .link-preview .lp-title{font-family:'Inter';font-weight:500;font-size:13px;color:var(--text-primary);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -226,8 +220,6 @@
   .day{border:1px solid var(--line);border-top:none;padding:16px 20px;background:var(--bg);}
   .day.today{border-left:3px solid var(--text-primary);}
   .day-head{display:flex;align-items:baseline;gap:12px;cursor:pointer;}
-  .day-chevron{margin-left:auto;color:var(--text-secondary);font-size:14px;flex-shrink:0;}
-  .day-head:hover .day-chevron{color:var(--text-primary);}
   .day-num{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;color:var(--text-primary);min-width:26px;}
   .day-date{font-size:12px;color:var(--text-secondary);min-width:86px;font-weight:400;}
   .day-dot{color:var(--blue);}
@@ -261,24 +253,6 @@
     width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text-primary);
     padding:9px 11px;font-family:'Inter';font-weight:400;font-size:13px;
   }
-  .big3-compact-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-  .big3-compact-line{font-family:'Inter';font-size:14px;color:var(--text-primary);font-weight:500;}
-  .big3-toggle-link{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;}
-  .big3-toggle-link:hover{color:var(--text-primary);border-color:var(--text-primary);}
-
-  /* collapsible-toggle: shared affordance for every expand/collapse control
-     that isn't a chapter or day row (which use their own chevron inline).
-     Looks like a small clickable header, not a plain text link, and the
-     chevron itself flips between + and \u2212 so the state is visible even
-     before you notice whether anything below it changed. */
-  .collapsible-toggle{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    cursor:pointer;padding:9px 12px;border:1px solid var(--line);
-    font-family:'Inter';font-size:12px;color:var(--text-secondary);
-  }
-  .collapsible-toggle:hover{border-color:var(--text-primary);color:var(--text-primary);}
-  .collapsible-toggle .chev{font-size:14px;color:var(--text-secondary);flex-shrink:0;}
-  .collapsible-toggle:hover .chev{color:var(--text-primary);}
 
   /* leaderboard */
   .leaderboard-row{display:flex;align-items:center;gap:16px;padding:14px 18px;border-top:1px solid var(--line);}
@@ -436,7 +410,6 @@
   </div>
 
   <nav class="jump-nav">
-    <span class="jump-nav-label">Jump to</span>
     <a href="#nav-leaderboard">who's winning</a>
     <a href="#nav-placements">the big 3</a>
     <a href="#nav-week">✨ this week ✨</a>
@@ -447,11 +420,58 @@
   </nav>
 
   <div class="section-title" id="nav-leaderboard">Leaderboard</div>
-  <div class="section-subnote">One point per thing done: a journal, a phone-free hour, a movement session, an article sent, a no-spend day, plus water points (6 at the 48oz minimum, 7 at 64oz). Just for fun.</div>
+  <div class="section-subnote">One point per thing done: a journal, a phone-free hour, 8 glasses of water, a movement session, an article sent, a no-spend day. Just for fun.</div>
   <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
 
   <div class="section-title" id="nav-placements">Your placements (optional)</div>
-  <div class="placements" id="placementsPanel"></div>
+  <div class="placements">
+    <div class="chart-upload-row">
+      <label class="grat-label">Upload a screenshot of your chart, this scans for text and guesses your Big 3, rougher than it sounds</label>
+      <input type="file" id="chartFileInput" accept="image/*">
+      <div id="chartUploadStatus" class="commit-sub"></div>
+    </div>
+    <div class="big3-row">
+      <div class="big3-field">
+        <label class="grat-label">Sun *</label>
+        <select id="sunSelect"></select>
+      </div>
+      <div class="big3-field">
+        <label class="grat-label">Moon *</label>
+        <select id="moonSelect"></select>
+      </div>
+      <div class="big3-field">
+        <label class="grat-label">Rising *</label>
+        <select id="risingSelect"></select>
+      </div>
+    </div>
+    <div id="big3Warning" class="commit-sub" style="margin-top:2px;"></div>
+    <label class="grat-label" style="margin-top:16px;display:block;">Everything else (Mercury, Venus, Mars, houses, whatever's on the screenshot)</label>
+    <textarea id="placementsNotes" placeholder="Optional, or filled in automatically from your screenshot"></textarea>
+    <p>This app isn't running a real ephemeris, and the screenshot reader is free basic text-scanning, not real image understanding, so it's rougher than a proper reading. Always check it against the actual screenshot.</p>
+    <p style="margin-top:14px;">The "what today means for you" notes on each day also work at the sign level only (e.g. "3 signs apart, that's a square"), not exact degrees, which is what real astrology actually uses to judge how strong an aspect is. For a precise, degree-based read, check the Aspects tab in whatever app you used for your chart (Co-Star, The Pattern, etc.), or ask Claude directly with your real birth data, something like:</p>
+    <p style="font-style:italic;background:var(--track-off);padding:10px 12px;margin-top:8px;border:1px solid var(--line);">"Using my birth chart (born [date], [time], in [place]), give me a precise, degree-based reading of how [the event, e.g. the Full Moon in Aries on September 26] aspects my Sun, Moon, and Rising."</p>
+  </div>
+
+  <div class="section-title" id="nav-currently">Currently...</div>
+  <div class="placements">
+    <div class="currently-row">
+      <div class="currently-field">
+        <label class="grat-label">Reading</label>
+        <input type="text" id="currentlyReading" class="gratitude-input" placeholder="Whatever you're reading">
+        <div id="currentlyReadingPreview"></div>
+      </div>
+      <div class="currently-field">
+        <label class="grat-label">Watching</label>
+        <input type="text" id="currentlyWatching" class="gratitude-input" placeholder="Whatever you're watching">
+        <div id="currentlyWatchingPreview"></div>
+      </div>
+      <div class="currently-field">
+        <label class="grat-label">Listening</label>
+        <input type="text" id="currentlyListening" class="gratitude-input" placeholder="Whatever you're listening to">
+        <div id="currentlyListeningPreview"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="section-title" id="nav-week">This week's commitments</div>
   <div class="week-panel">
@@ -489,29 +509,6 @@
       </div>
       <div class="toggle" id="noSpendToggle"></div>
     </div>
-  </div>
-
-  <div class="section-title" id="nav-currently">Currently...</div>
-  <div class="section-subnote">Whatever's true right now. Update it whenever it changes, like a status. Old ones don't disappear, they just move into the archive below.</div>
-  <div class="placements">
-    <div class="currently-row">
-      <div class="currently-field">
-        <label class="grat-label">Reading</label>
-        <input type="text" id="currentlyReading" class="gratitude-input" placeholder="Whatever you're reading">
-      </div>
-      <div class="currently-field">
-        <label class="grat-label">Watching</label>
-        <input type="text" id="currentlyWatching" class="gratitude-input" placeholder="Whatever you're watching">
-      </div>
-      <div class="currently-field">
-        <label class="grat-label">Listening</label>
-        <input type="text" id="currentlyListening" class="gratitude-input" placeholder="Whatever you're listening to">
-      </div>
-    </div>
-    <div class="collapsible-toggle" id="currentlyHistoryToggle" style="margin-top:16px;">
-      <span>See past updates</span><span class="chev">+</span>
-    </div>
-    <div id="currentlyHistoryBody" style="display:none;margin-top:12px;"></div>
   </div>
 
   <div class="bookend-card">
@@ -560,7 +557,7 @@
   </div>
 
   <div class="section-title" id="nav-overview">How's everyone doing</div>
-  <div class="section-subnote">Journaled and no phone are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Water shows total points earned (6 at the 48oz minimum, 7 at 64oz). Move / article / no-spend reflect the week shown above.</div>
+  <div class="section-subnote">Journaled, no phone, and water are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
   <div class="week-panel" style="padding:0;overflow-x:auto;">
     <table class="overview" id="overviewTable"></table>
   </div>
@@ -624,6 +621,11 @@ const storage = {
   }
 };
 
+// Cloudflare Worker that proxies Spotify + TMDb search, keeps the
+// Spotify secret and TMDb key out of this public repo. See notify/
+// folder README or ask Claude if this ever needs to move.
+const MEDIA_WORKER_BASE = "https://spellcheck.nnirema.workers.dev";
+
 const PEOPLE = ["Nina","Kellye","Lauren","Carolina"];
 
 // Register the service worker, this is what actually makes "Add to Home
@@ -633,64 +635,52 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW registration failed', e));
   });
 }
-const CHALLENGE_START = new Date(2026,8,18); // Sep 18 2026
-const CHALLENGE_END = new Date(2026,9,18);   // Oct 18 2026
+const CHALLENGE_START = new Date(2026,8,16); // Sep 16 2026
+const CHALLENGE_END = new Date(2026,9,16);   // Oct 16 2026
 
 const DAYS = [
-  {n:1,d:"Sep 18",wd:"Fri",ch:1,prompt:"Welcome in, witch! Virgo season loves a good audit, so let's ease into it: think back on yesterday, hour by hour, and circle the moments you were just on autopilot. No judgment, just curiosity. That's the whole game this week."},
-  {n:2,d:"Sep 19",wd:"Sat",ch:1,prompt:"Zoom out like you're reading your own chart: what's the one relationship, habit, or thought you keep circling back to? Name it, gently, no fixing required today. Just noticing the pattern out loud, even only to yourself, is real magic."},
-  {n:3,d:"Sep 20",wd:"Sun",ch:1,prompt:"What's the line you say to yourself on repeat? Would you ever say it to your best friend? Today's spell: talk to yourself like someone worth being kind to."},
-  {n:4,d:"Sep 21",wd:"Mon",ch:1,prompt:"Last day of The Audit! Write down one thing you're officially done explaining yourself for. Just one. Let it be dramatic if it wants to be, you earned it."},
-  {n:5,d:"Sep 22",wd:"Tue",ch:2,tag:"Equinox \u2014 Sun enters Libra",prompt:"Happy Equinox! This one's a group spell, not a solo one. Get on a call, grab dinner, go on a walk, whatever four busy witches can pull off. Each of you says one thing from The Audit you're letting go of, and one thing you're calling in. Out loud, to each other. That's the whole assignment, and it's a good one."},
-  {n:6,d:"Sep 23",wd:"Wed",ch:3,prompt:"Libra season has entered the chat! Where does the give and take in your life feel genuinely lopsided right now? Say it plainly, diplomacy can sit this one out."},
-  {n:7,d:"Sep 24",wd:"Thu",ch:3,prompt:"There's a request you've been quietly softening before you send it. Send it today, soften it or don't, that part's up to you, just send it."},
-  {n:8,d:"Sep 25",wd:"Fri",ch:3,prompt:"What do you actually find beautiful, not what performs well online? Go do one thing today purely because it delights you. No other reason needed, that's very Libra of you."},
-  {n:9,d:"Sep 26",wd:"Sat",ch:3,tag:"Full Harvest Moon \u2014 Aries",prompt:"Full moon in Aries tonight! She's not here for your reflections, she wants your action. Whatever you've been circling all week, go do the thing before midnight. She's rooting for you."},
-  {n:10,d:"Sep 27",wd:"Sun",ch:3,prompt:"Full moon hangover day, in the best way. What did you let go of last night, even if it happened kind of by accident?"},
-  {n:11,d:"Sep 28",wd:"Mon",ch:3,prompt:"Go back to whatever you called lopsided earlier this week. Has anything actually shifted, or does it just look different from this angle? Either answer is honest."},
-  {n:12,d:"Sep 29",wd:"Tue",ch:3,prompt:"Chapter's closing! In one sentence: what has balance actually meant to you this week? Not the dictionary's definition, yours."},
-  {n:13,d:"Sep 30",wd:"Wed",ch:4,prompt:"New stretch, new values check! Write your top three values in an actual order. No ties, the universe wants your real answer."},
-  {n:14,d:"Oct 1",wd:"Thu",ch:4,prompt:"Where did you choose harmony over honesty this week? Be honest now: was it worth it, or are you quietly still annoyed?"},
-  {n:15,d:"Oct 2",wd:"Fri",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of them out loud, even if it's just here, just to you."},
-  {n:16,d:"Oct 3",wd:"Sat",ch:4,tag:"Venus stations retrograde",prompt:"Venus turns retrograde today, drifting between Scorpio and Libra through mid-November, so love, money, and values might get a little slippery. Perfect timing to ask: who do you become around people you don't fully trust? Write about her like she's a character in a really good book."},
-  {n:17,d:"Oct 4",wd:"Sun",ch:4,prompt:"Rest day! Do one thing today with zero audience, not even yourself watching and narrating it. Just be, quietly, for once.",rest:true},
-  {n:18,d:"Oct 5",wd:"Mon",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if we're being honest?"},
-  {n:19,d:"Oct 6",wd:"Tue",ch:4,prompt:"Four days till the reset! What do you want to be true about your life by October 10th that isn't true yet? Say it like it's already on its way."},
-  {n:20,d:"Oct 7",wd:"Wed",ch:4,prompt:"Write out the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself. It'll feel lighter once it's out."},
-  {n:21,d:"Oct 8",wd:"Thu",ch:4,prompt:"What have you outgrown this cycle that you haven't said out loud yet? Say it now, even just in a whisper."},
-  {n:22,d:"Oct 9",wd:"Fri",ch:4,prompt:"Last day before the new moon! Clear something real: an email, a drawer, a text thread that's overstayed its welcome. Make room for what's coming."},
-  {n:23,d:"Oct 10",wd:"Sat",ch:5,tag:"New Moon \u2014 Libra",prompt:"New moon in Libra tonight! Write one intention for after this challenge ends, present tense, one sentence, like it's already true. Let the sky hear it."},
-  {n:24,d:"Oct 11",wd:"Sun",ch:5,prompt:"Who's one person you want more real balance with going forward? Get specific about what that would actually look like, details make spells stick."},
-  {n:25,d:"Oct 12",wd:"Mon",ch:5,prompt:"Go back and reread your Day 1 energy audit. What's actually different now? You've probably moved more than you think."},
-  {n:26,d:"Oct 13",wd:"Tue",ch:5,prompt:"Tell each of the other three witches something you've noticed shifting in them this cycle. Not a compliment for the sake of it, something real you've actually seen change."},
-  {n:27,d:"Oct 14",wd:"Wed",ch:5,prompt:"What's the thing you're proudest of from this whole cycle that literally nobody else would think to ask about? Say it here, you deserve the credit."},
-  {n:28,d:"Oct 15",wd:"Thu",ch:5,prompt:"What's one commitment from this challenge you actually want to keep going, well past the last day? Pick the one that already feels like you."},
-  {n:29,d:"Oct 16",wd:"Fri",ch:5,prompt:"Mercury goes retrograde in eight days! Before things get a little chaotic, is there one message, one apology, one loose end worth closing now instead of later?"},
-  {n:30,d:"Oct 17",wd:"Sat",ch:5,prompt:"You started this on September 18th. What's different about how you spend your first hour awake now versus then? Notice it, that's the whole spell."},
-  {n:31,d:"Oct 18",wd:"Sun",ch:5,tag:"Last clear signal before Mercury retrograde",prompt:"Last day, witches! Mercury turns retrograde on the 24th, so tonight's your last clean signal for a while, use it well. Write a short letter to future-you, the one who'll need this again someday. Share whatever part of it feels right with the group."},
+  {n:1,d:"Sep 16",wd:"Wed",ch:1,prompt:"Welcome in, witch! Virgo season loves a good audit, so let's ease into it: think back on yesterday, hour by hour, and circle the moments you were just on autopilot. No judgment, just curiosity. That's the whole game this week."},
+  {n:2,d:"Sep 17",wd:"Thu",ch:1,prompt:"Pick one relationship, one habit, one thought you keep circling back to. Give each one a name, gently. You don't have to fix a thing today, just noticing it out loud (even only to yourself) is real magic."},
+  {n:3,d:"Sep 18",wd:"Fri",ch:1,prompt:"What's the line you say to yourself on repeat? Would you ever say it to your best friend? Today's spell: talk to yourself like someone worth being kind to."},
+  {n:4,d:"Sep 19",wd:"Sat",ch:1,prompt:"No deep prompt today, witches, just movement. Dance in your kitchen, take the long walk, stretch out on the floor, whatever feels good. Nobody's watching, nobody has to be.",rest:true},
+  {n:5,d:"Sep 20",wd:"Sun",ch:1,prompt:"Zoom out on your week like you're reading your own chart. What pattern kept showing up, even in the small stuff?"},
+  {n:6,d:"Sep 21",wd:"Mon",ch:1,prompt:"Last day of The Audit! Write down one thing you're officially done explaining yourself for. Just one. Let it be dramatic if it wants to be, you earned it."},
+  {n:7,d:"Sep 22",wd:"Tue",ch:2,tag:"Equinox \u2014 Sun enters Libra",prompt:"Happy Equinox! This one's a group spell, not a solo one. Get on a call, grab dinner, go on a walk, whatever four busy witches can pull off. Each of you says one thing from The Audit you're letting go of, and one thing you're calling in. Out loud, to each other. That's the whole assignment, and it's a good one."},
+  {n:8,d:"Sep 23",wd:"Wed",ch:3,prompt:"Libra season has entered the chat! Where does the give and take in your life feel genuinely lopsided right now? Say it plainly, diplomacy can sit this one out."},
+  {n:9,d:"Sep 24",wd:"Thu",ch:3,prompt:"There's a request you've been quietly softening before you send it. Send it today, soften it or don't, that part's up to you, just send it."},
+  {n:10,d:"Sep 25",wd:"Fri",ch:3,prompt:"What do you actually find beautiful, not what performs well online? Go do one thing today purely because it delights you. No other reason needed, that's very Libra of you."},
+  {n:11,d:"Sep 26",wd:"Sat",ch:3,tag:"Full Harvest Moon \u2014 Aries",prompt:"Full moon in Aries tonight! She's not here for your reflections, she wants your action. Whatever you've been circling all week, go do the thing before midnight. She's rooting for you."},
+  {n:12,d:"Sep 27",wd:"Sun",ch:3,prompt:"Full moon hangover day, in the best way. What did you let go of last night, even if it happened kind of by accident?"},
+  {n:13,d:"Sep 28",wd:"Mon",ch:3,prompt:"Chapter's closing! In one sentence: what has balance actually meant to you this week? Not the dictionary's definition, yours."},
+  {n:14,d:"Sep 29",wd:"Tue",ch:4,prompt:"New stretch, new values check! Write your top three values in an actual order. No ties, the universe wants your real answer."},
+  {n:15,d:"Sep 30",wd:"Wed",ch:4,prompt:"Where did you choose harmony over honesty this week? Be honest now: was it worth it, or are you quietly still annoyed?"},
+  {n:16,d:"Oct 1",wd:"Thu",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of them out loud, even if it's just here, just to you."},
+  {n:17,d:"Oct 2",wd:"Fri",ch:4,tag:"Venus stations retrograde",prompt:"Venus turns retrograde today, drifting between Libra and Scorpio through mid-November, so love, money, and values might get a little slippery. Perfect timing to ask: who do you become around people you don't fully trust? Write about her like she's a character in a really good book."},
+  {n:18,d:"Oct 3",wd:"Sat",ch:4,prompt:"Rest day! Do one thing today with zero audience, not even yourself watching and narrating it. Just be, quietly, for once.",rest:true},
+  {n:19,d:"Oct 4",wd:"Sun",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if we're being honest?"},
+  {n:20,d:"Oct 5",wd:"Mon",ch:4,prompt:"Four days till the reset! What do you want to be true about your life by October 9th that isn't true yet? Say it like it's already on its way."},
+  {n:21,d:"Oct 6",wd:"Tue",ch:4,prompt:"Write out the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself. It'll feel lighter once it's out."},
+  {n:22,d:"Oct 7",wd:"Wed",ch:4,prompt:"What have you outgrown this cycle that you haven't said out loud yet? Say it now, even just in a whisper."},
+  {n:23,d:"Oct 8",wd:"Thu",ch:4,prompt:"Last day before the new moon! Clear something real: an email, a drawer, a text thread that's overstayed its welcome. Make room for what's coming."},
+  {n:24,d:"Oct 9",wd:"Fri",ch:5,tag:"New Moon \u2014 Libra",prompt:"New moon in Libra tonight! Write one intention for after this challenge ends, present tense, one sentence, like it's already true. Let the sky hear it."},
+  {n:25,d:"Oct 10",wd:"Sat",ch:5,prompt:"Who's one person you want more real balance with going forward? Get specific about what that would actually look like, details make spells stick."},
+  {n:26,d:"Oct 11",wd:"Sun",ch:5,prompt:"Go back and reread your Day 1 energy audit. What's actually different now? You've probably moved more than you think."},
+  {n:27,d:"Oct 12",wd:"Mon",ch:5,prompt:"What's the thing you're proudest of from this whole cycle that literally nobody else would think to ask about? Say it here, you deserve the credit."},
+  {n:28,d:"Oct 13",wd:"Tue",ch:5,prompt:"What's one commitment from this challenge you actually want to keep going, well past the last day? Pick the one that already feels like you."},
+  {n:29,d:"Oct 14",wd:"Wed",ch:5,prompt:"Mercury goes retrograde in ten days! Before things get a little chaotic, is there one message, one apology, one loose end worth closing now instead of later?"},
+  {n:30,d:"Oct 15",wd:"Thu",ch:5,prompt:"You started this on September 16th. What's different about how you spend your first hour awake now versus then? Notice it, that's the whole spell."},
+  {n:31,d:"Oct 16",wd:"Fri",ch:5,tag:"Last clear signal before Mercury retrograde",prompt:"Last day, witches! Mercury turns retrograde in one week, so tonight's your last clean signal for a while, use it well. Write a short letter to future-you, the one who'll need this again someday. Share whatever part of it feels right with the group."},
 ];
 
 const CHAPTERS = [
-  {id:1,name:"The Audit",range:"Sep 18\u201321",blurb:"Virgo season's still wrapping up, which means the universe is basically begging you to Marie Kondo your own brain. Not a full life overhaul, just an honest look at where your energy's actually going.",cls:"g1",sign:"Virgo"},
+  {id:1,name:"The Audit",range:"Sep 16\u201321",blurb:"Virgo season's still wrapping up, which means the universe is basically begging you to Marie Kondo your own brain. Not a full life overhaul, just an honest look at where your energy's actually going.",cls:"g1",sign:"Virgo"},
   {id:2,name:"The Equinox Shift",range:"Sep 22",blurb:"The sun crosses into Libra today: balance, beauty, and please, for the love of god, put the phone down and talk to each other in person.",cls:"g2",sign:"Libra"},
-  {id:3,name:"The Charge",range:"Sep 23\u201329",blurb:"Libra season is officially here (balance, relationships, main character aesthetics), and on the 26th a Full Harvest Moon in Aries shows up to make sure none of us just think about our feelings without doing something about them.",cls:"g3",sign:"Libra"},
-  {id:4,name:"The Align",range:"Sep 30\u2013Oct 9",blurb:"Libra season keeps going, and we're using it to figure out what alignment actually feels like, not just keeping the peace because it's easier. Venus stations retrograde partway through, so expect love, money, and values to get a little messy right on schedule.",cls:"g4",sign:"Libra"},
-  {id:5,name:"The Reset",range:"Oct 10\u201318",blurb:"New Moon in Libra on the 10th means fresh intentions and real balance, and the extra days on the tail end are borrowed time before Mercury turns retrograde on the 24th, use them.",cls:"g5",sign:"Libra"},
+  {id:3,name:"The Charge",range:"Sep 23\u201328",blurb:"Libra season is officially here (balance, relationships, main character aesthetics), and on the 26th a Full Harvest Moon in Aries shows up to make sure none of us just think about our feelings without doing something about them.",cls:"g3",sign:"Libra"},
+  {id:4,name:"The Align",range:"Sep 29\u2013Oct 8",blurb:"Libra season keeps going, and we're using it to figure out what alignment actually feels like, not just keeping the peace because it's easier. Venus stations retrograde partway through, so expect love, money, and values to get a little messy right on schedule.",cls:"g4",sign:"Libra"},
+  {id:5,name:"The Reset",range:"Oct 9\u201316",blurb:"New Moon in Libra on the 9th means fresh intentions and real balance, and the extra days on the tail end are borrowed time before Mercury turns retrograde on the 24th, use them.",cls:"g5",sign:"Libra"},
 ];
 
 const ZODIAC_ORDER = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
-
-const SIGN_GLYPHS = {
-  Aries:"\u2648", Taurus:"\u2649", Gemini:"\u264A", Cancer:"\u264B",
-  Leo:"\u264C", Virgo:"\u264D", Libra:"\u264E", Scorpio:"\u264F",
-  Sagittarius:"\u2650", Capricorn:"\u2651", Aquarius:"\u2652", Pisces:"\u2653"
-};
-
-function signLabel(sign){
-  if(!sign) return '';
-  const glyph = SIGN_GLYPHS[sign];
-  return glyph ? `${sign} ${glyph}` : sign;
-}
 
 function signDistance(signA, signB){
   const a = ZODIAC_ORDER.indexOf(signA);
@@ -749,8 +739,8 @@ const ASPECT_TEXT = {
 // but the real transiting body for the two one-day events (the Moon for
 // the Aries full moon, Venus for its retrograde station).
 function dayTransit(day){
-  if(day.n===9) return {sign:"Aries", body:"The Moon"};
-  if(day.n===16) return {sign:"Scorpio", body:"Venus"};
+  if(day.n===11) return {sign:"Aries", body:"The Moon"};
+  if(day.n===17) return {sign:"Scorpio", body:"Venus"};
   const ch = CHAPTERS.find(c=>c.id===day.ch);
   return {sign:(ch && ch.sign) || "Libra", body:"The Sun"};
 }
@@ -772,26 +762,19 @@ function personalizedAstroLines(day, person){
 }
 
 // weeks: real Mon-Sun calendar weeks, so the first and last are partial
-// since Sep 18 (a Friday) doesn't line up with a Monday. This time the
-// short week lands at the start instead of the end, and the run ends up
-// dividing into 5 clean weeks with no partial week at the tail.
+// since Sep 16 (a Wednesday) doesn't line up with a Monday
 const WEEKS = [
-  {label:"Week 1 (short)",range:"Sep 18\u201320",days:[1,2,3]},
-  {label:"Week 2",range:"Sep 21\u201327",days:[4,5,6,7,8,9,10]},
-  {label:"Week 3",range:"Sep 28\u2013Oct 4",days:[11,12,13,14,15,16,17]},
-  {label:"Week 4",range:"Oct 5\u201311",days:[18,19,20,21,22,23,24]},
-  {label:"Week 5",range:"Oct 12\u201318",days:[25,26,27,28,29,30,31]},
+  {label:"Week 1",range:"Sep 16\u201320",days:[1,2,3,4,5]},
+  {label:"Week 2",range:"Sep 21\u201327",days:[6,7,8,9,10,11,12]},
+  {label:"Week 3",range:"Sep 28\u2013Oct 4",days:[13,14,15,16,17,18,19]},
+  {label:"Week 4",range:"Oct 5\u201311",days:[20,21,22,23,24,25,26]},
+  {label:"Week 5 (short)",range:"Oct 12\u201316",days:[27,28,29,30,31]},
 ];
 
 let currentPerson = PEOPLE[0];
 let currentWeekIdx = 0;
 let myIdentity = null;
 let allData = {}; // {person: {placements, days:{n:{journaled,noPhone,gratitude}}, weeks:{idx:{sessions:[{done,timestamp,hasPhoto,photoType}x3], article:{url,label}, noSpend}}}}
-
-// Whether the current identity is actively editing their own Big 3 form
-// right now. null means "not decided yet"; renderPlacements() picks a
-// sensible default the first time it's needed (see placementsDefaultMode).
-let placementsEditingSelf = null;
 
 function isEditable(){
   return !!myIdentity && currentPerson === myIdentity;
@@ -820,7 +803,6 @@ function renderIdentityBanner(){
       b.onclick = async ()=>{
         myIdentity = p;
         currentPerson = p;
-        placementsEditingSelf = null;
         try{ await storage.set('recal-whoami', p, false); }catch(e){ console.error(e); }
         renderAll();
       };
@@ -832,7 +814,6 @@ function renderIdentityBanner(){
       e.preventDefault();
       try{ await storage.delete('recal-whoami', false); }catch(err){ /* nothing stored, fine */ }
       myIdentity = null;
-      placementsEditingSelf = null;
       renderAll();
     };
   }
@@ -941,54 +922,35 @@ function renderProfilePicSection(){
     const btn = document.getElementById('profilePicBtn');
     const input = document.getElementById('profilePicInput');
     btn.onclick = ()=> input.click();
-    input.onchange = async ()=>{
+    input.onchange = ()=>{
       const file = input.files[0];
       if(!file) return;
-      const originalLabel = btn.textContent;
-      btn.textContent = 'Processing photo...';
-      try{
-        const dataUrl = await compressImageFile(file);
-        if(dataUrl.length > PHOTO_MAX_DATAURL_LEN){
-          btn.textContent = 'Too large even compressed, try a different photo';
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        const dataUrl = reader.result;
+        if(dataUrl.length > 4500000){
+          btn.textContent = 'Too large, try a smaller photo';
           return;
         }
-        await storage.set(`recal-profile-pic:${currentPerson}`, dataUrl, true);
-        pd.hasProfilePic = true;
-        profilePicCache[currentPerson] = dataUrl;
-        savePerson(currentPerson);
-        renderProfilePicSection();
-        renderPeopleTabs();
-        renderLeaderboard();
-      }catch(e){
-        console.error(e);
-        btn.textContent = originalLabel;
-      }
+        try{
+          await storage.set(`recal-profile-pic:${currentPerson}`, dataUrl, true);
+          pd.hasProfilePic = true;
+          profilePicCache[currentPerson] = dataUrl;
+          savePerson(currentPerson);
+          renderProfilePicSection();
+          renderPeopleTabs();
+          renderLeaderboard();
+        }catch(e){ console.error(e); }
+      };
+      reader.readAsDataURL(file);
     };
   }
-}
-
-// Bump this whenever the day/date mapping itself changes (the challenge
-// got restarted, chapters got resized, etc). Anyone whose stored data
-// doesn't match gets their day-by-day progress cleared exactly once,
-// since old entries would otherwise end up attached to the wrong dates
-// and wrong prompts. Placements, currently-status, kickoff/closing text,
-// and profile pic are untouched, same as the manual reset button.
-const SCHEDULE_VERSION = 2;
-
-function applyScheduleReset(pd){
-  if(pd.scheduleVersion === SCHEDULE_VERSION) return false;
-  pd.days = {};
-  pd.weeks = {};
-  pd.scheduleVersion = SCHEDULE_VERSION;
-  return true;
 }
 
 function emptyPersonData(){
   return {
     placements:{sun:"",moon:"",rising:"",notes:""},
     currently:{reading:"",watching:"",listening:""},
-    currentlyHistory:[],
-    scheduleVersion: SCHEDULE_VERSION,
     kickoffIntention:"",
     hasProfilePic:false,
     closingToast:"",
@@ -1010,7 +972,7 @@ function normalizedPlacements(p){
 
 function buildSignOptions(select, selected){
   select.innerHTML = '<option value="">Select a sign</option>' +
-    SIGNS.map(s=>`<option value="${s}"${s===selected?' selected':''}>${signLabel(s)}</option>`).join('');
+    SIGNS.map(s=>`<option value="${s}"${s===selected?' selected':''}>${s}</option>`).join('');
 }
 
 async function readChartScreenshot(file){
@@ -1083,44 +1045,6 @@ async function readChartScreenshot(file){
   }
 }
 
-// Currently reading/watching/listening has changed shape twice now:
-// originally one ongoing field per person, then briefly one per week.
-// It's now a single live "status" per person, like an AIM away message,
-// plus a running archive of every past status anyone's posted. This runs
-// once (it's keyed off currentlyHistory not existing yet) and folds
-// whatever shape was already there into the new one without losing data.
-function migrateCurrentlyToLiveStatus(pd){
-  if(pd.currentlyHistory) return;
-  const FIELDS = ['reading','watching','listening'];
-  const history = [];
-  const lastSeen = {reading:"", watching:"", listening:""};
-
-  function absorb(cur){
-    if(!cur) return;
-    FIELDS.forEach(f=>{
-      const v = (cur[f]||"").trim();
-      if(v && v !== lastSeen[f]){
-        history.push({field:f, value:v, timestamp:null});
-        lastSeen[f] = v;
-      }
-    });
-  }
-
-  absorb(pd.currently); // old person-level baseline, if any
-  if(pd.weeks){
-    Object.keys(pd.weeks).map(Number).sort((a,b)=>a-b).forEach(idx=>{
-      const wd = pd.weeks[idx];
-      if(wd && wd.currently){
-        absorb(wd.currently);
-        delete wd.currently; // no longer stored per week
-      }
-    });
-  }
-
-  pd.currently = {reading:lastSeen.reading, watching:lastSeen.watching, listening:lastSeen.listening};
-  pd.currentlyHistory = history;
-}
-
 async function loadAll(){
   for(const p of PEOPLE){
     try{
@@ -1128,10 +1052,6 @@ async function loadAll(){
       allData[p] = res ? JSON.parse(res.value) : emptyPersonData();
     }catch(e){
       allData[p] = emptyPersonData();
-    }
-    migrateCurrentlyToLiveStatus(allData[p]);
-    if(applyScheduleReset(allData[p])){
-      await savePerson(p);
     }
   }
 }
@@ -1164,20 +1084,8 @@ function renderResetLink(){
   };
 }
 
-const WATER_MIN_OZ = 48;   // minimum goal
-const WATER_BONUS_OZ = 64; // stretch goal, bonus point
-const WATER_STEP_OZ = 8;   // one tap = one glass
-
-// Flat scoring, not linear: nothing until the 48oz minimum, 6 points once
-// you hit it, one more bonus point at 64oz. Nothing in between matters.
-function waterPoints(oz){
-  if(oz >= WATER_BONUS_OZ) return 7;
-  if(oz >= WATER_MIN_OZ) return 6;
-  return 0;
-}
-
 function dayData(p,n){
-  if(!allData[p].days[n]) allData[p].days[n] = {journaled:false,noPhone:false,waterOz:0,gratitude:"",hasPhoto:false,photoType:null,photoCaption:"",photoLocation:""};
+  if(!allData[p].days[n]) allData[p].days[n] = {journaled:false,noPhone:false,water:false,gratitude:"",hasPhoto:false,photoType:null,photoCaption:"",photoLocation:""};
   return allData[p].days[n];
 }
 
@@ -1484,24 +1392,24 @@ function renderWeekPanel(){
         s.done = true;
         s.timestamp = new Date().toISOString();
       }
-      meta.textContent = 'Processing photo...';
-      try{
-        const dataUrl = await compressImageFile(file);
-        if(dataUrl.length > PHOTO_MAX_DATAURL_LEN){
-          meta.textContent = "That image is too large even compressed, try a different photo";
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        const dataUrl = reader.result;
+        if(dataUrl.length > 4500000){
+          meta.textContent = "That image is too large, try a smaller photo";
           return;
         }
-        await storage.set(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
-        s.hasPhoto = true;
-        s.photoType = file.type;
-        savePerson(currentPerson);
-        renderWeekPanel();
-        renderOverview();
-        renderLeaderboard();
-      }catch(e){
-        console.error(e);
-        meta.textContent = "Something went wrong uploading that photo, try again";
-      }
+        try{
+          await storage.set(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
+          s.hasPhoto = true;
+          s.photoType = file.type;
+          savePerson(currentPerson);
+          renderWeekPanel();
+          renderOverview();
+          renderLeaderboard();
+        }catch(e){ console.error(e); }
+      };
+      reader.readAsDataURL(file);
     };
 
     actions.appendChild(photoBtn);
@@ -1569,182 +1477,11 @@ function renderWeekPanel(){
   }
 }
 
-const CURRENTLY_FIELD_META = {
-  reading: {label:'Reading', icon:'\ud83d\udcd6'},
-  watching: {label:'Watching', icon:'\ud83c\udfac'},
-  listening: {label:'Listening', icon:'\ud83c\udfa7'}
-};
-
-// Currently reading/watching/listening: a single live status per person,
-// like an AIM away message, not tied to any week. Editable any time on
-// your own tab; whatever was there before a change gets appended to that
-// person's currentlyHistory archive so nothing anyone's posted is lost.
-function renderCurrentlyStatus(){
-  const pd = allData[currentPerson];
-  if(!pd.currentlyHistory) pd.currentlyHistory = [];
-  const cur = pd.currently;
-  const editable = isEditable();
-
-  const fields = [
-    ['currentlyReading','reading'],
-    ['currentlyWatching','watching'],
-    ['currentlyListening','listening']
-  ];
-  fields.forEach(([id,key])=>{
-    const el = document.getElementById(id);
-    el.value = cur[key] || '';
-    el.disabled = !editable;
-    el.onchange = ()=>{
-      const newVal = el.value.trim();
-      const oldVal = (cur[key]||'').trim();
-      if(newVal !== oldVal){
-        if(newVal){
-          pd.currentlyHistory.push({field:key, value:newVal, timestamp:new Date().toISOString()});
-        }
-        cur[key] = newVal;
-        savePerson(currentPerson);
-        renderCurrentlyHistory();
-      }
-      flashSaved(el);
-    };
-  });
-
-  renderCurrentlyHistory();
-}
-
-function renderCurrentlyHistory(){
-  const body = document.getElementById('currentlyHistoryBody');
-  const toggle = document.getElementById('currentlyHistoryToggle');
-  if(!body || !toggle) return;
-  const pd = allData[currentPerson];
-  const history = (pd.currentlyHistory || []).slice().reverse(); // newest first
-
-  if(!history.length){
-    body.innerHTML = `<div class="commit-sub">Nothing archived yet, updates land here once ${isEditable()?'you change':currentPerson+' changes'} a status.</div>`;
-    return;
-  }
-  body.innerHTML = history.map(h=>{
-    const meta = CURRENTLY_FIELD_META[h.field] || {label:h.field, icon:''};
-    const when = h.timestamp ? formatTimestamp(h.timestamp) : 'date unknown, from before this was tracked';
-    return `<div class="session-row">
-      <div class="session-info">
-        <div class="session-label">${meta.icon} ${meta.label} \u2014 ${escapeHtml(h.value)}</div>
-        <div class="session-meta">${when}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-document.getElementById('currentlyHistoryToggle').onclick = ()=>{
-  const body = document.getElementById('currentlyHistoryBody');
-  const toggle = document.getElementById('currentlyHistoryToggle');
-  const open = body.style.display !== 'none';
-  body.style.display = open ? 'none' : 'block';
-  toggle.querySelector('.chev').textContent = open ? '+' : '\u2212';
-};
-
 document.getElementById('weekPrev').onclick = ()=>{ if(currentWeekIdx>0){currentWeekIdx--; renderWeekPanel();} };
 document.getElementById('weekNext').onclick = ()=>{ if(currentWeekIdx<WEEKS.length-1){currentWeekIdx++; renderWeekPanel();} };
 
-// Decide the default view (compact "done" summary vs the full edit form)
-// for a person's Big 3 the first time it's rendered this session. If all
-// three placements are already filled in, default to the compact view,
-// nothing left to fill in, no reason to show the form. Otherwise open
-// straight into edit mode so a brand new person isn't stuck clicking
-// Edit on an empty state.
-function placementsDefaultIsEdit(pl){
-  return !(pl.sun && pl.moon && pl.rising);
-}
-
-function renderPlacementsCompact(panel, pl, editableSelf){
-  const hasAny = pl.sun || pl.moon || pl.rising;
-  const line = hasAny
-    ? `\u2609 ${pl.sun?signLabel(pl.sun):'\u2014'} &nbsp;\u00b7&nbsp; \u263d ${pl.moon?signLabel(pl.moon):'\u2014'} &nbsp;\u00b7&nbsp; \u2191 ${pl.rising?signLabel(pl.rising):'\u2014'}`
-    : 'Not added yet.';
-  panel.innerHTML = `
-    <div class="big3-compact-row">
-      <div class="big3-compact-line">${line}</div>
-      ${editableSelf ? `<button id="placementsEditBtn" class="gallery-toggle-btn" type="button">Edit</button>` : ''}
-    </div>
-  `;
-  if(editableSelf){
-    document.getElementById('placementsEditBtn').onclick = ()=>{
-      placementsEditingSelf = true;
-      renderPlacements();
-    };
-  }
-}
-
-function refreshBig3Warning(pl){
-  const warningEl = document.getElementById('big3Warning');
-  if(!warningEl) return;
-  const missing = [];
-  if(!pl.sun) missing.push('Sun');
-  if(!pl.moon) missing.push('Moon');
-  if(!pl.rising) missing.push('Rising');
-  warningEl.textContent = missing.length ? `Still need: ${missing.join(', ')}` : '';
-}
-
-function renderPlacementsEditForm(panel, pl){
-  panel.innerHTML = `
-    <div class="collapsible-toggle" id="chartUploadToggle">
-      <span>Upload a chart screenshot to auto-fill</span><span class="chev">+</span>
-    </div>
-    <div class="chart-upload-row" id="chartUploadRow" style="display:none;margin-top:10px;">
-      <label class="grat-label">Upload a screenshot of your chart, this scans for text and guesses your Big 3, rougher than it sounds</label>
-      <input type="file" id="chartFileInput" accept="image/*">
-      <div id="chartUploadStatus" class="commit-sub"></div>
-    </div>
-    <div class="big3-row" style="margin-top:16px;">
-      <div class="big3-field">
-        <label class="grat-label">Sun *</label>
-        <select id="sunSelect"></select>
-      </div>
-      <div class="big3-field">
-        <label class="grat-label">Moon *</label>
-        <select id="moonSelect"></select>
-      </div>
-      <div class="big3-field">
-        <label class="grat-label">Rising *</label>
-        <select id="risingSelect"></select>
-      </div>
-    </div>
-    <div id="big3Warning" class="commit-sub" style="margin-top:2px;"></div>
-    <label class="grat-label" style="margin-top:16px;display:block;">Everything else (Mercury, Venus, Mars, houses, whatever's on the screenshot)</label>
-    <textarea id="placementsNotes" placeholder="Optional, or filled in automatically from your screenshot"></textarea>
-    <div class="collapsible-toggle" id="placementsInfoToggle" style="margin-top:14px;">
-      <span>How this works</span><span class="chev">+</span>
-    </div>
-    <div id="placementsInfoBody" style="display:none;margin-top:10px;">
-      <p>This app isn't running a real ephemeris, and the screenshot reader is free basic text-scanning, not real image understanding, so it's rougher than a proper reading. Always check it against the actual screenshot.</p>
-      <p style="margin-top:14px;">The "what today means for you" notes on each day also work at the sign level only (e.g. "3 signs apart, that's a square"), not exact degrees, which is what real astrology actually uses to judge how strong an aspect is. For a precise, degree-based read, check the Aspects tab in whatever app you used for your chart (Co-Star, The Pattern, etc.), or ask Claude directly with your real birth data, something like:</p>
-      <p style="font-style:italic;background:var(--track-off);padding:10px 12px;margin-top:8px;border:1px solid var(--line);">"Using my birth chart (born [date], [time], in [place]), give me a precise, degree-based reading of how [the event, e.g. the Full Moon in Aries on September 26] aspects my Sun, Moon, and Rising."</p>
-    </div>
-    <div style="margin-top:20px;text-align:right;">
-      <button id="placementsDoneBtn" class="gallery-toggle-btn" type="button">Done</button>
-    </div>
-  `;
-
-  document.getElementById('chartUploadToggle').onclick = ()=>{
-    const row = document.getElementById('chartUploadRow');
-    const toggle = document.getElementById('chartUploadToggle');
-    const open = row.style.display !== 'none';
-    row.style.display = open ? 'none' : 'block';
-    toggle.querySelector('.chev').textContent = open ? '+' : '\u2212';
-  };
-  document.getElementById('placementsInfoToggle').onclick = ()=>{
-    const body = document.getElementById('placementsInfoBody');
-    const toggle = document.getElementById('placementsInfoToggle');
-    const open = body.style.display !== 'none';
-    body.style.display = open ? 'none' : 'block';
-    toggle.querySelector('.chev').textContent = open ? '+' : '\u2212';
-  };
-  document.getElementById('placementsDoneBtn').onclick = ()=>{
-    placementsEditingSelf = false;
-    renderPlacements();
-    renderOverview();
-    renderLeaderboard();
-  };
+function renderPlacements(){
+  const pl = normalizedPlacements(currentPerson);
 
   const sunSel = document.getElementById('sunSelect');
   const moonSel = document.getElementById('moonSelect');
@@ -1752,19 +1489,30 @@ function renderPlacementsEditForm(panel, pl){
   buildSignOptions(sunSel, pl.sun);
   buildSignOptions(moonSel, pl.moon);
   buildSignOptions(risingSel, pl.rising);
-  sunSel.onchange = ()=>{ pl.sun = sunSel.value; savePerson(currentPerson); flashSaved(sunSel); refreshBig3Warning(pl); };
-  moonSel.onchange = ()=>{ pl.moon = moonSel.value; savePerson(currentPerson); flashSaved(moonSel); refreshBig3Warning(pl); };
-  risingSel.onchange = ()=>{ pl.rising = risingSel.value; savePerson(currentPerson); flashSaved(risingSel); refreshBig3Warning(pl); };
+  sunSel.disabled = !isEditable();
+  moonSel.disabled = !isEditable();
+  risingSel.disabled = !isEditable();
+  sunSel.onchange = ()=>{ pl.sun = sunSel.value; savePerson(currentPerson); flashSaved(sunSel); };
+  moonSel.onchange = ()=>{ pl.moon = moonSel.value; savePerson(currentPerson); flashSaved(moonSel); };
+  risingSel.onchange = ()=>{ pl.rising = risingSel.value; savePerson(currentPerson); flashSaved(risingSel); };
 
   const notes = document.getElementById('placementsNotes');
   notes.value = pl.notes || '';
+  notes.disabled = !isEditable();
   notes.onchange = ()=>{ pl.notes = notes.value; savePerson(currentPerson); flashSaved(notes); };
 
-  refreshBig3Warning(pl);
+  const warningEl = document.getElementById('big3Warning');
+  const missing = [];
+  if(!pl.sun) missing.push('Sun');
+  if(!pl.moon) missing.push('Moon');
+  if(!pl.rising) missing.push('Rising');
+  warningEl.textContent = missing.length ? `Still need: ${missing.join(', ')}` : '';
 
   const statusEl = document.getElementById('chartUploadStatus');
-  statusEl.textContent = '';
+  statusEl.textContent = isEditable() ? '' : "Switch to your own tab to add a chart.";
   const fileInput = document.getElementById('chartFileInput');
+  fileInput.value = '';
+  fileInput.disabled = !isEditable();
   fileInput.onchange = async ()=>{
     const file = fileInput.files[0];
     if(!file) return;
@@ -1786,36 +1534,87 @@ function renderPlacementsEditForm(panel, pl){
       }
       savePerson(currentPerson);
     }
-    renderPlacementsEditForm(panel, pl);
+    renderPlacements();
     const freshStatus = document.getElementById('chartUploadStatus');
-    const freshRow = document.getElementById('chartUploadRow');
-    const freshToggle = document.getElementById('chartUploadToggle');
-    if(freshRow && freshToggle){ freshRow.style.display = 'block'; freshToggle.querySelector('.chev').textContent = '\u2212'; }
     const parts = [];
     if(matched.length) parts.push(`Matched ${matched.join(', ')} from labeled text in the image.`);
     if(guessed.length) parts.push(`Read ${guessed.join(', ')} off the icon row near the top (Co-Star's layout).`);
-    if(freshStatus){
-      freshStatus.textContent = parts.length
-        ? parts.join(' ') + ' This is basic OCR, not real understanding, so double check every field, and skim the raw text now in your notes below for anything else it missed.'
-        : `Couldn't confidently match or guess Sun/Moon/Rising from that image. If it found any text at all, it's now in your notes below, check it and fill in manually.`;
-    }
+    freshStatus.textContent = parts.length
+      ? parts.join(' ') + ' This is basic OCR, not real understanding, so double check every field, and skim the raw text now in your notes below for anything else it missed.'
+      : `Couldn't confidently match or guess Sun/Moon/Rising from that image. If it found any text at all, it's now in your notes below, check it and fill in manually.`;
   };
 }
 
-function renderPlacements(){
-  const pl = normalizedPlacements(currentPerson);
-  const panel = document.getElementById('placementsPanel');
-  const editableSelf = isEditable();
-
-  if(editableSelf && placementsEditingSelf === null){
-    placementsEditingSelf = placementsDefaultIsEdit(pl);
+// Calls the Cloudflare Worker to find a real match for whatever someone
+// typed. kind is 'spotify' (Listening) or 'tmdb' (Reading/Watching, since
+// TMDb only covers movies/TV, books get pulled in as its "unmatched"
+// text still saves fine, just without a preview card).
+async function fetchMediaMatch(kind, query){
+  if(!query || !query.trim()) return null;
+  try{
+    const res = await fetch(`${MEDIA_WORKER_BASE}/${kind}?q=${encodeURIComponent(query.trim())}`);
+    if(!res.ok) return null;
+    const data = await res.json();
+    return data.result || null;
+  }catch(e){
+    console.error('media search failed', e);
+    return null;
   }
+}
 
-  if(editableSelf && placementsEditingSelf){
-    renderPlacementsEditForm(panel, pl);
-  } else {
-    renderPlacementsCompact(panel, pl, editableSelf);
+function renderMediaPreview(elId, match){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(!match){ el.innerHTML = ''; return; }
+  el.innerHTML = `<a class="link-preview media" href="${match.url}" target="_blank" rel="noopener">
+    ${match.image ? `<img src="${match.image}" alt="">` : ''}
+    <div class="lp-text">
+      <div class="lp-title">${escapeHtml(match.title)}</div>
+      <div class="lp-domain">${escapeHtml(match.subtitle)}</div>
+    </div>
+  </a>`;
+}
+
+// field is 'reading', 'watching', or 'listening'. Looks up (and saves)
+// the matched link, then re-renders that field's preview.
+async function updateMediaLink(field, cur, query, kind){
+  const previewId = 'currently'+field.charAt(0).toUpperCase()+field.slice(1)+'Preview';
+  const linkField = field+'Link';
+  if(!query || !query.trim()){
+    cur[linkField] = null;
+    savePerson(currentPerson);
+    renderMediaPreview(previewId, null);
+    return;
   }
+  const previewEl = document.getElementById(previewId);
+  if(previewEl) previewEl.innerHTML = `<div class="commit-sub" style="margin-top:6px;">Looking that up...</div>`;
+  const match = await fetchMediaMatch(kind, query);
+  // Guard against a slower request landing after the person's already
+  // changed the field again, don't overwrite a newer value with a stale one.
+  if(cur[field] !== query) return;
+  cur[linkField] = match;
+  savePerson(currentPerson);
+  renderMediaPreview(previewId, match);
+}
+
+function renderCurrently(){
+  if(!allData[currentPerson].currently) allData[currentPerson].currently = {reading:"",watching:"",listening:""};
+  const cur = allData[currentPerson].currently;
+  const r = document.getElementById('currentlyReading');
+  const w = document.getElementById('currentlyWatching');
+  const l = document.getElementById('currentlyListening');
+  r.value = cur.reading || '';
+  w.value = cur.watching || '';
+  l.value = cur.listening || '';
+  r.disabled = w.disabled = l.disabled = !isEditable();
+
+  renderMediaPreview('currentlyReadingPreview', cur.readingLink);
+  renderMediaPreview('currentlyWatchingPreview', cur.watchingLink);
+  renderMediaPreview('currentlyListeningPreview', cur.listeningLink);
+
+  r.onchange = ()=>{ cur.reading = r.value; savePerson(currentPerson); flashSaved(r); updateMediaLink('reading', cur, r.value, 'tmdb'); };
+  w.onchange = ()=>{ cur.watching = w.value; savePerson(currentPerson); flashSaved(w); updateMediaLink('watching', cur, w.value, 'tmdb'); };
+  l.onchange = ()=>{ cur.listening = l.value; savePerson(currentPerson); flashSaved(l); updateMediaLink('listening', cur, l.value, 'spotify'); };
 }
 
 function renderBookends(){
@@ -1872,7 +1671,7 @@ function renderDayRow(day, isToday){
 
   const head = document.createElement('div');
   head.className = 'day-head';
-  head.innerHTML = `<div class="day-num">${day.n}</div><div class="day-date">${day.d} <span class="day-dot">&middot;</span> ${day.wd}</div>${day.tag?`<div class="day-tag">${day.tag}</div>`:''}<div class="day-chevron">${openDay===day.n?'\u2212':'+'}</div>`;
+  head.innerHTML = `<div class="day-num">${day.n}</div><div class="day-date">${day.d} <span class="day-dot">&middot;</span> ${day.wd}</div>${day.tag?`<div class="day-tag">${day.tag}</div>`:''}`;
   head.style.cursor='pointer';
   head.onclick = ()=>{ openDay = (openDay===day.n)?null:day.n; renderChapters(); };
   row.appendChild(head);
@@ -1913,7 +1712,7 @@ function renderDayRow(day, isToday){
     checks.appendChild(makeCheckRow('Journaled, 15 min', dd.journaled, (v)=>{dd.journaled=v; savePerson(currentPerson); renderOverview(); renderLeaderboard(); refreshReceiptsIfLoaded();}));
   }
   checks.appendChild(makeCheckRow('No phone, 1 hour (any time today)', dd.noPhone, (v)=>{dd.noPhone=v; savePerson(currentPerson); renderOverview(); renderLeaderboard();}));
-  checks.appendChild(makeWaterRow(dd, ()=>{ savePerson(currentPerson); renderOverview(); renderLeaderboard(); }));
+  checks.appendChild(makeCheckRow('8 glasses of water', dd.water, (v)=>{dd.water=v; savePerson(currentPerson); renderOverview(); renderLeaderboard();}));
 
   const gratRow = document.createElement('div');
   const label = document.createElement('label');
@@ -1933,66 +1732,6 @@ function renderDayRow(day, isToday){
   full.appendChild(checks);
   row.appendChild(full);
   return row;
-}
-
-const PHOTO_MAX_DATAURL_LEN = 4500000; // ~3.3MB of actual photo, base64 overhead included
-const PHOTO_MAX_DIMENSION = 1600; // longest side, in pixels
-
-function readFileAsDataURL(file){
-  return new Promise((resolve, reject)=>{
-    const reader = new FileReader();
-    reader.onload = ()=> resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-// Modern phone photos routinely land well past the storage cap, since
-// they're stored as base64 text directly in the database rather than as
-// real files. Resize onto a canvas and re-encode as JPEG so a normal
-// photo just works instead of erroring; falls back to the original file
-// untouched if anything about this fails, so a photo never gets silently
-// dropped.
-async function compressImageFile(file){
-  try{
-    const originalDataUrl = await readFileAsDataURL(file);
-    if(!file.type || !file.type.startsWith('image/')) return originalDataUrl;
-    if(originalDataUrl.length <= PHOTO_MAX_DATAURL_LEN) return originalDataUrl;
-
-    const img = await new Promise((resolve, reject)=>{
-      const image = new Image();
-      image.onload = ()=> resolve(image);
-      image.onerror = reject;
-      image.src = originalDataUrl;
-    });
-
-    let width = img.naturalWidth || img.width;
-    let height = img.naturalHeight || img.height;
-    if(width > PHOTO_MAX_DIMENSION || height > PHOTO_MAX_DIMENSION){
-      const scale = PHOTO_MAX_DIMENSION / Math.max(width, height);
-      width = Math.round(width * scale);
-      height = Math.round(height * scale);
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, width, height);
-
-    let quality = 0.85;
-    let dataUrl = canvas.toDataURL('image/jpeg', quality);
-    let attempts = 0;
-    while(dataUrl.length > PHOTO_MAX_DATAURL_LEN && attempts < 5){
-      quality = Math.max(quality - 0.15, 0.3);
-      dataUrl = canvas.toDataURL('image/jpeg', quality);
-      attempts++;
-    }
-    return dataUrl;
-  }catch(e){
-    console.error('photo compression failed, falling back to original file', e);
-    return readFileAsDataURL(file);
-  }
 }
 
 function makePhotoRow(person, dayNum, dd){
@@ -2046,28 +1785,28 @@ function makePhotoRow(person, dayNum, dd){
     }
   };
 
-  fileInput.onchange = async ()=>{
+  fileInput.onchange = ()=>{
     const file = fileInput.files[0];
     if(!file) return;
-    meta.textContent = 'Processing photo...';
-    try{
-      const dataUrl = await compressImageFile(file);
-      if(dataUrl.length > PHOTO_MAX_DATAURL_LEN){
-        meta.textContent = "That image is too large even compressed, try a different photo";
+    const reader = new FileReader();
+    reader.onload = async ()=>{
+      const dataUrl = reader.result;
+      if(dataUrl.length > 4500000){
+        meta.textContent = "That image is too large, try a smaller photo";
         return;
       }
-      await storage.set(key, dataUrl, true);
-      dd.hasPhoto = true;
-      dd.photoType = file.type;
-      photoCache[key] = dataUrl;
-      savePerson(person);
-      meta.textContent = 'Saved';
-      photoBtn.textContent = 'View photo';
-      renderPhotoJournal();
-    }catch(e){
-      console.error(e);
-      meta.textContent = "Something went wrong uploading that photo, try again";
-    }
+      try{
+        await storage.set(key, dataUrl, true);
+        dd.hasPhoto = true;
+        dd.photoType = file.type;
+        photoCache[key] = dataUrl;
+        savePerson(person);
+        meta.textContent = 'Saved';
+        photoBtn.textContent = 'View photo';
+        renderPhotoJournal();
+      }catch(e){ console.error(e); }
+    };
+    reader.readAsDataURL(file);
   };
 
   actions.appendChild(photoBtn);
@@ -2090,62 +1829,6 @@ function makePhotoRow(person, dayNum, dd){
     row.appendChild(buildLocationRow(dd, ()=>{ savePerson(person); renderChapters(); }));
   }
 
-  return row;
-}
-
-function makeWaterRow(dd, onSaved){
-  const row = document.createElement('div');
-  row.className = 'session-row';
-
-  const info = document.createElement('div');
-  info.className = 'session-info';
-  const label = document.createElement('div');
-  label.className = 'session-label';
-  label.textContent = 'Water';
-  const meta = document.createElement('div');
-  meta.className = 'session-meta';
-  function metaText(){
-    const oz = dd.waterOz||0;
-    const pts = waterPoints(oz);
-    return `${oz} fl oz \u00b7 ${pts} pt${pts===1?'':'s'} (48oz min = 6, 64oz = 7)`;
-  }
-  meta.textContent = metaText();
-  info.appendChild(label);
-  info.appendChild(meta);
-
-  const actions = document.createElement('div');
-  actions.className = 'session-actions';
-
-  const minusBtn = document.createElement('button');
-  minusBtn.type = 'button';
-  minusBtn.className = 'session-photo-btn';
-  minusBtn.textContent = '\u2212' + WATER_STEP_OZ + 'oz';
-
-  const plusBtn = document.createElement('button');
-  plusBtn.type = 'button';
-  plusBtn.className = 'session-photo-btn';
-  plusBtn.textContent = '+' + WATER_STEP_OZ + 'oz';
-
-  if(isEditable()){
-    minusBtn.onclick = ()=>{
-      dd.waterOz = Math.max(0, (dd.waterOz||0) - WATER_STEP_OZ);
-      meta.textContent = metaText();
-      onSaved();
-    };
-    plusBtn.onclick = ()=>{
-      dd.waterOz = (dd.waterOz||0) + WATER_STEP_OZ;
-      meta.textContent = metaText();
-      onSaved();
-    };
-  } else {
-    minusBtn.disabled = true;
-    plusBtn.disabled = true;
-  }
-
-  actions.appendChild(minusBtn);
-  actions.appendChild(plusBtn);
-  row.appendChild(info);
-  row.appendChild(actions);
   return row;
 }
 
@@ -2176,10 +1859,10 @@ function renderOverview(){
   let html = `<tr><th>Person</th><th>Journaled</th><th>No phone</th><th>Water</th><th>Move (this wk)</th><th>Article</th><th>No-spend</th></tr>`;
   PEOPLE.forEach(p=>{
     const pd = allData[p];
-    let journaledCount=0, noPhoneCount=0, waterPointsTotal=0;
+    let journaledCount=0, noPhoneCount=0, waterCount=0;
     for(let n=1;n<=elapsed;n++){
       const d = pd.days[n];
-      if(d){ if(d.journaled) journaledCount++; if(d.noPhone) noPhoneCount++; waterPointsTotal += waterPoints(d.waterOz||0); }
+      if(d){ if(d.journaled) journaledCount++; if(d.noPhone) noPhoneCount++; if(d.water) waterCount++; }
     }
     const wd = weekData(p, currentWeekIdx);
     const sessionsDone = wd.sessions.filter(s=>s.done).length;
@@ -2188,7 +1871,7 @@ function renderOverview(){
       <td>${p}</td>
       <td>${elapsed?journaledCount+'/'+journalableCount:'\u2014'}</td>
       <td>${elapsed?noPhoneCount+'/'+elapsed:'\u2014'}</td>
-      <td>${elapsed?waterPointsTotal+' pts':'\u2014'}</td>
+      <td>${elapsed?waterCount+'/'+elapsed:'\u2014'}</td>
       <td>${sessionsDone}/3</td>
       <td><span class="mini-dot${hasArticle?' on':''}"></span>${hasArticle?'sent':'\u2014'}</td>
       <td><span class="mini-dot${wd.noSpend.done?' on':''}"></span>${wd.noSpend.done?'done':'\u2014'}</td>
@@ -2203,7 +1886,7 @@ function scoreFor(p){
   let score = 0;
   for(let n=1;n<=elapsed;n++){
     const d = pd.days[n];
-    if(d){ if(d.journaled) score++; if(d.noPhone) score++; score += waterPoints(d.waterOz||0); }
+    if(d){ if(d.journaled) score++; if(d.noPhone) score++; if(d.water) score++; }
   }
   for(let idx=0; idx<WEEKS.length; idx++){
     const wd = weekData(p, idx);
@@ -2390,7 +2073,7 @@ function chapterAstroCallout(chapterId){
   // Prefer the chapter's headline event day (the Aries full moon, Venus's
   // retrograde station) over the plain season baseline, when one of those
   // falls inside this chapter, that's the actual point of the chapter.
-  const specialDay = chDays.find(d=>d.n===9 || d.n===16);
+  const specialDay = chDays.find(d=>d.n===11 || d.n===17);
   const transit = dayTransit(specialDay || chDays[0]);
   const hits = [];
   PEOPLE.forEach(p=>{
@@ -2508,56 +2191,6 @@ document.getElementById('downloadReceiptBtn').onclick = async ()=>{
   btn.disabled = false;
 };
 
-// Scrollspy: highlights whichever jump-nav link matches the section
-// currently sitting just under the sticky nav bar, and keeps it updated
-// as the page scrolls. A section counts as "current" once its title has
-// scrolled up to (or past) the bottom edge of the nav; the last one that's
-// crossed that line wins, so the highlight always tracks where you
-// actually are, not just where you last clicked.
-const JUMP_SECTIONS = ['nav-leaderboard','nav-placements','nav-week','nav-days','nav-photos','nav-receipts','nav-overview'];
-
-let lastActiveNavId = null;
-function updateActiveNavLink(){
-  const nav = document.querySelector('.jump-nav');
-  if(!nav) return;
-  // +24 (not just a few px) because .section-title's scroll-margin-top
-  // leaves a bigger gap under the nav than the nav's own height alone,
-  // so a plain "just past the nav" threshold would lag a step behind
-  // right after a jump-nav click lands.
-  const threshold = nav.getBoundingClientRect().bottom + 24;
-  let activeId = JUMP_SECTIONS[0];
-  for(const id of JUMP_SECTIONS){
-    const el = document.getElementById(id);
-    if(!el) continue;
-    if(el.getBoundingClientRect().top <= threshold){
-      activeId = id;
-    } else {
-      break;
-    }
-  }
-  document.querySelectorAll('.jump-nav a').forEach(a=>{
-    a.classList.toggle('active', a.getAttribute('href') === '#'+activeId);
-  });
-  // The nav itself scrolls sideways on narrow screens, so the active link
-  // can end up off to the right, out of view, which defeats the point of
-  // highlighting it. Only nudge the nav's own scroll position when the
-  // active section has actually changed, so it doesn't fight anyone who's
-  // mid-drag scrolling the nav strip by hand.
-  if(activeId !== lastActiveNavId){
-    lastActiveNavId = activeId;
-    const activeLink = nav.querySelector('a.active');
-    if(activeLink) activeLink.scrollIntoView({behavior:'smooth', inline:'nearest', block:'nearest'});
-  }
-}
-
-let navScrollTicking = false;
-window.addEventListener('scroll', ()=>{
-  if(navScrollTicking) return;
-  navScrollTicking = true;
-  requestAnimationFrame(()=>{ updateActiveNavLink(); navScrollTicking = false; });
-}, {passive:true});
-window.addEventListener('resize', updateActiveNavLink);
-
 async function renderAll(){
   renderPeopleTabs();
   renderStatus();
@@ -2567,7 +2200,7 @@ async function renderAll(){
   renderResetLink();
   renderTimeline();
   renderPlacements();
-  renderCurrentlyStatus();
+  renderCurrently();
   renderBookends();
   renderWeekPanel();
   renderChapters();
@@ -2576,7 +2209,6 @@ async function renderAll(){
   renderPhotoJournal();
   populateReceiptChapterSelect();
   loadAndRenderReceipt();
-  updateActiveNavLink();
 }
 
 (async function init(){
