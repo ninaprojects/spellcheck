@@ -1546,9 +1546,9 @@ function renderPlacements(){
 }
 
 // Calls the Cloudflare Worker to find a real match for whatever someone
-// typed. kind is 'spotify' (Listening) or 'tmdb' (Reading/Watching, since
-// TMDb only covers movies/TV, books get pulled in as its "unmatched"
-// text still saves fine, just without a preview card).
+// typed. kind is 'spotify' (Listening), 'googlebooks' (Reading), or
+// 'tmdb' (Watching). If nothing matches, the plain text still saves
+// fine, it just won't get a preview card.
 async function fetchMediaMatch(kind, query){
   if(!query || !query.trim()) return null;
   try{
@@ -1612,7 +1612,7 @@ function renderCurrently(){
   renderMediaPreview('currentlyWatchingPreview', cur.watchingLink);
   renderMediaPreview('currentlyListeningPreview', cur.listeningLink);
 
-  r.onchange = ()=>{ cur.reading = r.value; savePerson(currentPerson); flashSaved(r); updateMediaLink('reading', cur, r.value, 'tmdb'); };
+  r.onchange = ()=>{ cur.reading = r.value; savePerson(currentPerson); flashSaved(r); updateMediaLink('reading', cur, r.value, 'googlebooks'); };
   w.onchange = ()=>{ cur.watching = w.value; savePerson(currentPerson); flashSaved(w); updateMediaLink('watching', cur, w.value, 'tmdb'); };
   l.onchange = ()=>{ cur.listening = l.value; savePerson(currentPerson); flashSaved(l); updateMediaLink('listening', cur, l.value, 'spotify'); };
 }
