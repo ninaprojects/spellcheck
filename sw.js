@@ -50,7 +50,7 @@ self.addEventListener('push', (event) => {
   );
 });
 
-const CACHE_NAME = 'practical-magic-v1';
+const CACHE_NAME = 'practical-magic-v2'; // bumped so phones drop the stale offline copy
 const PRECACHE_URLS = ['./', './index.html'];
 
 self.addEventListener('install', (event) => {
@@ -72,9 +72,26 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first: always try to get the live version. Only fall back
-  // to whatever's cached if the network request fails (offline).
+  const req = event.request;
+  if (req.mode === 'navigate') {
+    // Opening the app: always check GitHub for the newest index.html,
+    // skipping the browser's HTTP cache (which could hold a copy up to 10
+    // minutes old after an upload). Keep the fresh copy for offline use.
+    event.respondWith(
+      fetch(req, { cache: 'no-cache' })
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put('./index.html', copy)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match('./index.html').then((r) => r || caches.match(req)))
+    );
+    return;
+  }
+  // Everything else: network-first, cached copy only when offline.
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(req).catch(() => caches.match(req))
   );
 });

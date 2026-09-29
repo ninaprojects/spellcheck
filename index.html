@@ -37,6 +37,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Spell Check">
 <meta name="theme-color" content="#1A1A1A">
+<script>
+  // Before first paint: if you've seen the intro, start it collapsed so the
+  // long intro never flashes while data loads.
+  try{ if(localStorage.getItem('recal-intro-seen')==='1') document.documentElement.classList.add('intro-seen'); }catch(e){}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Display:ital,wght@0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- html2canvas and Tesseract.js load on demand (see loadScriptOnce), not on every open -->
@@ -263,6 +268,7 @@
   .big3-compact-line{font-family:'Inter';font-size:14px;color:var(--text-primary);font-weight:500;}
   /* intro collapses after the first visit */
   .masthead.collapsed p.sub:not(.lede){display:none;}
+  html.intro-seen .masthead:not(.expanded) p.sub:not(.lede){display:none;}
   .intro-toggle{margin-top:14px;}
 
   /* Today card */
@@ -1255,6 +1261,7 @@ async function loadAll(){
   for(const p of PEOPLE){
     try{
       const res = await storage.get(`recal:${p}`, true);
+      if(editedBeforeFresh[p]){ continue; } // your own tap from the snapshot moment wins; it's already saved
       allData[p] = res ? JSON.parse(res.value) : emptyPersonData();
       lastSynced[p] = res ? res.value : null;
     }catch(e){
@@ -1279,9 +1286,11 @@ async function loadAll(){
 async function savePerson(p){
   try{
     const json = JSON.stringify(allData[p]);
+    if(!freshLoaded) editedBeforeFresh[p] = true;
     lastSynced[p] = json;
     rememberOwnWrite(p, json); // so our own writes echoing back (even late, out of order) aren't treated as remote
     await storage.set(`recal:${p}`, json, true);
+    saveSnapshot();
   }catch(e){
     console.error("save failed", e);
   }
@@ -2724,9 +2733,11 @@ function setupIntro(){
     m.classList.add('collapsed');
     t.style.display = 'inline-block';
   }
+
   t.onclick = (e)=>{
     e.preventDefault();
     const collapsed = m.classList.toggle('collapsed');
+    m.classList.toggle('expanded', !collapsed);
     t.textContent = collapsed ? 'Read the intro +' : 'Hide the intro \u2212';
   };
   try{ localStorage.setItem('recal-intro-seen', '1'); }catch(e){}
@@ -2765,6 +2776,7 @@ function scheduleLiveRender(){
     const y = window.scrollY;
     renderAll();
     window.scrollTo(0, y);
+    saveSnapshot();
   }, 400);
 }
 
@@ -3361,20 +3373,77 @@ async function renderAll(){
   safeRender('loadAndRenderReceipt', loadAndRenderReceipt);
 }
 
+// ---- Instant open: paint from this device's last snapshot, then refresh ----
+// Only a copy of what this phone already saw. Firebase stays the source of
+// truth; the fresh load replaces it a moment later.
+const SNAPSHOT_KEY = 'recal-snapshot-v1';
+let paintedFromSnapshot = false;
+let freshLoaded = false;
+const editedBeforeFresh = {};
+
+function saveSnapshot(){
+  if(!freshLoaded) return;
+  try{
+    const people = {};
+    PEOPLE.forEach(p=>{ if(allData[p]) people[p] = JSON.stringify(allData[p]); });
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({at: Date.now(), people, reactions: reactionsData, prefs: notifPrefs}));
+  }catch(e){ /* storage full or unavailable, fine */ }
+  PEOPLE.forEach(p=>{
+    const src = profilePicCache[p];
+    if(!src || src.length > 1200000) return;
+    try{
+      const k = 'recal-snap-pic:'+p;
+      if(localStorage.getItem(k) !== src) localStorage.setItem(k, src);
+    }catch(e){ /* too big for this phone's storage, the photo just loads a beat later */ }
+  });
+}
+
+function applySnapshot(){
+  let snap = null;
+  try{ snap = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || 'null'); }catch(e){ snap = null; }
+  if(!snap || !snap.people) return false;
+  PEOPLE.forEach(p=>{
+    try{
+      const pd = snap.people[p] ? JSON.parse(snap.people[p]) : emptyPersonData();
+      try{ migrateCurrentlyToLiveStatus(pd); }catch(e){}
+      try{ applyScheduleReset(pd); }catch(e){}
+      allData[p] = pd;
+    }catch(e){ allData[p] = emptyPersonData(); }
+    try{ const pic = localStorage.getItem('recal-snap-pic:'+p); if(pic) profilePicCache[p] = pic; }catch(e){}
+    reactionsData[p] = (snap.reactions && snap.reactions[p]) || {};
+    notifPrefs[p] = Object.assign({}, NOTIF_PREF_DEFAULTS, (snap.prefs && snap.prefs[p]) || {});
+  });
+  return true;
+}
+
 (async function init(){
   try{
     currentWeekIdx = currentWeekIndexForToday();
+    await loadIdentity();
+    if(myIdentity && PEOPLE.includes(myIdentity)){ currentPerson = myIdentity; }
+  }catch(e){ console.error('identity load failed', e); }
+  activeView = viewFromHash() || 'today';
+  try{
+    if(applySnapshot()){
+      paintedFromSnapshot = true;
+      renderAll();
+      applyView(false);
+      setupIntro();
+    }
+  }catch(e){ console.error('snapshot paint failed', e); }
+  try{
     await loadAll();
     try{ await loadReactions(); }catch(e){ console.error('reactions load failed', e); }
     try{ await loadNotifPrefs(); }catch(e){ console.error('prefs load failed', e); }
     await preloadProfilePics();
-    await loadIdentity();
-    if(myIdentity && PEOPLE.includes(myIdentity)){ currentPerson = myIdentity; }
   }catch(e){
     console.error('startup failed, rendering with defaults', e);
   }
-  activeView = viewFromHash() || 'today';
+  freshLoaded = true;
+  const y = window.scrollY;
   renderAll();
+  if(paintedFromSnapshot) window.scrollTo(0, y);
+  saveSnapshot();
   try{ applyView(false); }catch(e){ console.error('view setup failed', e); }
   try{ setupIntro(); }catch(e){ console.error('intro setup failed', e); }
   try{ setupScrollspy(); }catch(e){ console.error('scrollspy setup failed', e); }
