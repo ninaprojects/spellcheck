@@ -351,7 +351,24 @@
   .pref-row:first-child{border-top:none;}
   .pref-sub{font-size:11px;color:var(--text-secondary);font-weight:300;margin-top:2px;}
   .toggle.on.acc-blue{background:var(--blue);border-color:var(--blue);}
+  .toggle.on.acc-lavender{background:#C9A9E0;border-color:#C9A9E0;}
   .feed-avatar.tappable, .leaderboard-row.tappable{cursor:pointer;}
+
+  /* water tracker */
+  .water-box{border:1px solid var(--line);padding:14px 16px;}
+  .water-top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .water-id{display:flex;align-items:center;gap:10px;}
+  .water-icon{width:36px;height:36px;border-radius:50%;background:#DDEEFF;color:#1F6FC2;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .water-btns{display:flex;gap:8px;}
+  .water-btn{width:48px;height:44px;font-family:'Inter';font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);}
+  .water-btn.plus{background:var(--blue);border-color:var(--blue);color:#0C3B6E;}
+  .water-drops{display:flex;justify-content:space-between;margin-top:14px;}
+  .water-drop{width:30px;height:30px;border-radius:50%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1.5px solid #B9DAFF;color:#8FC3FF;background:var(--bg);transition:background .15s,color .15s,transform .15s;}
+  .water-drop.bonus{border-style:dashed;}
+  .water-drop.on{background:var(--blue);border-color:var(--blue);color:var(--bg);transform:scale(1.06);}
+  .water-scale{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text-secondary);}
+  .water-done{margin-top:10px;font-size:12px;font-weight:500;color:#1F6FC2;}
+  .gallery-cell .cell-tag{position:absolute;top:6px;left:6px;font-size:10px;font-weight:600;font-family:'Inter';color:#1A1A1A;background:var(--yellow);border-radius:999px;padding:2px 7px;}
 
   .big3-toggle-link{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;}
   .big3-toggle-link:hover{color:var(--text-primary);border-color:var(--text-primary);}
@@ -517,7 +534,7 @@
 
     <div class="commit-row">
       <div class="commit-label">Move, with intent</div>
-      <div class="commit-sub" style="margin-bottom:6px;">3 times this week. Mark it done and drop in proof if you've got it, time is stamped automatically.</div>
+      <div class="commit-sub" style="margin-bottom:6px;">3 times this week, a point each. Proof photo, anything counts, +1. Time is stamped automatically.</div>
       <div id="sessionsList"></div>
     </div>
 
@@ -548,7 +565,7 @@
   <div id="covenFeed" class="feed"></div>
   <div id="covenFeedMore"></div>
   <div class="section-title" id="nav-leaderboard">Leaderboard</div>
-  <div class="section-subnote">One point per thing done: a journal, a phone-free hour, 8 glasses of water, a movement session, an article sent, a no-spend day. Just for fun.</div>
+  <div class="section-subnote">Points for everything you do: a journal, a phone-free hour, water (6 at 48oz, 7 at 64oz), a movement session (+1 if there's a photo), an article sent, a no-spend day. Just for fun.</div>
   <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
   <div class="section-title" id="nav-overview">How's everyone doing</div>
   <div class="section-subnote">Journaled, no phone, and water are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
@@ -1635,10 +1652,13 @@ function renderWeekPanel(){
           await storage.set(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
           s.hasPhoto = true;
           s.photoType = file.type;
+          photoCache[`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`] = dataUrl;
           savePerson(currentPerson);
           renderWeekPanel();
           renderOverview();
           renderLeaderboard();
+          safeRender('renderPhotoJournal', renderPhotoJournal);
+          safeRender('renderCovenFeed', renderCovenFeed);
         }catch(e){ console.error(e); }
       };
       reader.readAsDataURL(file);
@@ -2644,7 +2664,7 @@ function renderTopbar(){
 // Notification preferences, one small record per person. Read by the
 // morning/evening pushes and the reactions Worker. Missing = all on.
 const notifPrefs = {};
-const NOTIF_PREF_DEFAULTS = {morning:true, nudge:true, reactions:true};
+const NOTIF_PREF_DEFAULTS = {morning:true, nudge:true, reactions:true, activity:true};
 async function loadNotifPrefs(){
   for(const p of PEOPLE){
     try{
@@ -2666,7 +2686,8 @@ function renderNotifPrefs(){
   const rows = [
     ['morning', 'Morning spell', 'Daily at 8am Pacific', 'acc-yellow'],
     ['nudge', 'Evening nudge', '7pm Pacific, only if your spell isn\u2019t cast', 'acc-pink'],
-    ['reactions', 'Reactions', 'When the coven reacts to your stuff', 'acc-blue']
+    ['reactions', 'Reactions', 'When the coven reacts to your stuff', 'acc-blue'],
+    ['activity', 'Coven activity', 'When someone casts her spell, the coven goes full, or a photo goes up', 'acc-lavender']
   ];
   el.innerHTML = '';
   const panel = document.createElement('div');
@@ -2919,57 +2940,39 @@ function waterPoints(oz){
   return 0;
 }
 
+const DROP_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5c-3 4-6 7.2-6 10.5a6 6 0 0 0 12 0c0-3.3-3-6.5-6-10.5z"></path></svg>';
+
 function makeWaterRow(dd){
-  const row = document.createElement('div');
-  row.className = 'session-row';
-  const info = document.createElement('div');
-  info.className = 'session-info';
-  const label = document.createElement('div');
-  label.className = 'session-label';
-  label.textContent = 'Water';
-  const meta = document.createElement('div');
-  meta.className = 'session-meta';
-  const updateMeta = ()=>{
-    const pts = waterPoints(dd.waterOz||0);
-    meta.textContent = `${dd.waterOz||0} fl oz \u00b7 ${pts} pt${pts===1?'':'s'}`;
-  };
-  updateMeta();
-  info.appendChild(label);
-  info.appendChild(meta);
-
-  const actions = document.createElement('div');
-  actions.className = 'session-actions';
-
-  const minusBtn = document.createElement('button');
-  minusBtn.type = 'button';
-  minusBtn.className = 'session-photo-btn';
-  minusBtn.textContent = '\u22128oz';
-  minusBtn.disabled = !isEditable();
-
-  const plusBtn = document.createElement('button');
-  plusBtn.type = 'button';
-  plusBtn.className = 'session-photo-btn';
-  plusBtn.textContent = '+8oz';
-  plusBtn.disabled = !isEditable();
-
+  const box = document.createElement('div');
+  box.className = 'water-box';
+  const oz = dd.waterOz || 0;
+  const pts = waterPoints(oz);
+  const meta = oz >= 48 ? `${oz} oz \u00b7 ${pts} pts` : `${oz} oz \u00b7 ${48-oz} to go`;
+  let drops = '';
+  for(let i=1;i<=8;i++) drops += `<div class="water-drop${oz>=i*8?' on':''}${i>6?' bonus':''}">${DROP_SVG}</div>`;
+  const doneLine = oz>=64 ? 'Bonus hydration, 7 pts. Counts toward your spell.' : (oz>=48 ? 'Goal met, 6 pts. Counts toward your spell.' : '');
+  box.innerHTML = `
+    <div class="water-top">
+      <div class="water-id">
+        <div class="water-icon">${DROP_SVG.replace('width="16" height="16"','width="20" height="20"')}</div>
+        <div><div class="session-label">Water</div><div class="session-meta">${meta}</div></div>
+      </div>
+      <div class="water-btns">
+        <button type="button" class="water-btn minus" aria-label="Remove 8 ounces">\u22128</button>
+        <button type="button" class="water-btn plus" aria-label="Add 8 ounces">+8</button>
+      </div>
+    </div>
+    <div class="water-drops" aria-hidden="true">${drops}</div>
+    <div class="water-scale"><span>8 oz each</span><span>goal 48 \u00b7 bonus 64</span></div>
+    ${doneLine ? `<div class="water-done">${doneLine}</div>` : ''}`;
+  const minusBtn = box.querySelector('.minus');
+  const plusBtn = box.querySelector('.plus');
+  minusBtn.disabled = plusBtn.disabled = !isEditable();
   if(isEditable()){
-    plusBtn.onclick = ()=>{
-      dd.waterOz = (dd.waterOz||0) + 8;
-      updateMeta();
-      onDayEdited(dd);
-    };
-    minusBtn.onclick = ()=>{
-      dd.waterOz = Math.max(0, (dd.waterOz||0) - 8);
-      updateMeta();
-      onDayEdited(dd);
-    };
+    plusBtn.onclick = ()=>{ dd.waterOz = (dd.waterOz||0) + 8; onDayEdited(dd); };
+    minusBtn.onclick = ()=>{ dd.waterOz = Math.max(0, (dd.waterOz||0) - 8); onDayEdited(dd); };
   }
-
-  actions.appendChild(minusBtn);
-  actions.appendChild(plusBtn);
-  row.appendChild(info);
-  row.appendChild(actions);
-  return row;
+  return box;
 }
 
 function makeCheckRow(labelText, checked, onChange, accent){
@@ -3031,6 +3034,7 @@ function scoreFor(p){
   for(let idx=0; idx<WEEKS.length; idx++){
     const wd = weekData(p, idx);
     score += wd.sessions.filter(s=>s.done).length;
+    score += wd.sessions.filter(s=>s.done && s.hasPhoto).length; // +1 bonus for a proof photo
     if(wd.article.url && wd.article.url.trim()) score++;
     if(wd.noSpend.done) score++;
   }
@@ -3073,6 +3077,14 @@ document.getElementById('photoModal').onclick = ()=>{
   document.getElementById('photoModal').classList.remove('open');
 };
 
+function dayNumFromTimestamp(ts){
+  if(!ts) return null;
+  const t = new Date(ts);
+  const local = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  const n = Math.round((local - CHALLENGE_START)/86400000) + 1;
+  return (n>=1 && n<=31) ? n : null;
+}
+
 async function renderPhotoJournal(){
   const el = document.getElementById('photoGallery');
   const people = galleryMode==='mine' ? [currentPerson] : PEOPLE;
@@ -3086,7 +3098,19 @@ async function renderPhotoJournal(){
       }
     });
   });
-  items.sort((a,b)=> a.day-b.day || a.person.localeCompare(b.person));
+  // Workout proof photos land on the day they were logged.
+  people.forEach(p=>{
+    const weeks = (allData[p] && allData[p].weeks) || {};
+    Object.keys(weeks).forEach(wi=>{
+      ((weeks[wi] && weeks[wi].sessions) || []).forEach((s,i)=>{
+        if(!s || !s.done || !s.hasPhoto) return;
+        const n = dayNumFromTimestamp(s.timestamp);
+        if(!n) return;
+        items.push({person:p, day:n, caption:s.photoCaption||'', location:s.photoLocation||'', key:`recal-photo:${p}:${wi}:${i}`, workout:true, t:s.timestamp});
+      });
+    });
+  });
+  items.sort((a,b)=> a.day-b.day || a.person.localeCompare(b.person) || (a.workout?1:0)-(b.workout?1:0));
 
   if(!items.length){
     el.innerHTML = `<div class="empty-note">No photos yet. Add one from any day above and it'll show up here.</div>`;
@@ -3109,14 +3133,15 @@ async function renderPhotoJournal(){
         }catch(e){ console.error(e); }
       }
       if(!dataUrl){ cell.innerHTML = `<div class="cell-loading">\u2014</div>`; return; }
-      const captionName = galleryMode==='everyone' ? `${item.person} \u00b7 Day ${item.day}` : `Day ${item.day}`;
-      cell.innerHTML = `<img src="${dataUrl}" alt=""><div class="cell-caption">${captionName}</div>`;
+      const baseName = galleryMode==='everyone' ? `${item.person} \u00b7 Day ${item.day}` : `Day ${item.day}`;
+      const captionName = item.workout ? `${baseName} \u00b7 Workout` : baseName;
+      cell.innerHTML = `<img src="${dataUrl}" alt="">${item.workout?'<div class="cell-tag">Workout</div>':''}<div class="cell-caption">${baseName}</div>`;
       cell.onclick = ()=>{
         document.getElementById('photoModalImg').src = dataUrl;
         const bits = [captionName];
         if(item.caption) bits.push(item.caption);
         if(item.location) bits.push('\ud83d\udccd '+item.location);
-        document.getElementById('photoModalCaption').textContent = bits.join(' \u2014 ');
+        document.getElementById('photoModalCaption').textContent = bits.join(' \u00b7 ');
         document.getElementById('photoModal').classList.add('open');
       };
     })();
