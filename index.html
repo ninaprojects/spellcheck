@@ -287,6 +287,43 @@
   .toggle.on.acc-pink{background:var(--pink);border-color:var(--pink);}
   .toggle.on.acc-yellow{background:var(--yellow);border-color:var(--yellow);}
 
+  /* coven feed + streak */
+  .streak-chip{font-size:11px;font-weight:600;color:var(--text-primary);background:#FFF1CC;border:1px solid var(--yellow);border-radius:999px;padding:3px 10px;white-space:nowrap;display:inline-block;margin-top:6px;}
+  .streak-card{border:2px solid var(--text-primary);background:#FFF8E6;padding:18px;margin-bottom:14px;}
+  .streak-head{display:flex;align-items:baseline;gap:10px;}
+  .streak-num{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:40px;line-height:1;color:var(--text-primary);border-bottom:4px solid var(--pink);padding-bottom:2px;}
+  .streak-title{font-size:14px;font-weight:500;color:var(--text-primary);}
+  .streak-dots{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:14px 0;}
+  .streak-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10px;color:var(--text-secondary);}
+  .streak-dot{width:24px;height:24px;border-radius:50%;box-sizing:border-box;border:1px solid var(--track-off-line);background:var(--bg);}
+  .streak-dot.full{background:var(--yellow);border:2px solid var(--text-primary);}
+  .streak-dot.today{border:2px dashed var(--pink);}
+  .streak-copy{font-size:12px;color:#5E584F;line-height:1.6;}
+  .feed{border:1px solid var(--line);}
+  .feed-empty{padding:18px;font-size:13px;color:var(--text-secondary);}
+  .feed-item{display:flex;gap:12px;padding:16px;border-top:1px solid var(--line);}
+  .feed-item:first-child{border-top:none;}
+  .feed-item.system{background:rgba(26,26,26,0.035);}
+  .feed-avatar{width:40px;height:40px;border-radius:50%;box-sizing:border-box;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+  .feed-avatar.system{background:var(--text-primary);border-color:var(--text-primary);color:var(--yellow);font-size:16px;}
+  .feed-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+  .feed-top{display:flex;justify-content:space-between;gap:8px;}
+  .feed-text{font-size:13px;line-height:1.5;color:var(--text-primary);font-weight:400;}
+  .feed-text strong{font-weight:600;}
+  .feed-time{font-size:11px;color:var(--text-secondary);flex-shrink:0;}
+  .feed-photo{width:100%;max-height:340px;object-fit:cover;display:block;background:var(--track-off);cursor:zoom-in;border:none;padding:0;}
+  .feed-photo-slot{width:100%;height:220px;background:var(--track-off);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-secondary);}
+  .feed-caption{font-size:13px;font-weight:300;color:var(--text-primary);}
+  .feed-item .link-preview{margin-top:0;}
+  .react-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .react-chip{min-width:48px;height:34px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-family:'Inter';}
+  .react-chip .g{font-size:14px;}
+  .react-chip .c{font-size:11px;font-weight:600;}
+  .react-chip.mine{border:2px solid var(--pink);background:#FFE3EE;}
+  .react-chip:disabled{opacity:1;cursor:default;}
+  .react-who{font-size:11px;color:var(--text-secondary);margin-top:-2px;}
+  .feed-more{margin-top:12px;width:100%;min-height:44px;border:1px solid var(--line);background:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;color:var(--text-primary);cursor:pointer;}
+
   .big3-toggle-link{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;}
   .big3-toggle-link:hover{color:var(--text-primary);border-color:var(--text-primary);}
 
@@ -451,6 +488,7 @@
   <nav class="jump-nav">
     <span class="jump-nav-label">Jump to</span>
     <a href="#nav-today">today</a>
+    <a href="#nav-coven">the coven</a>
     <a href="#nav-leaderboard">who's winning</a>
     <a href="#nav-placements">the big 3</a>
     <a href="#nav-week">✨ this week ✨</a>
@@ -459,6 +497,12 @@
     <a href="#nav-receipts">the receipts</a>
     <a href="#nav-overview">the tea</a>
   </nav>
+
+  <div class="section-title with-sub" id="nav-coven">The coven</div>
+  <div class="section-subnote">What the four of us have been up to, newest first. Tap to react.</div>
+  <div id="streakCard"></div>
+  <div id="covenFeed" class="feed"></div>
+  <div id="covenFeedMore"></div>
 
   <div class="section-title" id="nav-leaderboard">Leaderboard</div>
   <div class="section-subnote">One point per thing done: a journal, a phone-free hour, 8 glasses of water, a movement session, an article sent, a no-spend day. Just for fun.</div>
@@ -2087,6 +2131,8 @@ function onDayEdited(dd){
   stampCast(dd);
   savePerson(currentPerson);
   safeRender('renderTodayCard', renderTodayCard);
+  safeRender('renderStreakCard', renderStreakCard);
+  safeRender('renderCovenFeed', renderCovenFeed);
   safeRender('renderChapters', renderChapters);
   safeRender('renderOverview', renderOverview);
   safeRender('renderLeaderboard', renderLeaderboard);
@@ -2133,6 +2179,14 @@ function renderTodayCard(){
   const label = document.createElement('div');
   label.className = 'coven-label';
   label.textContent = covenLabelFor(count, isCast(viewerDd));
+  const streakN = covenStreak();
+  if(streakN > 0){
+    const chip = document.createElement('div');
+    chip.className = 'streak-chip';
+    chip.textContent = `\u2726 ${streakN} full-coven day${streakN===1?'':'s'}`;
+    label.appendChild(document.createElement('br'));
+    label.appendChild(chip);
+  }
   strip.appendChild(faces);
   strip.appendChild(label);
   wrap.appendChild(strip);
@@ -2177,6 +2231,316 @@ function renderTodayCard(){
   inner.appendChild(buildDayChecks(day, person));
   card.appendChild(inner);
   wrap.appendChild(card);
+}
+
+// ---- Full coven + streak (computed from existing data, nothing new stored) ----
+function isFullCoven(n){
+  return PEOPLE.every(p=> allData[p] && allData[p].days && isCast(allData[p].days[n]));
+}
+function covenStreak(){
+  const ti = todayInfo();
+  let n = ti.state==='during' ? ti.dayNum : (ti.state==='after' ? 31 : 0);
+  if(n < 1) return 0;
+  // Today only counts once it's full. Otherwise the streak runs through yesterday.
+  if(!isFullCoven(n)) n -= 1;
+  let s = 0;
+  while(n >= 1 && isFullCoven(n)){ s++; n--; }
+  return s;
+}
+
+function renderStreakCard(){
+  const el = document.getElementById('streakCard');
+  if(!el) return;
+  const ti = todayInfo();
+  if(ti.state==='before'){ el.innerHTML = ''; return; }
+  const today = ti.state==='during' ? ti.dayNum : 31;
+  const s = covenStreak();
+  const dots = [];
+  for(let n = today-6; n <= today; n++){
+    if(n < 1){ dots.push(`<div class="streak-dot-wrap"><div class="streak-dot" style="visibility:hidden;"></div><span>&nbsp;</span></div>`); continue; }
+    const d = DAYS.find(x=>x.n===n);
+    const full = isFullCoven(n);
+    const isToday = ti.state==='during' && n===today;
+    const cls = full ? 'full' : (isToday ? 'today' : '');
+    dots.push(`<div class="streak-dot-wrap"><div class="streak-dot ${cls}"></div><span>${isToday?'Today':(d?d.wd:'')}</span></div>`);
+  }
+  let todayLine = '';
+  if(ti.state==='during'){
+    const count = PEOPLE.filter(p=> allData[p] && allData[p].days && isCast(allData[p].days[today])).length;
+    const mine = myIdentity && allData[myIdentity] && allData[myIdentity].days ? isCast(allData[myIdentity].days[today]) : false;
+    const words = ['no','one','two','three','four'];
+    if(count===4) todayLine = ' Today: full coven.';
+    else if(myIdentity && !mine && count===3) todayLine = ' Today: just you left, we\u2019re holding your spot.';
+    else todayLine = ` Today: ${words[count]} spell${count===1?'':'s'} cast, ${words[4-count]} more to go.`;
+  }
+  el.innerHTML = `<div class="streak-card">
+    <div class="streak-head"><div class="streak-num">${s}</div><div class="streak-title">full-coven day${s===1?'':'s'} in a row</div></div>
+    <div class="streak-dots">${dots.join('')}</div>
+    <div class="streak-copy">Every day all four spells get cast, the streak grows. Miss one and we start a new one, together.${todayLine}</div>
+  </div>`;
+}
+
+// ---- Coven feed: built from data that already exists ----
+const CURRENTLY_VERBS = {reading:'is currently reading', watching:'is currently watching', listening:'is currently listening to'};
+let feedShowCount = 7;
+const FEED_PAGE = 7;
+
+function dayStartTime(n){ return new Date(CHALLENGE_START.getTime() + (n-1)*86400000); }
+
+function buildFeedEvents(){
+  const ev = [];
+  PEOPLE.forEach(p=>{
+    const pd = allData[p];
+    if(!pd) return;
+    Object.keys(pd.days||{}).forEach(k=>{
+      const n = Number(k), d = pd.days[k];
+      if(!d || n<1 || n>31) return;
+      // Older days (before castAt existed) that went full coven are covered by
+      // the one full-coven post, so they don't flood the feed with 4 cast posts each.
+      if(isCast(d) && (d.castAt || !isFullCoven(n))) ev.push({id:`cast:${p}:${n}`, type:'cast', who:p, day:n, at:d.castAt||null});
+      if(d.hasPhoto) ev.push({id:`photo:${p}:${n}`, type:'photo', who:p, day:n, at:d.photoAt||null, caption:d.photoCaption||'', key:`recal-daily-photo:${p}:${n}`});
+    });
+    Object.keys(pd.weeks||{}).forEach(wi=>{
+      const wd = pd.weeks[wi];
+      if(!wd) return;
+      (wd.sessions||[]).forEach((s,i)=>{
+        if(s && s.done && s.timestamp) ev.push({id:`session:${p}:${wi}:${i}`, type:'session', who:p, at:s.timestamp, hasPhoto:!!s.hasPhoto, caption:s.photoCaption||'', key:`recal-photo:${p}:${wi}:${i}`});
+      });
+      if(wd.article && wd.article.url && wd.article.timestamp){
+        ev.push({id:`article:${p}:${wi}`, type:'article', who:p, at:wd.article.timestamp, url:wd.article.url, label:wd.article.label||''});
+      }
+      // no-spend days deliberately stay out of the feed (still count for points)
+    });
+    (pd.currentlyHistory||[]).forEach(h=>{
+      if(h && h.timestamp && h.value) ev.push({id:`cur:${p}:${h.field}:${h.timestamp}`, type:'currently', who:p, at:h.timestamp, field:h.field, value:h.value, link:h.link||null});
+    });
+  });
+  for(let n=1; n<=31; n++){
+    if(!isFullCoven(n)) continue;
+    const times = PEOPLE.map(p=> allData[p].days[n].castAt).filter(Boolean);
+    const at = times.length===PEOPLE.length ? times.sort().slice(-1)[0] : null;
+    ev.push({id:`coven:${n}`, type:'coven', who:null, day:n, at});
+  }
+  // Sort newest first. Items with no clock time sit at the end of their day.
+  ev.forEach(e=>{
+    if(e.at) e.sortKey = new Date(e.at).getTime() + (e.type==='coven' ? 1 : 0); // full-coven post sits just above the spell that completed it
+    else if(e.day) e.sortKey = dayStartTime(e.day).getTime() + 86400000 - (e.type==='coven'?1000:2000);
+    else e.sortKey = 0;
+  });
+  const now = Date.now();
+  return ev.filter(e=> e.sortKey>0 && e.sortKey <= now + 3600000).sort((a,b)=> b.sortKey - a.sortKey);
+}
+
+function feedTimeLabel(e){
+  if(!e.at) return e.day ? `Day ${e.day}` : '';
+  const t = new Date(e.at), now = new Date();
+  const time = t.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}).replace(/\s/g,'').toLowerCase();
+  const sameDay = t.toDateString()===now.toDateString();
+  if(sameDay) return time;
+  const days = (new Date(now.getFullYear(),now.getMonth(),now.getDate()) - new Date(t.getFullYear(),t.getMonth(),t.getDate()))/86400000;
+  if(days < 7) return `${t.toLocaleDateString(undefined,{weekday:'short'})} ${time}`;
+  return t.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+}
+
+function feedSafeKey(id){ return String(id).replace(/[.#$\[\]\/]/g,'_'); }
+
+// ---- Reactions: one small JSON record per person, only she writes hers ----
+const REACTION_GLYPHS = [['\u2661','Love'],['\u2726','Sparkle'],['\u263E','Moon']];
+const reactionsData = {}; // {person: {eventKey: [glyph,...]}}
+const reactionsSynced = {};
+
+async function loadReactions(){
+  for(const p of PEOPLE){
+    try{
+      const res = await storage.get(`recal-reactions:${p}`, true);
+      reactionsData[p] = res ? JSON.parse(res.value) : {};
+      reactionsSynced[p] = res ? res.value : null;
+    }catch(e){ console.error('reactions load failed', p, e); reactionsData[p] = {}; }
+  }
+}
+
+async function toggleReaction(eventId, glyph){
+  if(!myIdentity) return;
+  const key = feedSafeKey(eventId);
+  const mine = reactionsData[myIdentity] || (reactionsData[myIdentity] = {});
+  const list = mine[key] || [];
+  mine[key] = list.includes(glyph) ? list.filter(g=>g!==glyph) : list.concat([glyph]);
+  if(!mine[key].length) delete mine[key];
+  safeRender('renderCovenFeed', renderCovenFeed);
+  try{
+    const json = JSON.stringify(mine);
+    reactionsSynced[myIdentity] = json;
+    await storage.set(`recal-reactions:${myIdentity}`, json, true);
+  }catch(e){ console.error('reaction save failed', e); }
+}
+
+function startReactionsSync(){
+  if(!db || typeof db.ref !== 'function') return;
+  PEOPLE.forEach(p=>{
+    try{
+      db.ref('recalData/recal-reactions:'+p).on('value', (snap)=>{
+        try{
+          const val = snap.val();
+          if(typeof val !== 'string' || val === reactionsSynced[p]) return;
+          if(p === myIdentity) return; // our own record: this device is the source of truth
+          reactionsSynced[p] = val;
+          reactionsData[p] = JSON.parse(val);
+          safeRender('renderCovenFeed', renderCovenFeed);
+        }catch(e){ console.error('reactions sync failed', p, e); }
+      });
+    }catch(e){ console.error('could not attach reactions listener', p, e); }
+  });
+}
+
+function joinNames(arr){
+  if(arr.length<=1) return arr.join('');
+  return arr.slice(0,-1).join(', ') + ' and ' + arr[arr.length-1];
+}
+
+function feedItemHtmlParts(e){
+  const name = e.who ? `<strong>${e.who}</strong> ` : '';
+  switch(e.type){
+    case 'cast': return {text:`${name}cast Day ${e.day}\u2019s spell`};
+    case 'photo': return {text:`${name}added a photo for Day ${e.day}`, photo:true};
+    case 'session': return {text:`${name}logged a movement session`, photo:e.hasPhoto};
+    case 'article': {
+      const domain = domainFromUrl(e.url);
+      const href = /^https?:\/\//i.test(e.url) ? e.url : 'https://'+e.url;
+      const card = domain ? `<a class="link-preview" href="${escapeHtml(href)}" target="_blank" rel="noopener"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt=""><div class="lp-text"><div class="lp-title">${escapeHtml(e.label || domain)}</div><div class="lp-domain">${escapeHtml(domain)}</div></div></a>` : '';
+      return {text:`${name}sent the group something`, card};
+    }
+    case 'currently': {
+      const card = e.link ? renderMediaPreviewHtml(e.link) : `<div class="link-preview"><div class="lp-text"><div class="lp-title">${escapeHtml(e.value)}</div></div></div>`;
+      return {text:`${name}${CURRENTLY_VERBS[e.field] || 'is currently into'}`, card};
+    }
+    case 'coven': return {text: e.day % 2 ? `Day ${e.day}, conjured. All four spells cast.` : `Full coven for Day ${e.day}.`};
+  }
+  return {text:''};
+}
+
+function renderCovenFeed(){
+  const el = document.getElementById('covenFeed');
+  const moreEl = document.getElementById('covenFeedMore');
+  if(!el) return;
+  const events = buildFeedEvents();
+  if(!events.length){
+    el.innerHTML = `<div class="feed-empty">Nothing here yet. Cast today's spell and it'll show up here.</div>`;
+    if(moreEl) moreEl.innerHTML = '';
+    return;
+  }
+  const shown = events.slice(0, feedShowCount);
+  el.innerHTML = '';
+  shown.forEach(e=>{
+    const parts = feedItemHtmlParts(e);
+    const item = document.createElement('div');
+    item.className = 'feed-item' + (e.type==='coven' ? ' system' : '');
+
+    const av = document.createElement('div');
+    if(e.type==='coven'){
+      av.className = 'feed-avatar system';
+      av.textContent = '\u2726';
+    } else {
+      av.className = 'feed-avatar';
+      av.style.borderColor = PERSON_COLORS[e.who] || 'var(--line)';
+      av.innerHTML = avatarHtml(e.who, 34);
+    }
+    item.appendChild(av);
+
+    const body = document.createElement('div');
+    body.className = 'feed-body';
+    body.innerHTML = `<div class="feed-top"><div class="feed-text">${parts.text}</div><div class="feed-time">${feedTimeLabel(e)}</div></div>`;
+
+    if(parts.photo && e.key){
+      const slot = document.createElement('div');
+      slot.className = 'feed-photo-slot';
+      slot.textContent = 'Loading photo...';
+      body.appendChild(slot);
+      (async ()=>{
+        let dataUrl = photoCache[e.key];
+        if(!dataUrl){
+          try{ const res = await storage.get(e.key, true); if(res){ dataUrl = res.value; photoCache[e.key] = dataUrl; } }catch(err){ console.error(err); }
+        }
+        if(!dataUrl){ slot.textContent = 'Photo unavailable'; return; }
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.style.cssText = 'border:none;padding:0;background:none;width:100%;cursor:zoom-in;';
+        btn.setAttribute('aria-label', 'Open photo');
+        btn.innerHTML = `<img class="feed-photo" src="${dataUrl}" alt="">`;
+        btn.onclick = ()=>{
+          document.getElementById('photoModalImg').src = dataUrl;
+          const bits = [`${e.who}${e.day?` \u00b7 Day ${e.day}`:''}`];
+          if(e.caption) bits.push(e.caption);
+          document.getElementById('photoModalCaption').textContent = bits.join(' \u00b7 ');
+          document.getElementById('photoModal').classList.add('open');
+        };
+        slot.replaceWith(btn);
+      })();
+    }
+    if(parts.photo && e.caption){
+      const cap = document.createElement('div');
+      cap.className = 'feed-caption';
+      cap.textContent = e.caption;
+      body.appendChild(cap);
+    }
+    if(parts.card){
+      const c = document.createElement('div');
+      c.innerHTML = parts.card;
+      body.appendChild(c);
+    }
+
+    // reactions (not on your own posts, and only once you've picked who you are)
+    const key = feedSafeKey(e.id);
+    const canReact = !!myIdentity && e.who !== myIdentity;
+    const row = document.createElement('div');
+    row.className = 'react-row';
+    const everyone = new Set();
+    REACTION_GLYPHS.forEach(([g, label])=>{
+      const names = PEOPLE.filter(p=> (reactionsData[p] && reactionsData[p][key] || []).includes(g));
+      names.forEach(n=> everyone.add(n));
+      const mineOn = !!myIdentity && names.includes(myIdentity);
+      if(!canReact && !names.length) return;
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'react-chip' + (mineOn ? ' mine' : '');
+      chip.setAttribute('aria-label', `${label} reaction`);
+      chip.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
+      chip.innerHTML = `<span class="g">${g}</span><span class="c">${names.length || ''}</span>`;
+      if(canReact) chip.onclick = ()=> toggleReaction(e.id, g);
+      else chip.disabled = true;
+      row.appendChild(chip);
+    });
+    if(row.children.length) body.appendChild(row);
+    if(everyone.size){
+      const list = Array.from(everyone).map(n=> n===myIdentity ? 'You' : n);
+      list.sort((a,b)=> a==='You' ? -1 : b==='You' ? 1 : 0);
+      const who = document.createElement('div');
+      who.className = 'react-who';
+      who.textContent = `${joinNames(list)} reacted`;
+      body.appendChild(who);
+    }
+
+    item.appendChild(body);
+    el.appendChild(item);
+  });
+
+  if(moreEl){
+    moreEl.innerHTML = '';
+    if(events.length > feedShowCount){
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'feed-more';
+      b.textContent = 'Show older';
+      b.onclick = ()=>{ feedShowCount += FEED_PAGE; renderCovenFeed(); };
+      moreEl.appendChild(b);
+    } else if(feedShowCount > FEED_PAGE){
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'feed-more';
+      b.textContent = 'Show less';
+      b.onclick = ()=>{ feedShowCount = FEED_PAGE; renderCovenFeed(); document.getElementById('nav-coven').scrollIntoView(); };
+      moreEl.appendChild(b);
+    }
+  }
 }
 
 // ---- Intro: full on the first visit, one line after that ----
@@ -2333,6 +2697,7 @@ function makePhotoRow(person, dayNum, dd){
         await storage.set(key, dataUrl, true);
         dd.hasPhoto = true;
         dd.photoType = file.type;
+        dd.photoAt = new Date().toISOString();
         photoCache[key] = dataUrl;
         savePerson(person);
         meta.textContent = 'Saved';
@@ -2626,7 +2991,8 @@ function computeChapterStats(chapterId){
 
   const pct = journalableSlots ? journalCount/journalableSlots : 0;
   const status = pct>=0.75 ? 'on track' : (pct>=0.4 ? 'getting there' : 'just getting started');
-  return {journalCount, workoutCount, noSpendCount, articleCount, status};
+  const fullCovenCount = dayNums.filter(n=>isFullCoven(n)).length;
+  return {journalCount, workoutCount, noSpendCount, articleCount, status, fullCovenCount};
 }
 
 function escapeHtml(str){
@@ -2722,6 +3088,7 @@ function renderReceiptCard(quoteText){
             <div class="stat-label">reads shared to the group</div>
           </div>
         </div>
+        ${stats.fullCovenCount ? `<div class="chart-callout">\u2726 conjured ${stats.fullCovenCount} full-coven day${stats.fullCovenCount===1?'':'s'} this chapter</div>` : ''}
         ${astroHits.length ? `<div class="chart-callout">lit up for: ${astroHits.join(', ')}</div>` : ''}
         ${quoteText ? `
         <div class="quote-block">
@@ -2802,6 +3169,8 @@ async function renderAll(){
   safeRender('renderNotifSection', renderNotifSection);
   safeRender('renderProfilePicSection', renderProfilePicSection);
   safeRender('renderTodayCard', renderTodayCard);
+  safeRender('renderStreakCard', renderStreakCard);
+  safeRender('renderCovenFeed', renderCovenFeed);
   safeRender('renderResetLink', renderResetLink);
   safeRender('renderTimeline', renderTimeline);
   safeRender('renderPlacements', renderPlacements);
@@ -2820,6 +3189,7 @@ async function renderAll(){
   try{
     currentWeekIdx = currentWeekIndexForToday();
     await loadAll();
+    try{ await loadReactions(); }catch(e){ console.error('reactions load failed', e); }
     await preloadProfilePics();
     await loadIdentity();
     if(myIdentity && PEOPLE.includes(myIdentity)){ currentPerson = myIdentity; }
@@ -2830,6 +3200,7 @@ async function renderAll(){
   try{ setupIntro(); }catch(e){ console.error('intro setup failed', e); }
   try{ setupScrollspy(); }catch(e){ console.error('scrollspy setup failed', e); }
   try{ startLiveSync(); }catch(e){ console.error('live sync setup failed', e); }
+  try{ startReactionsSync(); }catch(e){ console.error('reactions sync setup failed', e); }
 })();
 
 function setupScrollspy(){
