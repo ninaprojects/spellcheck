@@ -67,35 +67,131 @@ function getDayNumber() {
   return diffDays;
 }
 
-async function main() {
-  const day = getDayNumber();
-  console.log('Computed day number:', day);
-  if (day < 1 || day > 31) {
-    console.log('Outside the challenge range, nothing to send today.');
-    return;
-  }
+// ---------- shared helpers ----------
+const MODE = (process.env.NOTIFY_MODE || 'morning').toLowerCase(); // 'morning' | 'nudge'
+const PREF_DEFAULTS = { morning: true, nudge: true, reactions: true };
+const NUMBER_WORDS = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+const numWord = (n) => NUMBER_WORDS[n] || String(n);
 
+async function readString(key) {
+  const snap = await db.ref('recalData/' + key).once('value');
+  const v = snap.val();
+  return typeof v === 'string' ? v : null;
+}
+async function readJSON(key, fallback) {
+  try { const v = await readString(key); return v ? JSON.parse(v) : fallback; }
+  catch (e) { console.error('Could not read', key, e.message); return fallback; }
+}
+async function getPrefs(person) {
+  return Object.assign({}, PREF_DEFAULTS, await readJSON('recal-notif-prefs:' + person, {}));
+}
+
+// Same rule as the app: any two of journal, phone-free hour, 48oz water.
+function castCount(dd) {
+  if (!dd) return 0;
+  return (dd.journaled ? 1 : 0) + (dd.noPhone ? 1 : 0) + ((dd.waterOz || 0) >= 48 ? 1 : 0);
+}
+const isCast = (dd) => castCount(dd) >= 2;
+
+// Sent as a data-only message on purpose. A "notification" message relies
+// on the browser auto-displaying it, which iOS Safari doesn't reliably do.
+// Data-only forces it through our own service worker code (see sw.js).
+async function sendTo(person, title, body) {
+  const token = await readString('recal-fcm-token:' + person);
+  if (!token) { console.log('No token on file yet for', person, ', skipping.'); return; }
+  await admin.messaging().send({ token, data: { title, body } });
+  console.log('Sent to', person, '|', title);
+}
+
+// ---------- morning ----------
+async function runMorning(day) {
   const title = `\u2728 Day ${day} of Spells, Witches`;
   const body = SPECIAL[day] || AFFIRMATIONS[day] || `Day ${day} is live. Go check in.`;
-
   for (const person of PEOPLE) {
     try {
-      const snap = await db.ref('recalData/recal-fcm-token:' + person).once('value');
-      const token = snap.val();
-      if (!token) {
-        console.log('No token on file yet for', person, ', skipping.');
-        continue;
-      }
-      // Sent as a data-only message on purpose. A "notification" message
-      // relies on the browser auto-displaying it, which iOS Safari doesn't
-      // reliably do. Data-only forces it through our own service worker
-      // code (see sw.js), which we fully control.
-      await admin.messaging().send({ token, data: { title, body } });
-      console.log('Sent to', person);
+      const prefs = await getPrefs(person);
+      if (!prefs.morning) { console.log(person, 'turned the morning push off, skipping.'); continue; }
+      await sendTo(person, title, body);
     } catch (e) {
       console.error('Failed for', person, ':', e.message);
     }
   }
+}
+
+// ---------- evening nudge (7pm Pacific) ----------
+// Only goes to people whose spell for today isn't cast yet. Streak voice when
+// there's a live full-coven streak, social voice otherwise. Titles rotate by
+// day so the same one never lands two nights in a row.
+function nudgeMessage(day, need, othersCast, streak) {
+  if (streak >= 1) {
+    const needLine = need === 1 ? 'Just one more and your spell\u2019s cast.' : 'Any two of the three and your spell\u2019s cast.';
+    if (day % 2 === 0) {
+      return {
+        title: 'The streak\u2019s holding the door',
+        body: `${streak} full-coven day${streak === 1 ? '' : 's'} and counting. ${needLine} No guilt, we just want you on the board.`
+      };
+    }
+    return {
+      title: `Day ${streak + 1} of the streak is right there`,
+      body: `${needLine} Let\u2019s make it ${numWord(streak + 1)}.`
+    };
+  }
+  const threeIn = othersCast === 3 ? ' Three of us are in, come make it four.' : '';
+  const v = day % 3;
+  if (v === 0) {
+    return {
+      title: `Day ${day}\u2019s spell isn\u2019t cast yet`,
+      body: (need === 1 ? 'Just one more and it\u2019s done.' : 'Any two of the three and it\u2019s done.') + threeIn
+    };
+  }
+  if (v === 1) {
+    return {
+      title: `Still time for Day ${day}`,
+      body: (need === 1 ? 'Just one more and it\u2019s done.' : 'Any two of the three and it\u2019s done.') +
+        (othersCast === 3 ? threeIn : ' The coven\u2019s still casting too, you\u2019re in good company.')
+    };
+  }
+  return {
+    title: 'The day\u2019s still yours',
+    body: (need === 1 ? 'Just one more and today\u2019s spell is cast.' : 'Any two of the three and today\u2019s spell is cast.') + threeIn
+  };
+}
+
+async function runNudge(day) {
+  const data = {};
+  for (const p of PEOPLE) data[p] = await readJSON('recal:' + p, null);
+  const castOn = (p, n) => !!(data[p] && data[p].days && isCast(data[p].days[n]));
+  const fullCoven = (n) => PEOPLE.every(p => castOn(p, n));
+  // Streak through yesterday (today can't be full if someone's still out).
+  let streak = 0;
+  for (let n = day - 1; n >= 1 && fullCoven(n); n--) streak++;
+
+  for (const person of PEOPLE) {
+    try {
+      if (!data[person]) { console.log('No data for', person, ', skipping.'); continue; }
+      const dd = data[person].days ? data[person].days[day] : null;
+      if (isCast(dd)) { console.log(person, 'already cast Day', day, ', no nudge.'); continue; }
+      const prefs = await getPrefs(person);
+      if (!prefs.nudge) { console.log(person, 'turned the nudge off, skipping.'); continue; }
+      const need = 2 - castCount(dd);
+      const othersCast = PEOPLE.filter(p => p !== person && castOn(p, day)).length;
+      const { title, body } = nudgeMessage(day, need, othersCast, streak);
+      await sendTo(person, title, body);
+    } catch (e) {
+      console.error('Nudge failed for', person, ':', e.message);
+    }
+  }
+}
+
+async function main() {
+  const day = getDayNumber();
+  console.log('Mode:', MODE, '| computed day number:', day);
+  if (day < 1 || day > 31) {
+    console.log('Outside the challenge range, nothing to send today.');
+    return;
+  }
+  if (MODE === 'nudge') return runNudge(day);
+  return runMorning(day);
 }
 
 main()

@@ -15,7 +15,7 @@
 -->
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Spell Check</title>
 
 <!-- Link preview metadata, this is what shows up when the URL gets
@@ -324,6 +324,29 @@
   .react-who{font-size:11px;color:var(--text-secondary);margin-top:-2px;}
   .feed-more{margin-top:12px;width:100%;min-height:44px;border:1px solid var(--line);background:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;color:var(--text-primary);cursor:pointer;}
 
+  /* Wave 3: top bar, views, bottom tabs, profile */
+  .wrap{padding-bottom:calc(120px + env(safe-area-inset-bottom, 0px));}
+  html{scroll-padding-bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px;}
+  .topbar-title{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:26px;line-height:1;color:var(--text-primary);text-decoration:none;}
+  .topbar-avatar{width:44px;height:44px;border-radius:50%;box-sizing:border-box;border:2px solid var(--pink);background:#FFE3EE;padding:0;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;}
+  .view .masthead h1{display:none;}
+  .view[hidden]{display:none !important;}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--bg);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:8px 8px calc(10px + env(safe-area-inset-bottom, 0px));}
+  .tabbar .tab{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;text-decoration:none;color:var(--text-secondary);font-family:'Inter';font-size:10px;font-weight:500;position:relative;}
+  .tabbar .tab.active{color:var(--text-primary);font-weight:600;}
+  .tabbar .tab.active::after{content:'';width:16px;height:3px;border-radius:2px;background:var(--pink);margin-top:1px;}
+  .profile-head{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;margin:4px 0 8px;}
+  .profile-ring{width:108px;height:108px;border-radius:50%;box-sizing:border-box;border:4px solid var(--pink);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .profile-name{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:30px;color:var(--text-primary);line-height:1.1;}
+  .profile-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+  .profile-chip{font-size:12px;font-weight:500;color:var(--text-primary);border-radius:999px;padding:4px 12px;border:1px solid;}
+  .pref-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;border-top:1px solid var(--line);}
+  .pref-row:first-child{border-top:none;}
+  .pref-sub{font-size:11px;color:var(--text-secondary);font-weight:300;margin-top:2px;}
+  .toggle.on.acc-blue{background:var(--blue);border-color:var(--blue);}
+  .feed-avatar.tappable, .leaderboard-row.tappable{cursor:pointer;}
+
   .big3-toggle-link{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;}
   .big3-toggle-link:hover{color:var(--text-primary);border-color:var(--text-primary);}
 
@@ -459,6 +482,16 @@
 <body>
 <div class="wrap">
 
+  <header class="topbar">
+    <a href="#today" class="topbar-title">Spell Check</a>
+    <button type="button" id="topbarAvatar" class="topbar-avatar" aria-label="Open your profile"></button>
+  </header>
+
+  <div id="peopleWrap">
+  <div class="people" id="people"></div>
+  </div>
+
+  <section class="view" data-view="today">
   <div class="masthead">
     <h1>Spell Check</h1>
     <div class="tagline">a month of practical magic</div>
@@ -469,68 +502,9 @@
     <p class="sub">This is Spell Check. Consider it your monthly reminder to check in on your own spells.</p>
     <a href="#" id="introToggle" class="big3-toggle-link intro-toggle" style="display:none;">Read the intro +</a>
   </div>
-
-  <div class="people" id="people"></div>
   <div class="status" id="status"></div>
   <div id="identityBanner"></div>
-  <div id="notifSection" style="margin-bottom:20px;"></div>
-  <div id="profilePicSection" style="margin-bottom:20px;"></div>
-
   <div id="nav-today"><div id="todayCardWrap"></div></div>
-
-  <div class="timeline">
-    <div class="timeline-track" id="timelineTrack"></div>
-    <div class="timeline-labels">
-      <span>The Audit</span><span>Equinox</span><span>The Charge</span><span>The Align</span><span>The Reset</span>
-    </div>
-  </div>
-
-  <nav class="jump-nav">
-    <span class="jump-nav-label">Jump to</span>
-    <a href="#nav-today">today</a>
-    <a href="#nav-coven">the coven</a>
-    <a href="#nav-leaderboard">who's winning</a>
-    <a href="#nav-placements">the big 3</a>
-    <a href="#nav-week">✨ this week ✨</a>
-    <a href="#nav-days">the daily witchery</a>
-    <a href="#nav-photos">the evidence</a>
-    <a href="#nav-receipts">the receipts</a>
-    <a href="#nav-overview">the tea</a>
-  </nav>
-
-  <div class="section-title with-sub" id="nav-coven">The coven</div>
-  <div class="section-subnote">What the four of us have been up to, newest first. Tap to react.</div>
-  <div id="streakCard"></div>
-  <div id="covenFeed" class="feed"></div>
-  <div id="covenFeedMore"></div>
-
-  <div class="section-title" id="nav-leaderboard">Leaderboard</div>
-  <div class="section-subnote">One point per thing done: a journal, a phone-free hour, 8 glasses of water, a movement session, an article sent, a no-spend day. Just for fun.</div>
-  <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
-
-  <div class="section-title" id="nav-placements">Your placements (optional)</div>
-  <div class="placements" id="placementsPanel"></div>
-
-  <div class="section-title" id="nav-currently">Currently...</div>
-  <div class="placements">
-    <div class="currently-row">
-      <div class="currently-field">
-        <label class="grat-label">Reading</label>
-        <div id="currentlyReadingBody"></div>
-      </div>
-      <div class="currently-field">
-        <label class="grat-label">Watching</label>
-        <div id="currentlyWatchingBody"></div>
-      </div>
-      <div class="currently-field">
-        <label class="grat-label">Listening</label>
-        <div id="currentlyListeningBody"></div>
-      </div>
-    </div>
-    <a href="#" id="currentlyHistoryToggle" class="big3-toggle-link" style="display:none;margin-top:16px;">See past updates</a>
-    <div id="currentlyHistoryBody" style="display:none;margin-top:10px;"></div>
-  </div>
-
   <div class="section-title" id="nav-week">This week's commitments</div>
   <div class="week-panel">
     <div class="week-panel-head">
@@ -568,7 +542,31 @@
       <div class="toggle" id="noSpendToggle"></div>
     </div>
   </div>
+  </section>
 
+  <section class="view" data-view="coven" hidden>
+  <div class="section-title with-sub" id="nav-coven">The coven</div>
+  <div class="section-subnote">What the four of us have been up to, newest first. Tap to react.</div>
+  <div id="streakCard"></div>
+  <div id="covenFeed" class="feed"></div>
+  <div id="covenFeedMore"></div>
+  <div class="section-title" id="nav-leaderboard">Leaderboard</div>
+  <div class="section-subnote">One point per thing done: a journal, a phone-free hour, 8 glasses of water, a movement session, an article sent, a no-spend day. Just for fun.</div>
+  <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
+  <div class="section-title" id="nav-overview">How's everyone doing</div>
+  <div class="section-subnote">Journaled, no phone, and water are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
+  <div class="week-panel" style="padding:0;overflow-x:auto;">
+    <table class="overview" id="overviewTable"></table>
+  </div>
+  </section>
+
+  <section class="view" data-view="journey" hidden>
+  <div class="timeline">
+    <div class="timeline-track" id="timelineTrack"></div>
+    <div class="timeline-labels">
+      <span>The Audit</span><span>Equinox</span><span>The Charge</span><span>The Align</span><span>The Reset</span>
+    </div>
+  </div>
   <div class="bookend-card" id="kickoffBookend">
     <div class="bookend-label">Before Day 1</div>
     <h3>Kickoff Call</h3>
@@ -576,10 +574,8 @@
     <label class="grat-label">My intention going in</label>
     <input type="text" id="kickoffInput" class="gratitude-input" placeholder="Say it out loud first, then write it">
   </div>
-
   <div class="section-title" id="nav-days">The 31 days</div>
   <div id="chapters"></div>
-
   <div class="bookend-card">
     <div class="bookend-label">After Day 31</div>
     <h3>Closing Celebration</h3>
@@ -587,7 +583,6 @@
     <label class="grat-label">My toast</label>
     <input type="text" id="closingInput" class="gratitude-input" placeholder="What are you toasting to">
   </div>
-
   <div class="section-title with-sub" id="nav-photos">Photo Journal</div>
   <div class="section-subnote">Whatever anyone's added, day by day. This is the thing you'll actually want to look back at.</div>
   <div class="gallery-toggle">
@@ -596,7 +591,9 @@
   </div>
   <div id="photoGallery" class="photo-gallery"></div>
   <div id="photoModal" class="photo-modal"><div><img id="photoModalImg" src=""><div id="photoModalCaption" style="color:#fff;text-align:center;font-family:'Inter';font-size:13px;margin-top:10px;"></div></div></div>
+  </section>
 
+  <section class="view" data-view="receipts" hidden>
   <div class="section-title" id="nav-receipts">Chapter Receipts</div>
   <div class="section-subnote">Real numbers, pulled live. Add a quote whenever someone says something worth keeping, then download it in whichever shape you need.</div>
   <div class="week-panel">
@@ -613,17 +610,50 @@
     <div id="receiptPreviewWrap"></div>
     <button id="downloadReceiptBtn" type="button" class="session-photo-btn" style="margin-top:16px;">Download PNG</button>
   </div>
+  </section>
 
-  <div class="section-title" id="nav-overview">How's everyone doing</div>
-  <div class="section-subnote">Journaled, no phone, and water are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
-  <div class="week-panel" style="padding:0;overflow-x:auto;">
-    <table class="overview" id="overviewTable"></table>
+  <section class="view" data-view="profile" hidden>
+  <div id="profilePicSection"></div>
+  <div class="section-title" id="nav-notifs">Notifications</div>
+  <div id="notifSection"></div>
+  <div id="notifPrefs"></div>
+  <div class="section-title" id="nav-placements">The big 3</div>
+  <div class="placements" id="placementsPanel"></div>
+  <div class="section-title" id="nav-currently">Currently</div>
+  <div class="placements">
+    <div class="currently-row">
+      <div class="currently-field">
+        <label class="grat-label">Reading</label>
+        <div id="currentlyReadingBody"></div>
+      </div>
+      <div class="currently-field">
+        <label class="grat-label">Watching</label>
+        <div id="currentlyWatchingBody"></div>
+      </div>
+      <div class="currently-field">
+        <label class="grat-label">Listening</label>
+        <div id="currentlyListeningBody"></div>
+      </div>
+    </div>
+    <a href="#" id="currentlyHistoryToggle" class="big3-toggle-link" style="display:none;margin-top:16px;">See past updates</a>
+    <div id="currentlyHistoryBody" style="display:none;margin-top:10px;"></div>
   </div>
-
+  <div class="section-title">Bookends</div>
+  <div id="profileBookends"></div>
+  <div id="profileIdentity" style="margin-top:36px;"></div>
   <div class="footnote">Your entries, photos, and links are visible to the other three people using this. Data is shared across the group, not private.</div>
   <div id="resetProgressWrap" style="margin-top:6px;"></div>
   <div class="trademark-note">Cast &amp; Check&trade; (pending)</div>
+  </section>
+
 </div>
+
+<nav class="tabbar" aria-label="Sections">
+  <a href="#today" class="tab" data-tab="today"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"></path></svg><span>Today</span></a>
+  <a href="#coven" class="tab" data-tab="coven"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="9" cy="9" r="3"></circle><circle cx="17" cy="10" r="2.5"></circle><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5M15 15.2c2.6-.4 4.8.8 5.5 3.8"></path></svg><span>Coven</span></a>
+  <a href="#journey" class="tab" data-tab="journey"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg><span>Journey</span></a>
+  <a href="#receipts" class="tab" data-tab="receipts"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z"></path><path d="M9 8h6M9 12h6"></path></svg><span>Receipts</span></a>
+</nav>
 
 <script>
 // ============================================================
@@ -906,7 +936,9 @@ function renderIdentityBanner(){
       gate.appendChild(b);
     });
   } else {
-    el.innerHTML = `<div class="identity-banner">You're set up as <strong>${myIdentity}</strong>. <a href="#" id="switchIdentity">Not you?</a></div>`;
+    el.innerHTML = '';
+    const pid = document.getElementById('profileIdentity');
+    if(pid) pid.innerHTML = `<div class="identity-banner">You're set up as <strong>${myIdentity}</strong>. <a href="#" id="switchIdentity">Not you?</a></div>`;
     document.getElementById('switchIdentity').onclick = async (e)=>{
       e.preventDefault();
       try{ await storage.delete('recal-whoami', false); }catch(err){ /* nothing stored, fine */ }
@@ -1001,22 +1033,8 @@ function avatarHtml(name, size){
   return `<span style="display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:var(--track-off);color:var(--text-secondary);font-family:'Inter';font-weight:600;font-size:${fontSize}px;vertical-align:middle;flex-shrink:0;">${initial}</span>`;
 }
 
-function renderProfilePicSection(){
-  const el = document.getElementById('profilePicSection');
-  if(!myIdentity){ el.innerHTML = ''; return; }
+function wireProfilePicInput(el){
   const pd = allData[currentPerson];
-  const editable = isEditable();
-  const hasPic = !!profilePicCache[currentPerson];
-
-  el.innerHTML = `<div class="identity-banner" style="display:flex;align-items:center;gap:14px;">
-    <span id="profilePicPreviewWrap">${avatarHtml(currentPerson, 44)}</span>
-    <span style="flex:1;">
-      ${editable ? `<button id="profilePicBtn" class="gallery-toggle-btn" type="button">${hasPic?'Change photo':'Add a profile pic'}</button>
-      <input type="file" id="profilePicInput" accept="image/*" style="display:none;">` : `${currentPerson}'s photo`}
-    </span>
-  </div>`;
-
-  if(editable){
     const btn = document.getElementById('profilePicBtn');
     const input = document.getElementById('profilePicInput');
     btn.onclick = ()=> input.click();
@@ -1038,11 +1056,38 @@ function renderProfilePicSection(){
           renderProfilePicSection();
           renderPeopleTabs();
           renderLeaderboard();
+          renderTopbar();
+          safeRender('renderTodayCard', renderTodayCard);
         }catch(e){ console.error(e); }
       };
       reader.readAsDataURL(file);
     };
   }
+
+function renderProfilePicSection(){
+  const el = document.getElementById('profilePicSection');
+  if(!myIdentity){ el.innerHTML = ''; return; }
+  // Profile page header: big photo, name, Big 3 chips, change-photo button
+  {
+    const editableHead = isEditable();
+    const hasPicHead = !!profilePicCache[currentPerson];
+    const plh = (allData[currentPerson] && allData[currentPerson].placements) || {};
+    const chip = (glyph, sign, border, fill)=> sign ? `<span class="profile-chip" style="border-color:${border};background:${fill};">${glyph} ${sign}</span>` : '';
+    el.innerHTML = `<div class="profile-head">
+      <span class="profile-ring" id="profilePicPreviewWrap" style="border-color:${PERSON_COLORS[currentPerson]||'var(--pink)'};">${avatarHtml(currentPerson, 96)}</span>
+      <div class="profile-name">${currentPerson}</div>
+      <div class="profile-chips">${chip('\u2609', plh.sun, '#FFC94F', '#FFF1CC')}${chip('\u263D', plh.moon, '#C9A9E0', '#F0E6F7')}${chip('\u2191', plh.rising, '#4FA8FF', '#DDEEFF')}</div>
+      ${editableHead ? `<button id="profilePicBtn" class="gallery-toggle-btn" type="button" style="min-height:44px;">${hasPicHead?'Change photo':'Add a profile pic'}</button>
+      <input type="file" id="profilePicInput" accept="image/*" style="display:none;">` : ''}
+    </div>`;
+    if(editableHead) wireProfilePicInput(el);
+    return;
+  }
+  const pd = allData[currentPerson];
+  const editable = isEditable();
+  const hasPic = !!profilePicCache[currentPerson];
+
+  // (legacy layout replaced by the profile header above)
 }
 
 // Bumped whenever the day-by-day schedule itself changes shape.
@@ -2440,9 +2485,13 @@ function renderCovenFeed(){
       av.className = 'feed-avatar system';
       av.textContent = '\u2726';
     } else {
-      av.className = 'feed-avatar';
+      av.className = 'feed-avatar tappable';
       av.style.borderColor = PERSON_COLORS[e.who] || 'var(--line)';
       av.innerHTML = avatarHtml(e.who, 34);
+      av.setAttribute('role','button');
+      av.setAttribute('tabindex','0');
+      av.setAttribute('aria-label', `Open ${e.who}'s profile`);
+      av.onclick = ()=> openProfile(e.who);
     }
     item.appendChild(av);
 
@@ -2537,10 +2586,140 @@ function renderCovenFeed(){
       b.type = 'button';
       b.className = 'feed-more';
       b.textContent = 'Show less';
-      b.onclick = ()=>{ feedShowCount = FEED_PAGE; renderCovenFeed(); document.getElementById('nav-coven').scrollIntoView(); };
+      b.onclick = ()=>{ feedShowCount = FEED_PAGE; renderCovenFeed(); window.scrollTo(0,0); };
       moreEl.appendChild(b);
     }
   }
+}
+
+// ---- Views: Today / Coven / Journey / Receipts / Profile ----
+const VIEWS = ['today','coven','journey','receipts','profile'];
+let activeView = 'today';
+
+function applyView(scrollTop){
+  document.querySelectorAll('.view').forEach(s=>{ s.hidden = s.dataset.view !== activeView; });
+  document.querySelectorAll('.tabbar .tab').forEach(t=>{
+    const on = t.dataset.tab === activeView;
+    t.classList.toggle('active', on);
+    if(on) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current');
+  });
+  const pw = document.getElementById('peopleWrap');
+  if(pw) pw.style.display = ['today','journey','profile'].includes(activeView) ? '' : 'none';
+  if(scrollTop) window.scrollTo(0,0);
+}
+
+function viewFromHash(){
+  const h = (location.hash||'').replace('#','');
+  return VIEWS.includes(h) ? h : null;
+}
+
+window.addEventListener('hashchange', ()=>{
+  const v = viewFromHash();
+  if(!v) return; // bare "#" links elsewhere never move you between tabs
+  activeView = v;
+  // Today always opens on your own day; other tabs keep whoever you were looking at.
+  if(v === 'today' && myIdentity && currentPerson !== myIdentity){
+    currentPerson = myIdentity;
+    renderAll();
+  }
+  applyView(true);
+});
+
+function openProfile(p){
+  if(p && PEOPLE.includes(p)) currentPerson = p;
+  if(activeView !== 'profile'){ location.hash = 'profile'; }
+  renderAll();
+}
+
+function renderTopbar(){
+  const btn = document.getElementById('topbarAvatar');
+  if(!btn) return;
+  if(!myIdentity){ btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  btn.style.borderColor = PERSON_COLORS[myIdentity] || 'var(--pink)';
+  btn.innerHTML = avatarHtml(myIdentity, 36);
+  btn.onclick = ()=> openProfile(myIdentity);
+}
+
+// Notification preferences, one small record per person. Read by the
+// morning/evening pushes and the reactions Worker. Missing = all on.
+const notifPrefs = {};
+const NOTIF_PREF_DEFAULTS = {morning:true, nudge:true, reactions:true};
+async function loadNotifPrefs(){
+  for(const p of PEOPLE){
+    try{
+      const res = await storage.get(`recal-notif-prefs:${p}`, true);
+      notifPrefs[p] = Object.assign({}, NOTIF_PREF_DEFAULTS, res ? JSON.parse(res.value) : {});
+    }catch(e){ notifPrefs[p] = Object.assign({}, NOTIF_PREF_DEFAULTS); }
+  }
+}
+
+function renderNotifPrefs(){
+  const el = document.getElementById('notifPrefs');
+  const title = document.getElementById('nav-notifs');
+  const own = !!myIdentity && currentPerson === myIdentity;
+  document.getElementById('notifSection').style.display = own ? '' : 'none';
+  if(title) title.style.display = own ? '' : 'none';
+  if(!el) return;
+  if(!own){ el.innerHTML = ''; return; }
+  const prefs = notifPrefs[myIdentity] || (notifPrefs[myIdentity] = Object.assign({}, NOTIF_PREF_DEFAULTS));
+  const rows = [
+    ['morning', 'Morning spell', 'Daily at 8am Pacific', 'acc-yellow'],
+    ['nudge', 'Evening nudge', '7pm Pacific, only if your spell isn\u2019t cast', 'acc-pink'],
+    ['reactions', 'Reactions', 'When the coven reacts to your stuff. Quiet 10pm to 8am.', 'acc-blue']
+  ];
+  el.innerHTML = '';
+  const panel = document.createElement('div');
+  panel.className = 'week-panel';
+  panel.style.padding = '4px 20px';
+  rows.forEach(([key, label, sub, acc])=>{
+    const row = document.createElement('div');
+    row.className = 'pref-row';
+    row.innerHTML = `<div><div class="commit-label">${label}</div><div class="pref-sub">${sub}</div></div>`;
+    const t = document.createElement('button');
+    t.type = 'button';
+    t.className = 'toggle ' + acc + (prefs[key] ? ' on' : '');
+    t.setAttribute('role','switch');
+    t.setAttribute('aria-checked', prefs[key] ? 'true' : 'false');
+    t.setAttribute('aria-label', label);
+    t.style.padding = '0';
+    t.onclick = async ()=>{
+      prefs[key] = !prefs[key];
+      renderNotifPrefs();
+      try{ await storage.set(`recal-notif-prefs:${myIdentity}`, JSON.stringify(prefs), true); }catch(e){ console.error('prefs save failed', e); }
+    };
+    row.appendChild(t);
+    panel.appendChild(row);
+  });
+  el.appendChild(panel);
+}
+
+function renderProfileBookends(){
+  const el = document.getElementById('profileBookends');
+  if(!el) return;
+  const pd = allData[currentPerson];
+  const editable = isEditable();
+  el.innerHTML = '';
+  const panel = document.createElement('div');
+  panel.className = 'placements';
+  [['kickoffIntention','My intention going in','Say it out loud first, then write it'],
+   ['closingToast','My toast','What are you toasting to']].forEach(([key,label,ph], i)=>{
+    const lab = document.createElement('label');
+    lab.className = 'grat-label';
+    lab.textContent = label;
+    if(i) lab.style.marginTop = '16px';
+    lab.style.display = 'block';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'gratitude-input';
+    input.placeholder = editable ? ph : '';
+    input.value = pd[key] || '';
+    input.disabled = !editable;
+    input.onchange = ()=>{ pd[key] = input.value; savePerson(currentPerson); flashSaved(input); };
+    panel.appendChild(lab);
+    panel.appendChild(input);
+  });
+  el.appendChild(panel);
 }
 
 // ---- Intro: full on the first visit, one line after that ----
@@ -2859,13 +3038,16 @@ function renderLeaderboard(){
   const el = document.getElementById('leaderboardPanel');
   const ranked = PEOPLE.map(p=>({name:p, score:scoreFor(p)})).sort((a,b)=>b.score-a.score);
   el.innerHTML = ranked.map((r,i)=>`
-    <div class="leaderboard-row">
+    <div class="leaderboard-row tappable" data-person="${r.name}" role="button" tabindex="0" aria-label="Open ${r.name}'s profile">
       <div class="lb-rank">${i+1}</div>
       ${avatarHtml(r.name, 28)}
       <div class="lb-name${r.name===currentPerson?' me':''}">${r.name}</div>
       <div class="lb-score">${r.score}<span class="lb-score-label">pts</span></div>
     </div>
   `).join('');
+  el.querySelectorAll('.leaderboard-row[data-person]').forEach(row=>{
+    row.onclick = ()=> openProfile(row.dataset.person);
+  });
 }
 
 let galleryMode = 'everyone';
@@ -3163,6 +3345,7 @@ function safeRender(name, fn){
 }
 
 async function renderAll(){
+  safeRender('renderTopbar', renderTopbar);
   safeRender('renderPeopleTabs', renderPeopleTabs);
   safeRender('renderStatus', renderStatus);
   safeRender('renderIdentityBanner', renderIdentityBanner);
@@ -3172,6 +3355,8 @@ async function renderAll(){
   safeRender('renderStreakCard', renderStreakCard);
   safeRender('renderCovenFeed', renderCovenFeed);
   safeRender('renderResetLink', renderResetLink);
+  safeRender('renderNotifPrefs', renderNotifPrefs);
+  safeRender('renderProfileBookends', renderProfileBookends);
   safeRender('renderTimeline', renderTimeline);
   safeRender('renderPlacements', renderPlacements);
   safeRender('renderCurrently', renderCurrently);
@@ -3190,13 +3375,16 @@ async function renderAll(){
     currentWeekIdx = currentWeekIndexForToday();
     await loadAll();
     try{ await loadReactions(); }catch(e){ console.error('reactions load failed', e); }
+    try{ await loadNotifPrefs(); }catch(e){ console.error('prefs load failed', e); }
     await preloadProfilePics();
     await loadIdentity();
     if(myIdentity && PEOPLE.includes(myIdentity)){ currentPerson = myIdentity; }
   }catch(e){
     console.error('startup failed, rendering with defaults', e);
   }
+  activeView = viewFromHash() || 'today';
   renderAll();
+  try{ applyView(false); }catch(e){ console.error('view setup failed', e); }
   try{ setupIntro(); }catch(e){ console.error('intro setup failed', e); }
   try{ setupScrollspy(); }catch(e){ console.error('scrollspy setup failed', e); }
   try{ startLiveSync(); }catch(e){ console.error('live sync setup failed', e); }
