@@ -370,6 +370,13 @@
   .water-done{margin-top:10px;font-size:12px;font-weight:500;color:#1F6FC2;}
   .gallery-cell .cell-tag{position:absolute;top:6px;left:6px;font-size:10px;font-weight:600;font-family:'Inter';color:#1A1A1A;background:var(--yellow);border-radius:999px;padding:2px 7px;}
 
+  /* shared reads */
+  .share-item{margin-top:10px;}
+  .share-item .link-preview{margin-top:0;}
+  .share-meta{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;color:var(--text-secondary);margin-top:4px;}
+  .share-remove{background:none;border:none;padding:8px 0 8px 12px;font-family:'Inter';font-size:11px;color:var(--text-secondary);border-bottom:1px solid var(--line);cursor:pointer;}
+  .shares-empty{font-size:13px;color:var(--text-secondary);font-weight:300;}
+
   .big3-toggle-link{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;}
   .big3-toggle-link:hover{color:var(--text-primary);border-color:var(--text-primary);}
 
@@ -540,12 +547,14 @@
 
     <div class="commit-row">
       <div class="commit-label">Send the group something</div>
-      <div class="commit-sub">An article, an opinion, a weird fact. Whatever's actually interesting.</div>
+      <div class="commit-sub">An article, an opinion, a weird fact. Share as many as you like, the first one each week is worth a point.</div>
       <div class="article-inputs">
-        <input class="article-input" id="articleUrlInput" placeholder="Paste the link">
+        <input class="article-input" id="articleUrlInput" placeholder="Paste the link" inputmode="url" autocapitalize="none" autocorrect="off">
         <input class="article-label-input" id="articleLabelInput" placeholder="Short label (optional)">
       </div>
-      <div id="articlePreview"></div>
+      <button type="button" id="shareBtn" class="session-photo-btn" style="margin-top:10px;min-height:44px;">Share with the coven</button>
+      <div id="shareStatus" class="commit-sub" style="min-height:18px;margin-top:8px;"></div>
+      <div id="sharesList"></div>
     </div>
 
     <div class="commit-row flex">
@@ -652,6 +661,9 @@
     <a href="#" id="currentlyHistoryToggle" class="big3-toggle-link" style="display:none;margin-top:16px;">See past updates</a>
     <div id="currentlyHistoryBody" style="display:none;margin-top:10px;"></div>
   </div>
+  <div class="section-title">Shared reads</div>
+  <div id="profileShares"></div>
+
   <div class="section-title">Bookends</div>
   <div id="profileBookends"></div>
   <div id="profileIdentity" style="margin-top:36px;"></div>
@@ -1301,6 +1313,8 @@ async function loadAll(){
 }
 
 async function savePerson(p){
+  // Anything saved shows up in the feed straight away, not only after a reopen.
+  safeRender('renderCovenFeed', renderCovenFeed);
   try{
     const json = JSON.stringify(allData[p]);
     if(!freshLoaded) editedBeforeFresh[p] = true;
@@ -1418,6 +1432,45 @@ function buildLocationRow(obj, onSaved){
   return wrap;
 }
 
+function makeShareId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// The one place that reads a week's shared links. Works on raw or migrated data.
+function sharesOfWeek(wd){
+  if(!wd) return [];
+  if(Array.isArray(wd.shares)) return wd.shares.filter(s=> s && s.url && String(s.url).trim());
+  if(wd.article && wd.article.url && String(wd.article.url).trim()){
+    return [{id:'a0', legacy:true, url:String(wd.article.url).trim(), label:wd.article.label||'', timestamp:wd.article.timestamp||null}];
+  }
+  return [];
+}
+function shareEventId(p, wi, s){ return s.legacy ? `article:${p}:${wi}` : `article:${p}:${wi}:${s.id}`; }
+function normalizeShareUrl(u){ return String(u||'').trim().replace(/^https?:\/\//i,'').replace(/\/+$/,'').toLowerCase(); }
+
+function shareCardHtml(s){
+  const domain = domainFromUrl(s.url);
+  const href = /^https?:\/\//i.test(s.url) ? s.url : 'https://'+s.url;
+  const title = (s.label && s.label.trim()) || domain || s.url;
+  const icon = domain ? `<img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt="">` : '';
+  return `<a class="link-preview" href="${escapeHtml(href)}" target="_blank" rel="noopener">${icon}<div class="lp-text"><div class="lp-title">${escapeHtml(title)}</div><div class="lp-domain">${escapeHtml(domain||'')}</div></div></a>`;
+}
+
+function afterSharesChanged(){
+  savePerson(currentPerson);
+  safeRender('renderWeekPanel', renderWeekPanel);
+  safeRender('renderProfileShares', renderProfileShares);
+  safeRender('renderOverview', renderOverview);
+  safeRender('renderLeaderboard', renderLeaderboard);
+  safeRender('refreshReceiptsIfLoaded', refreshReceiptsIfLoaded);
+}
+
+function removeShare(wi, id){
+  if(!isEditable()) return;
+  if(!confirm('Remove this link from the feed and your profile?')) return;
+  const wd = weekData(currentPerson, wi);
+  wd.shares = wd.shares.filter(s=> s.id !== id);
+  afterSharesChanged();
+}
+
 function weekData(p,idx){
   let wd = allData[p].weeks[idx];
   if(!wd){
@@ -1437,6 +1490,9 @@ function weekData(p,idx){
   }
   if(!wd.article) wd.article = {url:"",label:"",timestamp:null};
   if(typeof wd.article.timestamp === 'undefined') wd.article.timestamp = null;
+  // Many links a week now. The old single article becomes the first share, once.
+  // (wd.article stays in the record untouched; sharesOfWeek is the one reader.)
+  if(!Array.isArray(wd.shares)) wd.shares = sharesOfWeek(wd);
   if(typeof wd.noSpend === 'boolean'){
     wd.noSpend = {done: wd.noSpend, timestamp:null};
   }
@@ -1688,31 +1744,50 @@ function renderWeekPanel(){
     sessionsList.appendChild(row);
   });
 
-  // article link
+  // shared links: as many as you like
   const urlInput = document.getElementById('articleUrlInput');
   const labelInput = document.getElementById('articleLabelInput');
-  urlInput.value = wd.article.url || '';
-  labelInput.value = wd.article.label || '';
-  urlInput.disabled = !isEditable();
-  labelInput.disabled = !isEditable();
-  renderArticlePreview(wd.article.url, wd.article.label);
-  const commitArticle = ()=>{
-    const newUrl = urlInput.value.trim();
-    if(newUrl && newUrl !== wd.article.url){
-      wd.article.timestamp = new Date().toISOString();
+  const shareBtn = document.getElementById('shareBtn');
+  const shareStatus = document.getElementById('shareStatus');
+  const sharesList = document.getElementById('sharesList');
+  const canShare = isEditable();
+  urlInput.disabled = labelInput.disabled = shareBtn.disabled = !canShare;
+  if(!canShare){ urlInput.value = ''; labelInput.value = ''; }
+  const doShare = ()=>{
+    if(!isEditable()) return;
+    const url = urlInput.value.trim();
+    if(!url){ urlInput.focus(); return; }
+    const wdNow = weekData(currentPerson, currentWeekIdx);
+    if(wdNow.shares.some(s=> normalizeShareUrl(s.url) === normalizeShareUrl(url))){
+      shareStatus.textContent = 'You already shared that one this week.';
+      return;
     }
-    if(!newUrl){ wd.article.timestamp = null; }
-    wd.article.url = newUrl;
-    wd.article.label = labelInput.value.trim();
-    savePerson(currentPerson);
-    renderArticlePreview(wd.article.url, wd.article.label);
-    renderOverview();
-    renderLeaderboard();
-    refreshReceiptsIfLoaded();
-    flashSaved(labelInput);
+    wdNow.shares.push({id:makeShareId(), url, label:labelInput.value.trim(), timestamp:new Date().toISOString()});
+    urlInput.value = ''; labelInput.value = '';
+    afterSharesChanged();
+    const st = document.getElementById('shareStatus');
+    if(st){ st.textContent = 'Shared. It\u2019s in the coven feed.'; setTimeout(()=>{ if(st.textContent.startsWith('Shared.')) st.textContent = ''; }, 3000); }
   };
-  urlInput.onchange = commitArticle;
-  labelInput.onchange = commitArticle;
+  shareBtn.onclick = doShare;
+  urlInput.onkeydown = labelInput.onkeydown = (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); doShare(); } };
+  const weekShares = sharesOfWeek(wd).slice().sort((a,b)=> String(b.timestamp||'').localeCompare(String(a.timestamp||'')));
+  sharesList.innerHTML = '';
+  weekShares.forEach(s=>{
+    const item = document.createElement('div');
+    item.className = 'share-item';
+    item.innerHTML = shareCardHtml(s);
+    if(canShare){
+      const meta = document.createElement('div');
+      meta.className = 'share-meta';
+      meta.innerHTML = `<span>${s.timestamp ? formatTimestamp(s.timestamp) : ''}</span>`;
+      const rm = document.createElement('button');
+      rm.type = 'button'; rm.className = 'share-remove'; rm.textContent = 'remove';
+      rm.onclick = ()=> removeShare(currentWeekIdx, s.id);
+      meta.appendChild(rm);
+      item.appendChild(meta);
+    }
+    sharesList.appendChild(item);
+  });
 
   const noSpendToggle = document.getElementById('noSpendToggle');
   noSpendToggle.className = 'toggle'+(wd.noSpend.done?' on':'')+(isEditable()?'':' locked');
@@ -2347,6 +2422,26 @@ function renderStreakCard(){
 
 // ---- Coven feed: built from data that already exists ----
 const CURRENTLY_VERBS = {reading:'is currently reading', watching:'is currently watching', listening:'is currently listening to'};
+
+// Feed and push notifications use the same lines. Each post picks one and
+// keeps it (from its own id), so a post never changes wording between visits.
+// Keep these lists, and pickLine, identical to spellcheck-push-worker.js.
+const FEED_LINES = {
+  share: ['{who} read this and thought of us', '{who} left something on the altar', '{who} passed on a little magic'],
+  reading: ['{who} opened a new chapter', '{who} turned a new page', '{who} is deep in a new one'],
+  watching: ['{who} hit play on something new', '{who} is on the couch with a new one', '{who} queued up something new'],
+  listening: ['{who}\u2019s soundtrack just changed', '{who} has a new one on repeat', '{who} is setting the mood']
+};
+function lineKey(id){ return String(id).split(':').slice(1).join(':'); }
+function pickLine(list, key){
+  let h = 0;
+  for(const c of String(key)) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  return list[h % list.length];
+}
+function feedLine(kind, id, who){
+  const list = FEED_LINES[kind];
+  return pickLine(list, lineKey(id)).replace('{who}', `<strong>${who}</strong>`);
+}
 let feedShowCount = 7;
 const FEED_PAGE = 7;
 
@@ -2371,12 +2466,15 @@ function buildFeedEvents(){
       (wd.sessions||[]).forEach((s,i)=>{
         if(s && s.done && s.timestamp) ev.push({id:`session:${p}:${wi}:${i}`, type:'session', who:p, at:s.timestamp, hasPhoto:!!s.hasPhoto, caption:s.photoCaption||'', key:`recal-photo:${p}:${wi}:${i}`});
       });
-      if(wd.article && wd.article.url && wd.article.timestamp){
-        ev.push({id:`article:${p}:${wi}`, type:'article', who:p, at:wd.article.timestamp, url:wd.article.url, label:wd.article.label||''});
-      }
+      sharesOfWeek(wd).forEach(s=>{
+        if(s.timestamp) ev.push({id:shareEventId(p, wi, s), type:'article', who:p, at:s.timestamp, url:s.url, label:s.label||''});
+      });
       // no-spend days deliberately stay out of the feed (still count for points)
     });
-    (pd.currentlyHistory||[]).forEach(h=>{
+    // A quick correction ("Piranesi" then "Piranesi, Susanna Clarke") is one post, not two.
+    const curSorted = (pd.currentlyHistory||[]).filter(h=> h && h.timestamp && h.value).slice().sort((a,b)=> String(b.timestamp).localeCompare(String(a.timestamp)));
+    const curKept = curSorted.filter((h,i)=> !curSorted.slice(0,i).some(n=> n.field===h.field && (new Date(n.timestamp)-new Date(h.timestamp)) < 600000));
+    curKept.forEach(h=>{
       if(h && h.timestamp && h.value) ev.push({id:`cur:${p}:${h.field}:${h.timestamp}`, type:'currently', who:p, at:h.timestamp, field:h.field, value:h.value, link:h.link||null});
     });
   });
@@ -2472,11 +2570,11 @@ function feedItemHtmlParts(e){
       const domain = domainFromUrl(e.url);
       const href = /^https?:\/\//i.test(e.url) ? e.url : 'https://'+e.url;
       const card = domain ? `<a class="link-preview" href="${escapeHtml(href)}" target="_blank" rel="noopener"><img src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt=""><div class="lp-text"><div class="lp-title">${escapeHtml(e.label || domain)}</div><div class="lp-domain">${escapeHtml(domain)}</div></div></a>` : '';
-      return {text:`${name}sent the group something`, card};
+      return {text: feedLine('share', e.id, e.who), card};
     }
     case 'currently': {
       const card = e.link ? renderMediaPreviewHtml(e.link) : `<div class="link-preview"><div class="lp-text"><div class="lp-title">${escapeHtml(e.value)}</div></div></div>`;
-      return {text:`${name}${CURRENTLY_VERBS[e.field] || 'is currently into'}`, card};
+      return {text: FEED_LINES[e.field] ? feedLine(e.field, e.id, e.who) : `${name}${CURRENTLY_VERBS[e.field] || 'is currently into'}`, card};
     }
     case 'coven': return {text: e.day % 2 ? `Day ${e.day}, conjured. All four spells cast.` : `Full coven for Day ${e.day}.`};
   }
@@ -2687,7 +2785,7 @@ function renderNotifPrefs(){
     ['morning', 'Morning spell', 'Daily at 8am Pacific', 'acc-yellow'],
     ['nudge', 'Evening nudge', '7pm Pacific, only if your spell isn\u2019t cast', 'acc-pink'],
     ['reactions', 'Reactions', 'When the coven reacts to your stuff', 'acc-blue'],
-    ['activity', 'Coven activity', 'When someone casts her spell, the coven goes full, or a photo goes up', 'acc-lavender']
+    ['activity', 'Coven activity', 'When someone casts her spell, the coven goes full, or a photo, link, or Currently update goes up', 'acc-lavender']
   ];
   el.innerHTML = '';
   const panel = document.createElement('div');
@@ -2713,6 +2811,46 @@ function renderNotifPrefs(){
     panel.appendChild(row);
   });
   el.appendChild(panel);
+}
+
+function renderProfileShares(){
+  const el = document.getElementById('profileShares');
+  if(!el) return;
+  const pd = allData[currentPerson];
+  const own = isEditable();
+  const all = [];
+  Object.keys((pd && pd.weeks) || {}).forEach(wi=>{
+    sharesOfWeek(pd.weeks[wi]).forEach(s=> all.push({wi:Number(wi), s}));
+  });
+  all.sort((a,b)=> String(b.s.timestamp||'').localeCompare(String(a.s.timestamp||'')));
+  if(!all.length){
+    el.innerHTML = `<div class="shares-empty">${own ? 'Nothing shared yet. Send the group something from Today.' : `${currentPerson} hasn\u2019t shared anything yet.`}</div>`;
+    return;
+  }
+  el.innerHTML = '';
+  all.forEach(({wi, s})=>{
+    const item = document.createElement('div');
+    item.className = 'share-item';
+    item.innerHTML = shareCardHtml(s);
+    const meta = document.createElement('div');
+    meta.className = 'share-meta';
+    const when = s.timestamp ? new Date(s.timestamp).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : ((WEEKS[wi] && WEEKS[wi].label) || '');
+    meta.innerHTML = `<span>${when}</span>`;
+    if(own){
+      const rm = document.createElement('button');
+      rm.type = 'button'; rm.className = 'share-remove'; rm.textContent = 'remove';
+      rm.onclick = ()=>{
+        if(!s.id) return;
+        if(!confirm('Remove this link from the feed and your profile?')) return;
+        const wd = weekData(currentPerson, wi);
+        wd.shares = wd.shares.filter(x=> x.id !== s.id);
+        afterSharesChanged();
+      };
+      meta.appendChild(rm);
+    }
+    item.appendChild(meta);
+    el.appendChild(item);
+  });
 }
 
 function renderProfileBookends(){
@@ -3009,14 +3147,15 @@ function renderOverview(){
     }
     const wd = weekData(p, currentWeekIdx);
     const sessionsDone = wd.sessions.filter(s=>s.done).length;
-    const hasArticle = !!(wd.article.url && wd.article.url.trim());
+    const shareCount = sharesOfWeek(wd).length;
+    const hasArticle = shareCount > 0;
     html += `<tr>
       <td>${p}</td>
       <td>${elapsed?journaledCount+'/'+journalableCount:'\u2014'}</td>
       <td>${elapsed?noPhoneCount+'/'+elapsed:'\u2014'}</td>
       <td>${elapsed?waterPts:'\u2014'}</td>
       <td>${sessionsDone}/3</td>
-      <td><span class="mini-dot${hasArticle?' on':''}"></span>${hasArticle?'sent':'\u2014'}</td>
+      <td><span class="mini-dot${hasArticle?' on':''}"></span>${hasArticle?(shareCount>1?shareCount+' sent':'sent'):'\u2014'}</td>
       <td><span class="mini-dot${wd.noSpend.done?' on':''}"></span>${wd.noSpend.done?'done':'\u2014'}</td>
     </tr>`;
   });
@@ -3035,7 +3174,7 @@ function scoreFor(p){
     const wd = weekData(p, idx);
     score += wd.sessions.filter(s=>s.done).length;
     score += wd.sessions.filter(s=>s.done && s.hasPhoto).length; // +1 bonus for a proof photo
-    if(wd.article.url && wd.article.url.trim()) score++;
+    if(sharesOfWeek(wd).length) score++; // one point a week, however many links
     if(wd.noSpend.done) score++;
   }
   return score;
@@ -3192,10 +3331,11 @@ function computeChapterStats(chapterId){
         const t = new Date(wd.noSpend.timestamp);
         if(t>=start && t<end) noSpendCount++;
       }
-      if(wd.article && wd.article.url && wd.article.timestamp){
-        const t = new Date(wd.article.timestamp);
+      sharesOfWeek(wd).forEach(s=>{
+        if(!s.timestamp) return;
+        const t = new Date(s.timestamp);
         if(t>=start && t<end) articleCount++;
-      }
+      });
     }
   });
 
@@ -3385,6 +3525,7 @@ async function renderAll(){
   safeRender('renderResetLink', renderResetLink);
   safeRender('renderNotifPrefs', renderNotifPrefs);
   safeRender('renderProfileBookends', renderProfileBookends);
+  safeRender('renderProfileShares', renderProfileShares);
   safeRender('renderTimeline', renderTimeline);
   safeRender('renderPlacements', renderPlacements);
   safeRender('renderCurrently', renderCurrently);
