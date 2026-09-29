@@ -438,19 +438,10 @@
   }
   .receipt-scope .card.format-square{ width:340px; aspect-ratio:4/5; padding:32px 28px 26px; }
   .receipt-scope .card.format-story{ width:300px; aspect-ratio:9/16; padding:40px 26px 30px; }
-  .receipt-scope .stars{
-    position:absolute; inset:0; opacity:.85; pointer-events:none;
-    background-image:
-      radial-gradient(1.5px 1.5px at 18% 10%, var(--r-gold-bright) 100%, transparent),
-      radial-gradient(1px 1px at 70% 6%, var(--r-lavender) 100%, transparent),
-      radial-gradient(1px 1px at 45% 16%, var(--r-paper) 100%, transparent),
-      radial-gradient(1.5px 1.5px at 85% 22%, var(--r-gold) 100%, transparent),
-      radial-gradient(1px 1px at 8% 30%, var(--r-lavender) 100%, transparent),
-      radial-gradient(1px 1px at 60% 34%, var(--r-paper) 100%, transparent),
-      radial-gradient(1.5px 1.5px at 25% 78%, var(--r-gold-bright) 100%, transparent),
-      radial-gradient(1px 1px at 90% 82%, var(--r-paper) 100%, transparent),
-      radial-gradient(1px 1px at 38% 88%, var(--r-lavender) 100%, transparent);
-  }
+  /* Starfield is real dots, not stacked radial-gradients: iOS Safari painted
+     the first tiny gradient across the whole card, which was the gold wash. */
+  .receipt-scope .stars{position:absolute; inset:0; opacity:.85; pointer-events:none;}
+  .receipt-scope .stars span{position:absolute; border-radius:50%; display:block;}
   .receipt-scope .top-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:2;}
   .receipt-scope .wordmark{font-family:'Fraunces',serif;font-style:italic;font-weight:500;color:var(--r-lavender);}
   .receipt-scope .card.format-square .wordmark{font-size:14px;}
@@ -3241,7 +3232,7 @@ function renderReceiptCard(quoteText){
   wrap.innerHTML = `
     <div class="receipt-scope">
       <div class="card format-${receiptFormat}" id="receiptCardEl">
-        <div class="stars"></div>
+        <div class="stars"><span style="left:18%;top:10%;width:3.0px;height:3.0px;background:var(--r-gold-bright);"></span><span style="left:70%;top:6%;width:2px;height:2px;background:var(--r-lavender);"></span><span style="left:45%;top:16%;width:2px;height:2px;background:var(--r-paper);"></span><span style="left:85%;top:22%;width:3.0px;height:3.0px;background:var(--r-gold);"></span><span style="left:8%;top:30%;width:2px;height:2px;background:var(--r-lavender);"></span><span style="left:60%;top:34%;width:2px;height:2px;background:var(--r-paper);"></span><span style="left:25%;top:78%;width:3.0px;height:3.0px;background:var(--r-gold-bright);"></span><span style="left:90%;top:82%;width:2px;height:2px;background:var(--r-paper);"></span><span style="left:38%;top:88%;width:2px;height:2px;background:var(--r-lavender);"></span></div>
         <div class="top-row">
           <div class="wordmark">Spell Check</div>
           <div class="moon-date">${ch.range}<br>Chapter ${ordinal}</div>
