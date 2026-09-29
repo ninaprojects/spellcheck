@@ -39,13 +39,11 @@
 <meta name="theme-color" content="#1A1A1A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Display:ital,wght@0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- html2canvas and Tesseract.js load on demand (see loadScriptOnce), not on every open -->
 <!-- Firebase (free tier) holds the shared data -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
-<!-- Tesseract.js (free, runs in the browser) reads chart screenshots -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
   :root{
     --bg:#FFFEFD;
@@ -263,6 +261,32 @@
   }
   .big3-compact-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
   .big3-compact-line{font-family:'Inter';font-size:14px;color:var(--text-primary);font-weight:500;}
+  /* intro collapses after the first visit */
+  .masthead.collapsed p.sub:not(.lede){display:none;}
+  .intro-toggle{margin-top:14px;}
+
+  /* Today card */
+  .today-card{border:1px solid var(--line);border-top:4px solid var(--pink);margin:0 0 30px;background:var(--bg);}
+  .today-cast{background:var(--text-primary);padding:16px 20px;}
+  .today-cast .tc-title{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:22px;color:var(--bg);display:flex;align-items:center;gap:10px;line-height:1.2;}
+  .today-cast .tc-title .star{color:var(--yellow);font-size:19px;}
+  .today-cast .tc-title .u{border-bottom:3px solid var(--pink);padding-bottom:1px;}
+  .today-cast .tc-sub{font-size:13px;font-weight:300;color:#E9E4DA;margin-top:6px;}
+  .today-inner{padding:18px 20px 20px;}
+  .today-eyebrow{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .today-date{font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--text-secondary);}
+  .today-chip{font-size:11px;font-weight:500;color:var(--text-primary);background:#DDEEFF;border-radius:999px;padding:3px 10px;}
+  .today-prompt{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:19px;line-height:1.4;color:var(--text-primary);margin:12px 0 14px;}
+  .today-left{font-size:12px;color:var(--text-secondary);margin:-4px 0 14px;}
+  .coven-strip{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;}
+  .coven-faces{display:flex;gap:10px;}
+  .coven-face{background:none;border:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:'Inter';font-size:10px;color:var(--text-secondary);}
+  .coven-ring{width:44px;height:44px;border-radius:50%;box-sizing:border-box;border:2px dashed var(--track-off-line);display:flex;align-items:center;justify-content:center;}
+  .coven-ring.cast{border-style:solid;border-width:3px;}
+  .coven-label{font-size:12px;font-weight:500;color:var(--text-primary);text-align:right;max-width:150px;line-height:1.4;}
+  .toggle.on.acc-pink{background:var(--pink);border-color:var(--pink);}
+  .toggle.on.acc-yellow{background:var(--yellow);border-color:var(--yellow);}
+
   .big3-toggle-link{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;}
   .big3-toggle-link:hover{color:var(--text-primary);border-color:var(--text-primary);}
 
@@ -406,6 +430,7 @@
     <p class="sub">So we'll journal when we don't feel like it. Move our bodies because it feels good, not because we have to. Spend a little less. Touch some grass before we touch our phones. And talk to each other through all of it: the wins, the spirals, the 2am realizations, all of it. Nothing here is that deep and also all of it is that deep.</p>
     <p class="sub">By the time the New Moon in Libra rolls around, we want receipts. Proof we actually did the thing. The sky's just here to keep us honest, and honestly, she's better at it than any app.</p>
     <p class="sub">This is Spell Check. Consider it your monthly reminder to check in on your own spells.</p>
+    <a href="#" id="introToggle" class="big3-toggle-link intro-toggle" style="display:none;">Read the intro +</a>
   </div>
 
   <div class="people" id="people"></div>
@@ -413,6 +438,8 @@
   <div id="identityBanner"></div>
   <div id="notifSection" style="margin-bottom:20px;"></div>
   <div id="profilePicSection" style="margin-bottom:20px;"></div>
+
+  <div id="nav-today"><div id="todayCardWrap"></div></div>
 
   <div class="timeline">
     <div class="timeline-track" id="timelineTrack"></div>
@@ -423,6 +450,7 @@
 
   <nav class="jump-nav">
     <span class="jump-nav-label">Jump to</span>
+    <a href="#nav-today">today</a>
     <a href="#nav-leaderboard">who's winning</a>
     <a href="#nav-placements">the big 3</a>
     <a href="#nav-week">✨ this week ✨</a>
@@ -497,7 +525,7 @@
     </div>
   </div>
 
-  <div class="bookend-card">
+  <div class="bookend-card" id="kickoffBookend">
     <div class="bookend-label">Before Day 1</div>
     <h3>Kickoff Call</h3>
     <p>Before any of this starts, get everyone together, call, couch, voice memo marathon in the group chat, whatever's realistic for four busy witches, and say your intention out loud. Not written first, not overthought, just said out loud to people who'll actually remember you said it. Drop a line of it below after, so future-you has a receipt.</p>
@@ -570,6 +598,25 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// Heavy libraries load only when someone actually uses them.
+const LAZY_SCRIPTS = {
+  html2canvas: 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  tesseract: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'
+};
+const lazyScriptPromises = {};
+function loadScriptOnce(url){
+  if(!lazyScriptPromises[url]){
+    lazyScriptPromises[url] = new Promise((resolve, reject)=>{
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = ()=> resolve();
+      s.onerror = ()=>{ delete lazyScriptPromises[url]; reject(new Error('failed to load '+url)); };
+      document.head.appendChild(s);
+    });
+  }
+  return lazyScriptPromises[url];
+}
+
 // Same shape as Claude's window.storage, so the rest of the app
 // below didn't need to change: get/set/delete(key, shared).
 // shared=false -> this browser only (localStorage).
@@ -641,7 +688,7 @@ const DAYS = [
   {n:14,d:"Oct 1",wd:"Thu",ch:4,prompt:"Where did you choose harmony over honesty this week? Be honest now: was it worth it, or are you quietly still annoyed?"},
   {n:15,d:"Oct 2",wd:"Fri",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of them out loud, even if it's just here, just to you."},
   {n:16,d:"Oct 3",wd:"Sat",ch:4,tag:"Venus stations retrograde",prompt:"Venus turns retrograde today, drifting between Libra and Scorpio through mid-November, so love, money, and values might get a little slippery. Perfect timing to ask: who do you become around people you don't fully trust? Write about her like she's a character in a really good book."},
-  {n:17,d:"Oct 4",wd:"Sun",ch:4,prompt:"Rest day! Do one thing today with zero audience, not even yourself watching and narrating it. Just be, quietly, for once.",rest:true},
+  {n:17,d:"Oct 4",wd:"Sun",ch:4,prompt:"Rest day! Do one thing today with zero audience, not even yourself watching and narrating it. Just be, quietly, for once."},
   {n:18,d:"Oct 5",wd:"Mon",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if we're being honest?"},
   {n:19,d:"Oct 6",wd:"Tue",ch:4,prompt:"Four days till the reset! What do you want to be true about your life by October 10th that isn't true yet? Say it like it's already on its way."},
   {n:20,d:"Oct 7",wd:"Wed",ch:4,prompt:"Write out the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself. It'll feel lighter once it's out."},
@@ -955,6 +1002,9 @@ function renderProfilePicSection(){
 }
 
 // Bumped whenever the day-by-day schedule itself changes shape.
+// DO NOT bump this mid-challenge. Changing it runs applyScheduleReset on
+// everyone's data on their next load. Wave 1 (Today card, casting rule,
+// Day 17 journal) is additive and deliberately leaves this at 2.
 const SCHEDULE_VERSION = 2;
 
 function applyScheduleReset(pd){
@@ -1017,6 +1067,9 @@ async function readChartScreenshot(file){
   // wheel, only text it can literally read off the image. The raw scanned
   // text gets surfaced too so people can catch what the regex below misses.
   try{
+    if(typeof Tesseract === 'undefined'){
+      try{ await loadScriptOnce(LAZY_SCRIPTS.tesseract); }catch(e){ console.error(e); }
+    }
     if(typeof Tesseract === 'undefined'){
       console.error('Tesseract.js did not load');
       return null;
@@ -1123,6 +1176,7 @@ async function loadAll(){
     try{
       const res = await storage.get(`recal:${p}`, true);
       allData[p] = res ? JSON.parse(res.value) : emptyPersonData();
+      lastSynced[p] = res ? res.value : null;
     }catch(e){
       console.error('load failed for', p, e);
       allData[p] = emptyPersonData();
@@ -1144,7 +1198,10 @@ async function loadAll(){
 
 async function savePerson(p){
   try{
-    await storage.set(`recal:${p}`, JSON.stringify(allData[p]), true);
+    const json = JSON.stringify(allData[p]);
+    lastSynced[p] = json;
+    rememberOwnWrite(p, json); // so our own writes echoing back (even late, out of order) aren't treated as remote
+    await storage.set(`recal:${p}`, json, true);
   }catch(e){
     console.error("save failed", e);
   }
@@ -1866,6 +1923,11 @@ function renderCurrentlyHistory(){
 }
 
 function renderBookends(){
+  const kickoffCard = document.getElementById('kickoffBookend');
+  if(kickoffCard){
+    const tiK = todayInfo();
+    kickoffCard.style.display = (tiK.state==='before' || (tiK.state==='during' && tiK.dayNum===1)) ? '' : 'none';
+  }
   const kickoff = document.getElementById('kickoffInput');
   const closing = document.getElementById('closingInput');
   kickoff.value = allData[currentPerson].kickoffIntention || '';
@@ -1888,7 +1950,7 @@ function renderChapters(){
 
   if(!uiInitialized){
     openChapter = todayNum ? DAYS.find(d=>d.n===todayNum).ch : 1;
-    openDay = todayNum || null;
+    openDay = null; // today's check-ins live in the Today card at the top
     uiInitialized = true;
   }
 
@@ -1913,53 +1975,40 @@ function renderChapters(){
   });
 }
 
-function renderDayRow(day, isToday){
-  const row = document.createElement('div');
-  row.className = 'day'+(isToday?' today':'');
+function buildAstroBlock(day, person){
+  const astroLines = personalizedAstroLines(day, person);
+  if(!astroLines) return null;
+  const astroWrap = document.createElement('div');
+  astroWrap.style.cssText = 'margin:-6px 0 16px;border:1px solid var(--line);';
+  const astroHeader = document.createElement('div');
+  astroHeader.style.cssText = 'padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:\'Inter\';font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);';
+  const titleSpan = document.createElement('span');
+  titleSpan.textContent = `\u2728 What today means for ${person}`;
+  const signSpan = document.createElement('span');
+  signSpan.textContent = '+';
+  astroHeader.appendChild(titleSpan);
+  astroHeader.appendChild(signSpan);
+  const astroBody = document.createElement('div');
+  astroBody.style.cssText = 'display:none;padding:0 14px 14px;';
+  astroBody.innerHTML = astroLines.map(l=>`<div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin-bottom:4px;">${l}</div>`).join('');
+  astroHeader.onclick = ()=>{
+    const open = astroBody.style.display !== 'none';
+    astroBody.style.display = open ? 'none' : 'block';
+    signSpan.textContent = open ? '+' : '\u2212';
+  };
+  astroWrap.appendChild(astroHeader);
+  astroWrap.appendChild(astroBody);
+  return astroWrap;
+}
 
-  const head = document.createElement('div');
-  head.className = 'day-head';
-  head.innerHTML = `<div class="day-num">${day.n}</div><div class="day-date">${day.d} <span class="day-dot">&middot;</span> ${day.wd}</div>${day.tag?`<div class="day-tag">${day.tag}</div>`:''}`;
-  head.style.cursor='pointer';
-  head.onclick = ()=>{ openDay = (openDay===day.n)?null:day.n; renderChapters(); };
-  row.appendChild(head);
-
-  const full = document.createElement('div');
-  full.className = 'day-full'+(openDay===day.n?' open':'');
-
-  const promptEl = document.createElement('div');
-  promptEl.className = 'day-prompt';
-  promptEl.textContent = day.prompt;
-  full.appendChild(promptEl);
-
-  const astroLines = personalizedAstroLines(day, currentPerson);
-  if(astroLines){
-    const astroWrap = document.createElement('div');
-    astroWrap.style.cssText = 'margin:-6px 0 16px;border:1px solid var(--line);';
-    const astroHeader = document.createElement('div');
-    astroHeader.style.cssText = 'padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:\'Inter\';font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);';
-    astroHeader.innerHTML = `<span>\u2728 What today means for ${currentPerson}</span><span id="astroToggle-${day.n}">+</span>`;
-    const astroBody = document.createElement('div');
-    astroBody.style.cssText = 'display:none;padding:0 14px 14px;';
-    astroBody.innerHTML = astroLines.map(l=>`<div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin-bottom:4px;">${l}</div>`).join('');
-    astroHeader.onclick = ()=>{
-      const open = astroBody.style.display !== 'none';
-      astroBody.style.display = open ? 'none' : 'block';
-      document.getElementById(`astroToggle-${day.n}`).textContent = open ? '+' : '\u2212';
-    };
-    astroWrap.appendChild(astroHeader);
-    astroWrap.appendChild(astroBody);
-    full.appendChild(astroWrap);
-  }
-
-  const dd = dayData(currentPerson, day.n);
+// The check-ins for one day, shared by the Today card and the chapter list.
+function buildDayChecks(day, person){
+  const dd = dayData(person, day.n);
   const checks = document.createElement('div');
   checks.className = 'day-checks';
 
-  if(!day.rest){
-    checks.appendChild(makeCheckRow('Journaled, 15 min', dd.journaled, (v)=>{dd.journaled=v; savePerson(currentPerson); renderOverview(); renderLeaderboard(); refreshReceiptsIfLoaded();}));
-  }
-  checks.appendChild(makeCheckRow('No phone, 1 hour (any time today)', dd.noPhone, (v)=>{dd.noPhone=v; savePerson(currentPerson); renderOverview(); renderLeaderboard();}));
+  checks.appendChild(makeCheckRow('Journaled, 15 min', dd.journaled, (v)=>{ dd.journaled=v; onDayEdited(dd); }, 'acc-pink'));
+  checks.appendChild(makeCheckRow('No phone, 1 hour (any time today)', dd.noPhone, (v)=>{ dd.noPhone=v; onDayEdited(dd); }, 'acc-yellow'));
   checks.appendChild(makeWaterRow(dd));
 
   const gratRow = document.createElement('div');
@@ -1975,11 +2024,248 @@ function renderDayRow(day, isToday){
   gratRow.appendChild(gratInput);
   checks.appendChild(gratRow);
 
-  checks.appendChild(makePhotoRow(currentPerson, day.n, dd));
+  // The Kickoff intention lives with Day 1 once the kickoff card retires.
+  if(day.n===1){
+    const kRow = document.createElement('div');
+    const kLabel = document.createElement('label');
+    kLabel.className = 'grat-label';
+    kLabel.textContent = 'My intention going in (from the Kickoff Call)';
+    const kInput = document.createElement('input');
+    kInput.className = 'gratitude-input';
+    kInput.value = allData[person].kickoffIntention || '';
+    kInput.disabled = !isEditable();
+    kInput.onchange = ()=>{ allData[person].kickoffIntention = kInput.value; savePerson(currentPerson); flashSaved(kInput); };
+    kRow.appendChild(kLabel);
+    kRow.appendChild(kInput);
+    checks.appendChild(kRow);
+  }
 
-  full.appendChild(checks);
+  checks.appendChild(makePhotoRow(person, day.n, dd));
+  return checks;
+}
+
+function renderDayRow(day, isToday){
+  const row = document.createElement('div');
+  row.className = 'day'+(isToday?' today':'');
+
+  const head = document.createElement('div');
+  head.className = 'day-head';
+  const castMark = isCast(allData[currentPerson].days[day.n]) ? `<div class="day-tag" style="color:var(--pink);">\u2726 spell cast</div>` : '';
+  head.innerHTML = `<div class="day-num">${day.n}</div><div class="day-date">${day.d} <span class="day-dot">&middot;</span> ${day.wd}</div>${day.tag?`<div class="day-tag">${day.tag}</div>`:''}${castMark}`;
+  head.style.cursor='pointer';
+  head.onclick = ()=>{ openDay = (openDay===day.n)?null:day.n; renderChapters(); };
+  row.appendChild(head);
+
+  const full = document.createElement('div');
+  full.className = 'day-full'+(openDay===day.n?' open':'');
+  if(openDay===day.n){
+    const promptEl = document.createElement('div');
+    promptEl.className = 'day-prompt';
+    promptEl.textContent = day.prompt;
+    full.appendChild(promptEl);
+    const astro = buildAstroBlock(day, currentPerson);
+    if(astro) full.appendChild(astro);
+    full.appendChild(buildDayChecks(day, currentPerson));
+  }
   row.appendChild(full);
   return row;
+}
+
+// ---- Casting rule: any two of journal, phone-free hour, 48oz water ----
+function castCount(dd){
+  if(!dd) return 0;
+  return (dd.journaled?1:0) + (dd.noPhone?1:0) + ((dd.waterOz||0)>=48?1:0);
+}
+function isCast(dd){ return castCount(dd) >= 2; }
+function stampCast(dd){
+  // castAt records the moment a day first reached two of three. Additive
+  // only, nothing reads it yet besides the feed coming in Wave 2.
+  if(isCast(dd)){ if(!dd.castAt) dd.castAt = new Date().toISOString(); }
+  else if(dd.castAt){ dd.castAt = null; }
+}
+function onDayEdited(dd){
+  stampCast(dd);
+  savePerson(currentPerson);
+  safeRender('renderTodayCard', renderTodayCard);
+  safeRender('renderChapters', renderChapters);
+  safeRender('renderOverview', renderOverview);
+  safeRender('renderLeaderboard', renderLeaderboard);
+  safeRender('refreshReceiptsIfLoaded', refreshReceiptsIfLoaded);
+}
+
+const PERSON_COLORS = {Nina:'#FF6FA8', Kellye:'#FFC94F', Lauren:'#4FA8FF', Carolina:'#C9A9E0'};
+const COUNT_WORDS = ['No','One','Two','Three','Four'];
+
+function covenLabelFor(count, viewerCast){
+  if(count===4) return 'Full coven today';
+  if(myIdentity && !viewerCast && count===3) return 'Just you left today, we\u2019re holding your spot';
+  if(count===0) return 'Four spells to cast today';
+  return `${COUNT_WORDS[count]} spell${count===1?'':'s'} cast. ${COUNT_WORDS[4-count]} more to go.`;
+}
+
+function renderTodayCard(){
+  const wrap = document.getElementById('todayCardWrap');
+  if(!wrap) return;
+  const ti = todayInfo();
+  const day = ti.state==='during' ? DAYS.find(d=>d.n===ti.dayNum) : null;
+  if(!day){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = '';
+
+  // coven strip: who's cast today
+  let count = 0;
+  const strip = document.createElement('div');
+  strip.className = 'coven-strip';
+  const faces = document.createElement('div');
+  faces.className = 'coven-faces';
+  PEOPLE.forEach(p=>{
+    const pdd = allData[p] && allData[p].days ? allData[p].days[day.n] : null;
+    const cast = isCast(pdd);
+    if(cast) count++;
+    const face = document.createElement('button');
+    face.type = 'button';
+    face.className = 'coven-face';
+    face.setAttribute('aria-label', `${p}, ${cast?'spell cast':'not cast yet'}. View ${p}'s day`);
+    face.innerHTML = `<span class="coven-ring${cast?' cast':''}"${cast?` style="border-color:${PERSON_COLORS[p]};"`:''}>${avatarHtml(p, 34)}</span><span>${p}</span>`;
+    face.onclick = ()=>{ currentPerson = p; renderAll(); };
+    faces.appendChild(face);
+  });
+  const viewerDd = myIdentity && allData[myIdentity] && allData[myIdentity].days ? allData[myIdentity].days[day.n] : null;
+  const label = document.createElement('div');
+  label.className = 'coven-label';
+  label.textContent = covenLabelFor(count, isCast(viewerDd));
+  strip.appendChild(faces);
+  strip.appendChild(label);
+  wrap.appendChild(strip);
+
+  // the card itself, for whoever's tab is selected
+  const person = currentPerson;
+  const dd = dayData(person, day.n);
+  const cast = isCast(dd);
+  const card = document.createElement('div');
+  card.className = 'today-card';
+
+  if(cast){
+    const banner = document.createElement('div');
+    banner.className = 'today-cast';
+    let sub;
+    if(count===4) sub = `Full coven. Day ${day.n}, conjured.`;
+    else if(person===myIdentity) sub = 'That\u2019s your part done. Go live your actual life now.';
+    else sub = `${person}\u2019s part is done for today.`;
+    banner.innerHTML = `<div class="tc-title"><span class="star">\u2726</span><span class="u">Day ${day.n}, spell cast.</span></div><div class="tc-sub">${sub}</div>`;
+    card.appendChild(banner);
+  }
+
+  const inner = document.createElement('div');
+  inner.className = 'today-inner';
+  const transit = dayTransit(day);
+  const chipText = day.tag || `${transit.body.replace(/^The /,'')} in ${transit.sign}`;
+  inner.innerHTML = `<div class="today-eyebrow"><div class="today-date">Today \u00b7 ${day.wd}, ${day.d}</div><div class="today-chip">${chipText}</div></div>`;
+  const promptEl = document.createElement('div');
+  promptEl.className = 'today-prompt';
+  promptEl.textContent = day.prompt;
+  inner.appendChild(promptEl);
+
+  if(!cast && isEditable()){
+    const left = document.createElement('div');
+    left.className = 'today-left';
+    left.textContent = castCount(dd)===1 ? 'Just one more and today\u2019s spell is cast.' : 'Any two of the three and today\u2019s spell is cast.';
+    inner.appendChild(left);
+  }
+
+  const astro = buildAstroBlock(day, person);
+  if(astro) inner.appendChild(astro);
+  inner.appendChild(buildDayChecks(day, person));
+  card.appendChild(inner);
+  wrap.appendChild(card);
+}
+
+// ---- Intro: full on the first visit, one line after that ----
+function setupIntro(){
+  const m = document.querySelector('.masthead');
+  const t = document.getElementById('introToggle');
+  if(!m || !t) return;
+  let seen = false;
+  try{ seen = localStorage.getItem('recal-intro-seen') === '1'; }catch(e){}
+  if(seen){
+    m.classList.add('collapsed');
+    t.style.display = 'inline-block';
+  }
+  t.onclick = (e)=>{
+    e.preventDefault();
+    const collapsed = m.classList.toggle('collapsed');
+    t.textContent = collapsed ? 'Read the intro +' : 'Hide the intro \u2212';
+  };
+  try{ localStorage.setItem('recal-intro-seen', '1'); }catch(e){}
+}
+
+// ---- Live sync: see everyone's check-ins without refreshing ----
+const lastSynced = {};
+const ownWrites = {};
+function rememberOwnWrite(p, json){
+  const list = ownWrites[p] || (ownWrites[p] = []);
+  list.push(json);
+  if(list.length > 20) list.shift();
+}
+function isOwnWrite(p, json){
+  return !!(ownWrites[p] && ownWrites[p].includes(json));
+}
+let liveRenderTimer = null;
+let liveRenderPending = false;
+
+function isTyping(){
+  const a = document.activeElement;
+  if(!a) return false;
+  if(a.tagName==='TEXTAREA' || a.tagName==='SELECT') return true;
+  if(a.tagName==='INPUT'){
+    return !['button','checkbox','radio','file','range','submit'].includes((a.type||'').toLowerCase());
+  }
+  return false;
+}
+
+function scheduleLiveRender(){
+  clearTimeout(liveRenderTimer);
+  liveRenderTimer = setTimeout(()=>{
+    // Never rebuild the page under someone mid-sentence. Wait for blur.
+    if(isTyping()){ liveRenderPending = true; return; }
+    liveRenderPending = false;
+    const y = window.scrollY;
+    renderAll();
+    window.scrollTo(0, y);
+  }, 400);
+}
+
+document.addEventListener('focusout', ()=>{
+  if(!liveRenderPending) return;
+  setTimeout(()=>{ if(liveRenderPending && !isTyping()) scheduleLiveRender(); }, 60);
+});
+
+async function loadProfilePicLive(p){
+  try{
+    const res = await storage.get(`recal-profile-pic:${p}`, true);
+    if(res){ profilePicCache[p] = res.value; scheduleLiveRender(); }
+  }catch(e){ console.error('profile pic live load failed', p, e); }
+}
+
+function startLiveSync(){
+  if(!db || typeof db.ref !== 'function') return;
+  PEOPLE.forEach(p=>{
+    try{
+      db.ref('recalData/recal:'+p).on('value', (snap)=>{
+        try{
+          const val = snap.val();
+          if(typeof val !== 'string' || val === lastSynced[p] || isOwnWrite(p, val)) return;
+          const parsed = JSON.parse(val);
+          try{ migrateCurrentlyToLiveStatus(parsed); }catch(e){ console.error(e); }
+          // Read-only here: normalize in memory, never write back from a listener.
+          try{ if(parsed.scheduleVersion !== SCHEDULE_VERSION) applyScheduleReset(parsed); }catch(e){ console.error(e); }
+          lastSynced[p] = val;
+          allData[p] = parsed;
+          if(parsed.hasProfilePic && !profilePicCache[p]) loadProfilePicLive(p);
+          scheduleLiveRender();
+        }catch(e){ console.error('live sync failed for', p, e); }
+      }, (err)=> console.error('live listener error for', p, err));
+    }catch(e){ console.error('could not attach live listener for', p, e); }
+  });
 }
 
 function makePhotoRow(person, dayNum, dd){
@@ -2123,16 +2409,12 @@ function makeWaterRow(dd){
     plusBtn.onclick = ()=>{
       dd.waterOz = (dd.waterOz||0) + 8;
       updateMeta();
-      savePerson(currentPerson);
-      renderOverview();
-      renderLeaderboard();
+      onDayEdited(dd);
     };
     minusBtn.onclick = ()=>{
       dd.waterOz = Math.max(0, (dd.waterOz||0) - 8);
       updateMeta();
-      savePerson(currentPerson);
-      renderOverview();
-      renderLeaderboard();
+      onDayEdited(dd);
     };
   }
 
@@ -2143,11 +2425,11 @@ function makeWaterRow(dd){
   return row;
 }
 
-function makeCheckRow(labelText, checked, onChange){
+function makeCheckRow(labelText, checked, onChange, accent){
   const row = document.createElement('div');
   row.className='check-row';
   const toggle = document.createElement('div');
-  toggle.className='toggle'+(checked?' on':'')+(isEditable()?'':' locked');
+  toggle.className='toggle'+(accent?' '+accent:'')+(checked?' on':'')+(isEditable()?'':' locked');
   const label = document.createElement('label');
   label.textContent = labelText;
   if(isEditable()){
@@ -2479,6 +2761,12 @@ document.getElementById('receiptQuoteInput').onchange = async ()=>{
 document.getElementById('downloadReceiptBtn').onclick = async ()=>{
   const btn = document.getElementById('downloadReceiptBtn');
   const cardEl = document.getElementById('receiptCardEl');
+  if(cardEl && typeof html2canvas==='undefined'){
+    const before = btn.textContent;
+    btn.textContent = 'Loading...';
+    try{ await loadScriptOnce(LAZY_SCRIPTS.html2canvas); }catch(e){ console.error(e); }
+    btn.textContent = before;
+  }
   if(!cardEl || typeof html2canvas==='undefined'){
     console.error('html2canvas not available');
     return;
@@ -2513,6 +2801,7 @@ async function renderAll(){
   safeRender('renderIdentityBanner', renderIdentityBanner);
   safeRender('renderNotifSection', renderNotifSection);
   safeRender('renderProfilePicSection', renderProfilePicSection);
+  safeRender('renderTodayCard', renderTodayCard);
   safeRender('renderResetLink', renderResetLink);
   safeRender('renderTimeline', renderTimeline);
   safeRender('renderPlacements', renderPlacements);
@@ -2538,7 +2827,9 @@ async function renderAll(){
     console.error('startup failed, rendering with defaults', e);
   }
   renderAll();
+  try{ setupIntro(); }catch(e){ console.error('intro setup failed', e); }
   try{ setupScrollspy(); }catch(e){ console.error('scrollspy setup failed', e); }
+  try{ startLiveSync(); }catch(e){ console.error('live sync setup failed', e); }
 })();
 
 function setupScrollspy(){
