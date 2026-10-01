@@ -16,7 +16,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Spell Check</title>
+<title>Spell Check · Round 1</title>
 
 <!-- Link preview metadata, this is what shows up when the URL gets
      shared in Messages, iMessage, or anywhere else that generates a
@@ -40,7 +40,7 @@
 <script>
   // Before first paint: if you've seen the intro, start it collapsed so the
   // long intro never flashes while data loads.
-  try{ if(localStorage.getItem('recal-intro-seen-r2')==='1') document.documentElement.classList.add('intro-seen'); }catch(e){}
+  try{ if(localStorage.getItem('recal-intro-seen-r1')==='1') document.documentElement.classList.add('intro-seen'); }catch(e){}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Display:ital,wght@0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -377,20 +377,12 @@
   .share-remove{background:none;border:none;padding:8px 0 8px 12px;font-family:'Inter';font-size:11px;color:var(--text-secondary);border-bottom:1px solid var(--line);cursor:pointer;}
   .shares-empty{font-size:13px;color:var(--text-secondary);font-weight:300;}
 
-  /* Your sky today: headline, short paragraph, something small */
-  .sky-card{border:1px solid #E3D3F0;border-top:4px solid #C9A9E0;background:#FBF7FD;padding:18px 18px 6px;margin:0 0 16px;color:var(--text-primary);}
-  .sky-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-  .sky-title{display:flex;align-items:center;gap:8px;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#6B4E8A;}
-  .sky-chips{display:flex;gap:6px;align-items:center;}
-  .sky-chip{font-size:11px;font-weight:500;background:#F0E6F7;border:1px solid #C9A9E0;border-radius:999px;padding:2px 10px;color:var(--text-primary);}
-  .sky-tag{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;background:#FFE3EE;border:1px solid var(--pink);border-radius:999px;padding:2px 8px;color:var(--text-primary);}
-  .sky-headline{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:25px;line-height:1.2;margin:18px 0 12px;color:var(--text-primary);}
-  .sky-body{font-size:14.5px;line-height:1.65;color:#3A3631;font-weight:400;}
-  .sky-small{margin-top:16px;padding:12px 0 6px;border-top:1px solid #E3D3F0;display:flex;flex-direction:column;gap:4px;}
-  .sky-label{font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#6B4E8A;}
-  .sky-action{font-size:14px;line-height:1.6;color:var(--text-primary);font-weight:400;}
-  .sky-link{margin-top:10px;background:none;border:none;padding:8px 0;font-family:'Inter';font-size:12px;font-weight:500;color:#6B4E8A;border-bottom:1px solid #C9A9E0;cursor:pointer;}
-
+  /* Round 1 archive */
+  .r1-banner{position:sticky;top:0;z-index:90;background:#1A1A1A;color:#FFFEFD;padding:10px 16px calc(10px);display:flex;justify-content:space-between;align-items:center;gap:12px;font-family:'Inter';font-size:12px;font-weight:500;}
+  .r1-banner a{color:#FFC94F;text-decoration:none;border-bottom:1px solid #FFC94F;white-space:nowrap;}
+  #notifSection,#notifPrefs,#nav-notifs,#resetProgressWrap,#profilePicBtn{display:none !important;}
+  input,textarea,select{pointer-events:none;}
+  .toggle,.water-btn,.react-chip,.session-photo-btn,#shareBtn,.share-remove{pointer-events:none;}
   .big3-toggle-link{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;}
   .big3-toggle-link:hover{color:var(--text-primary);border-color:var(--text-primary);}
 
@@ -515,6 +507,7 @@
 </style>
 </head>
 <body>
+<div class="r1-banner"><span>Round 1 archive · read only</span><a href="index.html">Back to Round 2</a></div>
 <div class="wrap">
 
   <header class="topbar">
@@ -531,10 +524,9 @@
     <h1>Spell Check</h1>
     <div class="tagline">a month of practical magic</div>
     <p class="sub lede">31 days, four witches.</p>
-    <p class="sub">Round 2. Round 1 got us started, real life did what real life does, and we're back with a setup that fits how we actually live: any two of your three daily spells counts, and a rough day doesn't end the story.</p>
     <p class="sub">We're not trying to become new people, we're just finally letting ourselves pay attention, out loud, together. Call it manifesting, but make it accountability. Call it girl math, but for the soul. Whatever you call it, it's four of us deciding to actually do the things we keep saying we'll do, and letting the sky hold us to it.</p>
     <p class="sub">So we'll journal when we don't feel like it. Move our bodies because it feels good, not because we have to. Spend a little less. Touch some grass before we touch our phones. And talk to each other through all of it: the wins, the spirals, the 2am realizations, all of it. Nothing here is that deep and also all of it is that deep.</p>
-    <p class="sub">By the time Halloween rolls around, we want receipts. Proof we actually did the thing. The sky's just here to keep us honest, and honestly, she's better at it than any app.</p>
+    <p class="sub">By the time the New Moon in Libra rolls around, we want receipts. Proof we actually did the thing. The sky's just here to keep us honest, and honestly, she's better at it than any app.</p>
     <p class="sub">This is Spell Check. Consider it your monthly reminder to check in on your own spells.</p>
     <a href="#" id="introToggle" class="big3-toggle-link intro-toggle" style="display:none;">Read the intro +</a>
   </div>
@@ -602,13 +594,13 @@
   <div class="timeline">
     <div class="timeline-track" id="timelineTrack"></div>
     <div class="timeline-labels">
-      <span>The Opening</span><span>The Review</span><span>The Seed</span><span>The Deep End</span><span>The Harvest</span>
+      <span>The Audit</span><span>Equinox</span><span>The Charge</span><span>The Align</span><span>The Reset</span>
     </div>
   </div>
   <div class="bookend-card" id="kickoffBookend">
     <div class="bookend-label">Before Day 1</div>
     <h3>Kickoff Call</h3>
-    <p>Round 2 starts October 1, so before it does, get everyone together: a call, a couch, a voice-note marathon, whatever's realistic for four busy witches. Say your intention out loud. Not written first, not overthought, just said to people who'll remember you said it. Drop a line of it below after, so future-you has a receipt.</p>
+    <p>Before any of this starts, get everyone together, call, couch, voice memo marathon in the group chat, whatever's realistic for four busy witches, and say your intention out loud. Not written first, not overthought, just said out loud to people who'll actually remember you said it. Drop a line of it below after, so future-you has a receipt.</p>
     <label class="grat-label">My intention going in</label>
     <input type="text" id="kickoffInput" class="gratitude-input" placeholder="Say it out loud first, then write it">
   </div>
@@ -617,7 +609,7 @@
   <div class="bookend-card">
     <div class="bookend-label">After Day 31</div>
     <h3>Closing Celebration</h3>
-    <p>You did a whole month together, and it ends on Halloween, so this one practically plans itself. Get together, in costume or not, and toast to whatever happened: the wins, the skipped days, the 2am texts, all of it. Celebrate loudly, don't grade quietly.</p>
+    <p>This one's not a debrief. Get together and actually celebrate: toast to whatever happened, the wins, the days you skipped, the 2am texts, all of it. You did a whole moon cycle together. That's worth celebrating loudly, not grading quietly.</p>
     <label class="grat-label">My toast</label>
     <input type="text" id="closingInput" class="gratitude-input" placeholder="What are you toasting to">
   </div>
@@ -681,8 +673,7 @@
 
   <div class="section-title">Bookends</div>
   <div id="profileBookends"></div>
-  <div style="margin-top:32px;"><a href="round1.html" class="big3-toggle-link">See Round 1 (read only)</a></div>
-  <div id="profileIdentity" style="margin-top:20px;"></div>
+  <div id="profileIdentity" style="margin-top:36px;"></div>
   <div class="footnote">Your entries, photos, and links are visible to the other three people using this. Data is shared across the group, not private.</div>
   <div id="resetProgressWrap" style="margin-top:6px;"></div>
   <div class="trademark-note">Cast &amp; Check&trade; (pending)</div>
@@ -737,13 +728,6 @@ function loadScriptOnce(url){
 // below didn't need to change: get/set/delete(key, shared).
 // shared=false -> this browser only (localStorage).
 // shared=true  -> everyone using the site (Firebase Realtime Database).
-// Round 2 keeps its own copy of everything tied to a day or a chapter, so Day 1
-// of this round can never overwrite Day 1 of Round 1. Profile photos, device
-// tokens and notification switches are the same people, so they stay shared.
-const ROUND_PREFIX = 'r2:';
-const ROUND_KEY_RE = /^(recal:|recal-photo:|recal-daily-photo:|recal-reactions:|recal-quote:)/;
-function rk(key){ return ROUND_KEY_RE.test(key) ? ROUND_PREFIX+key : key; }
-
 const storage = {
   async get(key, shared){
     if(!shared){
@@ -751,7 +735,7 @@ const storage = {
       return v===null ? null : {key, value:v, shared};
     }
     try{
-      const snap = await db.ref('recalData/'+rk(key)).once('value');
+      const snap = await db.ref('recalData/'+key).once('value');
       if(!snap.exists()) return null;
       return {key, value: snap.val(), shared};
     }catch(e){
@@ -764,7 +748,7 @@ const storage = {
       localStorage.setItem(key, value);
       return {key, value, shared};
     }
-    await db.ref('recalData/'+rk(key)).set(value);
+    /* read only: Round 1 archive never writes to the shared database */
     return {key, value, shared};
   },
   async delete(key, shared){
@@ -772,7 +756,7 @@ const storage = {
       localStorage.removeItem(key);
       return {key, deleted:true, shared};
     }
-    await db.ref('recalData/'+rk(key)).remove();
+    /* read only */
     return {key, deleted:true, shared};
   }
 };
@@ -786,54 +770,50 @@ const PEOPLE = ["Nina","Kellye","Lauren","Carolina"];
 
 // Register the service worker, this is what actually makes "Add to Home
 // Screen" / "Install" available in the browser.
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW registration failed', e));
-  });
-}
-const CHALLENGE_START = new Date(2026,9,1); // Oct 1 2026 (Round 2)
-const CHALLENGE_END = new Date(2026,9,31);  // Oct 31 2026
+// Archive page: the main app owns the service worker and notifications.
+const CHALLENGE_START = new Date(2026,8,18); // Sep 18 2026
+const CHALLENGE_END = new Date(2026,9,18);   // Oct 18 2026
 
 const DAYS = [
-  {"n": 1, "d": "Oct 1", "wd": "Thu", "ch": 1, "prompt": "Round 2, day one! No pressure and no catching up, just a starting line. Write down where you actually are right now: your energy, your habits, your mood. Honest beats impressive, and nobody's grading."},
-  {"n": 2, "d": "Oct 2", "wd": "Fri", "ch": 1, "prompt": "What do you want this month to feel like? Pick three words, and make them feelings, not goals. Write them down and keep them somewhere you'll see them."},
-  {"n": 3, "d": "Oct 3", "wd": "Sat", "ch": 2, "tag": "Venus stations retrograde", "prompt": "Venus turned retrograde overnight, and she's asking what and who you actually value. Make two lists: what you spend your time and money on, and what you say matters most. Notice where the lists don't match."},
-  {"n": 4, "d": "Oct 4", "wd": "Sun", "ch": 2, "prompt": "Slow Sunday. Who do you miss, and what's stopping you from telling them? Draft the message, even if you never send it. Sending it is allowed and encouraged."},
-  {"n": 5, "d": "Oct 5", "wd": "Mon", "ch": 2, "prompt": "Money check, gently. What did you spend on this week that you'd happily buy again, and what was a shrug? No shame, we're just collecting data."},
-  {"n": 6, "d": "Oct 6", "wd": "Tue", "ch": 2, "prompt": "What's a compromise you made recently that you're still a little annoyed about? Write the version where you say what you actually wanted."},
-  {"n": 7, "d": "Oct 7", "wd": "Wed", "ch": 2, "prompt": "The Moon is in Virgo, which loves a tidy-up. Pick one small thing that's been bugging you and fix it in ten minutes: a drawer, an inbox, a browser tab. Small counts."},
-  {"n": 8, "d": "Oct 8", "wd": "Thu", "ch": 2, "prompt": "The Moon is almost dark. What do you want to put down before the New Moon? A habit, a grudge, a group chat you keep meaning to mute. Write the list, then actually drop one."},
-  {"n": 9, "d": "Oct 9", "wd": "Fri", "ch": 2, "prompt": "Dark moon day, so nothing impressive is required. Take your phone-free hour early, get comfortable, and notice what you're feeling without trying to fix it. That's the whole assignment."},
-  {"n": 10, "d": "Oct 10", "wd": "Sat", "ch": 3, "tag": "New Moon in Libra", "prompt": "New Moon in Libra, and this one is a group spell! Get on a call, start a voice-note thread, or grab brunch. Each of you says one intention for the next two weeks out loud to the other three, then write yours down here."},
-  {"n": 11, "d": "Oct 11", "wd": "Sun", "ch": 3, "prompt": "You set an intention yesterday. What's the smallest possible step toward it? Not the impressive step, the tiny one. Do it today and write down what it was."},
-  {"n": 12, "d": "Oct 12", "wd": "Mon", "ch": 3, "prompt": "The Moon is in Scorpio, which prefers the honest version of things. What have you been saying \"I'm fine\" about that you're not totally fine about? Write the unfiltered version, just for you."},
-  {"n": 13, "d": "Oct 13", "wd": "Tue", "ch": 3, "prompt": "Share something with the coven today: an article, a song, a weird fact, anything that made you think. Extra credit, in spirit, for the one you'd normally keep to yourself."},
-  {"n": 14, "d": "Oct 14", "wd": "Wed", "ch": 3, "prompt": "The Moon is in Sagittarius, which wants an adventure. Do one thing today that you've been putting off because it felt like too much. Big, small, weird, whatever. Then tell the group how it went."},
-  {"n": 15, "d": "Oct 15", "wd": "Thu", "ch": 3, "prompt": "If you had one free hour today with zero obligations, what would you do with it? Go do a small version of that. Not later, today."},
-  {"n": 16, "d": "Oct 16", "wd": "Fri", "ch": 3, "tag": "Halfway", "prompt": "Halfway! Go back and read your Day 1 entry. What's changed, even a little? What's the same? Be honest and be kind, both are allowed."},
-  {"n": 17, "d": "Oct 17", "wd": "Sat", "ch": 4, "prompt": "The Moon is in Capricorn, which loves a plan. Pick the one habit from this challenge you actually want to keep, and picture it on a busy Tuesday, not an ideal Saturday."},
-  {"n": 18, "d": "Oct 18", "wd": "Sun", "ch": 4, "prompt": "Slow Sunday check: which of the three daily spells feels easiest right now, and which one feels like homework? Notice why, without judging yourself for it."},
-  {"n": 19, "d": "Oct 19", "wd": "Mon", "ch": 4, "prompt": "The Moon is in Aquarius, which cares about the group. What's one thing you appreciate about each of the other three witches that you've never told them? Pick one and send it today."},
-  {"n": 20, "d": "Oct 20", "wd": "Tue", "ch": 4, "prompt": "What do you believe now that you didn't believe a year ago? Write it like you're explaining it, gently, to someone who disagrees."},
-  {"n": 21, "d": "Oct 21", "wd": "Wed", "ch": 4, "prompt": "The Moon is in Pisces, so let's feel things. What's a feeling you've been too busy to have? Give it fifteen honest minutes and see what it wants."},
-  {"n": 22, "d": "Oct 22", "wd": "Thu", "ch": 4, "prompt": "Libra season wraps up in the early hours tomorrow. What has balance actually meant to you this month? Not the dictionary version, yours."},
-  {"n": 23, "d": "Oct 23", "wd": "Fri", "ch": 4, "tag": "Sun enters Scorpio", "prompt": "Scorpio season started overnight, and it isn't interested in small talk. What's one thing about yourself, or someone you love, that you've only ever skimmed? Go one layer deeper."},
-  {"n": 24, "d": "Oct 24", "wd": "Sat", "ch": 4, "tag": "Mercury stations retrograde", "prompt": "Mercury turned retrograde just after midnight, so reread before you send, and revisit something you left unfinished. Close or reopen one loose end today."},
-  {"n": 25, "d": "Oct 25", "wd": "Sun", "ch": 5, "tag": "Full Moon in Taurus", "prompt": "Full Moon in Taurus tonight, the receipts moon. What grew this month, and what are you keeping? Write down three things you can point to. Photos count as receipts."},
-  {"n": 26, "d": "Oct 26", "wd": "Mon", "ch": 5, "prompt": "The Moon is in Taurus, which wants comfort. Give yourself something real today: a proper meal, a long shower, an early night. Then write down what your body keeps asking for that you keep skipping."},
-  {"n": 27, "d": "Oct 27", "wd": "Tue", "ch": 5, "prompt": "What are you proudest of from this month that nobody would think to ask about? Tell the group. Showing off is allowed, you earned it."},
-  {"n": 28, "d": "Oct 28", "wd": "Wed", "ch": 5, "prompt": "The Moon is in Gemini, so let's talk. Voice-note one of the witches your favorite moment of this challenge. Real voices, not just texts."},
-  {"n": 29, "d": "Oct 29", "wd": "Thu", "ch": 5, "prompt": "Which one habit is coming with you past Halloween? Pick it, make it smaller than you think it needs to be, and tell the group so someone's watching."},
-  {"n": 30, "d": "Oct 30", "wd": "Fri", "ch": 5, "prompt": "The Moon is in Cancer, which is sentimental. Scroll back through this month's photos and pick your favorite. What was happening that day? Send it to the group."},
-  {"n": 31, "d": "Oct 31", "wd": "Sat", "ch": 5, "tag": "Halloween", "prompt": "Halloween, and the last day! Write a short letter to future you, the one who'll need this again someday. Share the part that feels right with the group, then go celebrate like the witches you are."}
+  {n:1,d:"Sep 18",wd:"Fri",ch:1,prompt:"Welcome in, witch! Virgo season loves a good audit, so let's ease into it: think back on yesterday, hour by hour, and circle the moments you were just on autopilot. No judgment, just curiosity. That's the whole game this week."},
+  {n:2,d:"Sep 19",wd:"Sat",ch:1,prompt:"Zoom out like you're reading your own chart: what's the one relationship, habit, or thought you keep circling back to? Name it, gently, no fixing required today. Just noticing the pattern out loud, even only to yourself, is real magic."},
+  {n:3,d:"Sep 20",wd:"Sun",ch:1,prompt:"What's the line you say to yourself on repeat? Would you ever say it to your best friend? Today's spell: talk to yourself like someone worth being kind to."},
+  {n:4,d:"Sep 21",wd:"Mon",ch:1,prompt:"Last day of The Audit! Write down one thing you're officially done explaining yourself for. Just one. Let it be dramatic if it wants to be, you earned it."},
+  {n:5,d:"Sep 22",wd:"Tue",ch:2,tag:"Equinox \u2014 Sun enters Libra",prompt:"Happy Equinox! This one's a group spell, not a solo one. Get on a call, grab dinner, go on a walk, whatever four busy witches can pull off. Each of you says one thing from The Audit you're letting go of, and one thing you're calling in. Out loud, to each other. That's the whole assignment, and it's a good one."},
+  {n:6,d:"Sep 23",wd:"Wed",ch:3,prompt:"Libra season has entered the chat! Where does the give and take in your life feel genuinely lopsided right now? Say it plainly, diplomacy can sit this one out."},
+  {n:7,d:"Sep 24",wd:"Thu",ch:3,prompt:"There's a request you've been quietly softening before you send it. Send it today, soften it or don't, that part's up to you, just send it."},
+  {n:8,d:"Sep 25",wd:"Fri",ch:3,prompt:"What do you actually find beautiful, not what performs well online? Go do one thing today purely because it delights you. No other reason needed, that's very Libra of you."},
+  {n:9,d:"Sep 26",wd:"Sat",ch:3,tag:"Full Harvest Moon \u2014 Aries",prompt:"Full moon in Aries tonight! She's not here for your reflections, she wants your action. Whatever you've been circling all week, go do the thing before midnight. She's rooting for you."},
+  {n:10,d:"Sep 27",wd:"Sun",ch:3,prompt:"Full moon hangover day, in the best way. What did you let go of last night, even if it happened kind of by accident?"},
+  {n:11,d:"Sep 28",wd:"Mon",ch:3,prompt:"Go back to whatever you called lopsided earlier this week. Has anything actually shifted, or does it just look different from this angle? Either answer is honest."},
+  {n:12,d:"Sep 29",wd:"Tue",ch:3,prompt:"Chapter's closing! In one sentence: what has balance actually meant to you this week? Not the dictionary's definition, yours."},
+  {n:13,d:"Sep 30",wd:"Wed",ch:4,prompt:"New stretch, new values check! Write your top three values in an actual order. No ties, the universe wants your real answer."},
+  {n:14,d:"Oct 1",wd:"Thu",ch:4,prompt:"Where did you choose harmony over honesty this week? Be honest now: was it worth it, or are you quietly still annoyed?"},
+  {n:15,d:"Oct 2",wd:"Fri",ch:4,prompt:"Think of one relationship running on unspoken rules. Name one of them out loud, even if it's just here, just to you."},
+  {n:16,d:"Oct 3",wd:"Sat",ch:4,tag:"Venus stations retrograde",prompt:"Venus turns retrograde today, drifting between Libra and Scorpio through mid-November, so love, money, and values might get a little slippery. Perfect timing to ask: who do you become around people you don't fully trust? Write about her like she's a character in a really good book."},
+  {n:17,d:"Oct 4",wd:"Sun",ch:4,prompt:"Rest day! Do one thing today with zero audience, not even yourself watching and narrating it. Just be, quietly, for once."},
+  {n:18,d:"Oct 5",wd:"Mon",ch:4,prompt:"What's a compromise you made recently that you're still a little mad about, if we're being honest?"},
+  {n:19,d:"Oct 6",wd:"Tue",ch:4,prompt:"Four days till the reset! What do you want to be true about your life by October 10th that isn't true yet? Say it like it's already on its way."},
+  {n:20,d:"Oct 7",wd:"Wed",ch:4,prompt:"Write out the money conversation you've been avoiding, whether that's with a partner, a friend, or just yourself. It'll feel lighter once it's out."},
+  {n:21,d:"Oct 8",wd:"Thu",ch:4,prompt:"What have you outgrown this cycle that you haven't said out loud yet? Say it now, even just in a whisper."},
+  {n:22,d:"Oct 9",wd:"Fri",ch:4,prompt:"Last day before the new moon! Clear something real: an email, a drawer, a text thread that's overstayed its welcome. Make room for what's coming."},
+  {n:23,d:"Oct 10",wd:"Sat",ch:5,tag:"New Moon \u2014 Libra",prompt:"New moon in Libra tonight! Write one intention for after this challenge ends, present tense, one sentence, like it's already true. Let the sky hear it."},
+  {n:24,d:"Oct 11",wd:"Sun",ch:5,prompt:"Who's one person you want more real balance with going forward? Get specific about what that would actually look like, details make spells stick."},
+  {n:25,d:"Oct 12",wd:"Mon",ch:5,prompt:"Go back and reread your Day 1 energy audit. What's actually different now? You've probably moved more than you think."},
+  {n:26,d:"Oct 13",wd:"Tue",ch:5,prompt:"Tell each of the other three witches something you've noticed shifting in them this cycle. Not a compliment for the sake of it, something real you've actually seen change."},
+  {n:27,d:"Oct 14",wd:"Wed",ch:5,prompt:"What's the thing you're proudest of from this whole cycle that literally nobody else would think to ask about? Say it here, you deserve the credit."},
+  {n:28,d:"Oct 15",wd:"Thu",ch:5,prompt:"What's one commitment from this challenge you actually want to keep going, well past the last day? Pick the one that already feels like you."},
+  {n:29,d:"Oct 16",wd:"Fri",ch:5,prompt:"Mercury goes retrograde in eight days! Before things get a little chaotic, is there one message, one apology, one loose end worth closing now instead of later?"},
+  {n:30,d:"Oct 17",wd:"Sat",ch:5,prompt:"You started this on September 18th. What's different about how you spend your first hour awake now versus then? Notice it, that's the whole spell."},
+  {n:31,d:"Oct 18",wd:"Sun",ch:5,tag:"Last clear signal before Mercury retrograde",prompt:"Last day, witches! Mercury turns retrograde on the 24th, so tonight's your last clean signal for a while, use it well. Write a short letter to future-you, the one who'll need this again someday. Share whatever part of it feels right with the group."},
 ];
 
 const CHAPTERS = [
-  {"id": 1, "name": "The Opening", "range": "Oct 1\u20132", "blurb": "Round 2, day one. Libra season is still going (balance, mirrors, other people), and Mercury just slid into Scorpio, so honest conversations are about to get more honest. No overhaul required, we're just starting again, together.", "cls": "g1"},
-  {"id": 2, "name": "The Review", "range": "Oct 3\u20139", "blurb": "On the 3rd, Venus turns retrograde in Scorpio, a six-week audit of love, money and what we actually value. The Moon shrinks to nothing by the 9th, so this week is for looking back, not launching. Take inventory, keep the receipts.", "cls": "g2"},
-  {"id": 3, "name": "The Seed", "range": "Oct 10\u201316", "blurb": "New Moon in Libra on the 10th: the fairest possible place to plant an intention. After that the Moon grows all week, so we get to take small steps while she does. Say what you want, then do one thing about it.", "cls": "g3"},
-  {"id": 4, "name": "The Deep End", "range": "Oct 17\u201324", "blurb": "On the 23rd the Sun slides into Scorpio, and Mercury turns retrograde right after midnight. The sky is basically saying go below the surface, and reread everything before you hit send.", "cls": "g4"},
-  {"id": 5, "name": "The Harvest", "range": "Oct 25\u201331", "blurb": "The Full Moon in Taurus on the 25th is the receipts moon: what grew, what we're keeping, what we're composting. Venus backs into Libra the same day, and then it's Halloween, which is very on brand for four witches.", "cls": "g5"}
+  {id:1,name:"The Audit",range:"Sep 18\u201321",blurb:"Virgo season's still wrapping up, which means the universe is basically begging you to Marie Kondo your own brain. Not a full life overhaul, just an honest look at where your energy's actually going.",cls:"g1",sign:"Virgo"},
+  {id:2,name:"The Equinox Shift",range:"Sep 22",blurb:"The sun crosses into Libra today: balance, beauty, and please, for the love of god, put the phone down and talk to each other in person.",cls:"g2",sign:"Libra"},
+  {id:3,name:"The Charge",range:"Sep 23\u201329",blurb:"Libra season is officially here (balance, relationships, main character aesthetics), and on the 26th a Full Harvest Moon in Aries shows up to make sure none of us just think about our feelings without doing something about them.",cls:"g3",sign:"Libra"},
+  {id:4,name:"The Align",range:"Sep 30\u2013Oct 9",blurb:"Libra season keeps going, and we're using it to figure out what alignment actually feels like, not just keeping the peace because it's easier. Venus stations retrograde partway through, so expect love, money, and values to get a little messy right on schedule.",cls:"g4",sign:"Libra"},
+  {id:5,name:"The Reset",range:"Oct 10\u201318",blurb:"New Moon in Libra on the 10th means fresh intentions and real balance, and the extra days on the tail end are borrowed time before Mercury turns retrograde on the 24th, use them.",cls:"g5",sign:"Libra"},
 ];
 
 const ZODIAC_ORDER = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
@@ -903,61 +883,42 @@ const ASPECT_TEXT = {
   }
 };
 
-// Round 2 daily forecast: horoscope-style lines (no astrology talk in the sentences),
-// picked from the day's Moon sign and how it meets each person's Big 3.
-// Moon sign per day is precomputed for Oct 1 to 31.
-const FC = {"HORO": {"conjunction": {"Sun": ["Today is unusually yours. You know what you want, and for once you're not apologizing for it. Say it plainly.", "You're easier to see today, and it suits you. Don't shrink to make the room comfortable.", "Your energy is up and people can feel it. Spend it on something that deserves you.", "The spotlight is going to find you whether you ask or not. Be ready to be looked at, and enjoy it a little."], "Moon": ["Your feelings are turned all the way up today, and they're mostly telling the truth. Give them a minute before you act.", "You feel very much like yourself today, for better and for worse. Write it down, it'll make sense later.", "You're emotionally fluent today. What you've been unable to say is close to the surface, so let it out gently.", "Your gut is louder than your logic today. It isn't wrong, it's just early. Follow the hunch, keep the receipts."], "Rising": ["People are reading you clearly today, and what they see is more magnetic than you think. Send the message.", "You walk in already warmed up. First impressions are on your side, so use them.", "The room notices you before you speak. Decide what you want it to notice.", "You're picking up on everyone faster than usual. Trust the read, and keep the opinion to yourself until you're sure."]}, "opposition": {"Sun": ["Someone else's needs are on your calendar today, and they're not going away. Meet them in the middle instead of winning.", "You want one thing and the people around you want another. This isn't a fight, it's a negotiation. Bring snacks.", "Other people are the mirror today. What annoys you about them is worth a second look.", "A friend or a to-do list will ask for more than you planned to give. Say what you can and mean it."], "Moon": ["What you feel and what the room feels don't match today. Check in with yourself before you assume you're the one who's off.", "You're caught between what you want and what you need, and both deserve a vote. Take the quieter one seriously.", "Your mood is swinging toward everyone else's today. Protect a little space, and put the weather back where it belongs.", "You're feeling other people's feelings and calling them yours. Sort out which ones are actually yours before dinner."], "Rising": ["Someone else's energy is very present today. Notice whose, and notice how much of it you're carrying.", "You're extra aware of how you come across, which is mostly a distraction. Nobody is grading you as hard as you are.", "Other people feel louder than usual. You don't have to match them to be heard.", "You'll catch people's reactions to you all day. Take notes, skip the spiral."]}, "square": {"Sun": ["Something is pushing back today, and it's annoying. It's also the useful kind of friction, so don't quit early.", "A small hurdle shows up, and it's not personal. Step over it and keep going.", "You'll want to snap at something small. The something small isn't the problem.", "Resistance today is a nudge to make a decision, not a sign you're wrong. Make the small one."], "Moon": ["You're moodier than the situation calls for, and you know it. Eat something, drink water, then decide.", "Small things feel big today. Most of them aren't. Pick the one that is and let the others pass.", "Your feelings and your day aren't quite in sync. Be patient with both, and don't send anything you drafted angry.", "You're a little prickly today, which is information, not a personality. Notice it before it makes a decision for you."], "Rising": ["You feel a step behind how you want to show up. You aren't, and nobody can tell. Skip the perfection.", "First impressions take extra effort today. Do the effort, then forgive yourself for the rest.", "An off day for how you come across. Show up as you are, wrinkles included, and let that be enough.", "You'll feel slightly out of step with the room. It passes by tomorrow, so don't rearrange your whole self over it."]}, "trine": {"Sun": ["Things flow more easily than usual today. Don't overthink it, and don't talk yourself out of the good luck.", "Nothing is in your way. It's a good day to start the thing you've been rehearsing.", "The day is on your side. Take the win when it comes, and let it be small.", "You'll get more done than you expect, mostly because you won't fight yourself. Do the thing you've been saving for a good day."], "Moon": ["Emotionally, today is unusually smooth. Enjoy it, and write down what's working so you can find it again.", "Your mood and your day agree for once. Rare, lovely, and worth using.", "Feelings flow without a fight today. It's a good day for the conversation you've been avoiding.", "Your plans and your feelings line up. Say the kind thing out loud, it'll land better than you think."], "Rising": ["People meet you halfway today. Ask for what you need and see what happens.", "You can be yourself with almost no effort. Enjoy how easy that is.", "The world is being easy on you. Say yes to the invitation you'd normally decline.", "You're moving through the day with less friction than usual. Notice it, and don't ruin it by waiting for the catch."]}, "sextile": {"Sun": ["A small opening is on its way. If it shows up, take it, even if it's inconvenient.", "A little help is closer than you think. All you have to do is ask for it.", "Say yes to the small opportunity today. It won't look important until later.", "A friendly tailwind is behind you. Ask for the thing you were nervous to ask for."], "Moon": ["Your mood is easy to work with today. Use it to be kind to someone, starting with you.", "A quiet emotional tailwind is on your side. Nothing dramatic, just easier.", "Feelings are manageable today, which makes it a good day to ask for support.", "You're a little softer today, and it helps. Let someone do something nice for you."], "Rising": ["People are a little easier to deal with than usual. Use that.", "Small talk goes better than expected today. Talk to someone new.", "A small social boost is on offer. Send the text.", "Reach out today. It will land well, and you'll be glad you did."]}}, "TONE": {"Aries": ["The day moves fast and runs a little impatient.", "Everything feels urgent. Pick the one thing that is.", "Good for starting things, bad for waiting in line."], "Taurus": ["The day wants to be slow, soft and uncomplicated.", "Your body has opinions today, mostly about snacks. Listen.", "Rushing won't be rewarded. Comfort will."], "Gemini": ["Your mind is in six places today, so write things down.", "Everything is more interesting than it should be. Follow one thread.", "Expect a lot of tabs, a lot of ideas, and one good conversation."], "Cancer": ["Feelings arrive early and stay late today. Be gentle with the tender ones.", "An old song might hit harder than usual.", "Home is the whole vibe. Nesting counts as productivity."], "Leo": ["The day is a little louder and a little more fun.", "Small things deserve applause today. Give yourself some.", "Main character energy is available. Use it kindly."], "Virgo": ["Details are loud today. Let some be loud without you.", "Ten minutes of tidying will feel like a superpower.", "Cross off something small and feel smug about it."], "Libra": ["Harmony is the goal today. Just don't smooth over what you actually need to say.", "Compromise comes easier than usual.", "Everything wants to be balanced and pretty. Start with your desk."], "Scorpio": ["Small talk will feel like a waste today. Ask the real question.", "Honest conversations go deeper than expected.", "The day notices everything and says half of it. You might be doing the same."], "Sagittarius": ["You're restless and hopeful, and a change of scenery would help. Go outside.", "The big picture wins over the details today. Say yes to something a little bold.", "Tomorrow will be great, probably. Borrow some of that optimism."], "Capricorn": ["Being productive feels good today, and being silly feels earned. Do both.", "Small habits are the whole point. Finish one thing.", "Respect the plan, and the plan will reward you."], "Aquarius": ["The group matters more than the to-do list today. Call a friend.", "Being a little weird feels right. Lean in.", "Check in on the coven, they'd like that."], "Pisces": ["Plans work better soft than rigid today.", "Boundaries feel blurry and feelings feel oceanic. Water helps, literally.", "You're absorbing everything around you. Notice what's yours and what isn't."]}, "QUIET": ["Nothing is poking at you today, which is its own kind of gift. Spend the free space on something you like.", "A low-drama day for you. Enjoy the quiet and resist the urge to invent something.", "No big tugs today, so you get to set the tone. Choose a gentle one."], "TRY": {"fire": ["Pick a spontaneous plan and actually do it. Fire days don't wait.", "Dance in your kitchen for one whole song. Nobody's watching, everybody benefits.", "Move your body before anything else. Fire days reward action.", "Do the bold thing first and the journaling after. Momentum beats mood today.", "Take your phone-free hour outside, moving. Fire likes a change of scenery."], "earth": ["Touch some grass before you touch your phone. Earth days are for the ground.", "Spend nothing today, or nothing extra. Earth days respect a no-spend.", "Do one boring useful thing, like refilling your water bottle or clearing one drawer.", "Get your water in early. Earth days are for looking after the body.", "Make a small plan for tomorrow, then close the laptop. Earth likes a clean handoff."], "air": ["Ask one of the witches a question you're genuinely curious about.", "Write down the three things your brain won't stop saying, then close the tab.", "Send something to the coven. A link, a song, a weird fact. Air days love a good share.", "Talk your journal entry out loud, then write the best part down.", "Message one of the witches something you'd normally think and not say."], "water": ["Put on the song that matches your mood and let it finish.", "Let yourself feel the thing for five minutes, then wash your face and carry on.", "Write the honest version of today's entry. Water days reward the real answer.", "Take your phone-free hour near water: a shower, a bath, or a window with rain.", "Drink your water slowly and check in on how you actually feel."]}, "EVENTS": {"3": {"sign": "Scorpio", "body": "Venus"}, "10": {"sign": "Libra", "body": "The New Moon"}, "23": {"sign": "Scorpio", "body": "The Sun"}, "24": {"sign": "Scorpio", "body": "Mercury"}, "25": {"sign": "Taurus", "body": "The Full Moon"}}, "EVENT_BODY": {"3": {"tight": "Love, money and what you value are up for review, and it feels personal this time. Go slowly with big decisions about either.", "easy": "A review of love, money and what you value is underway, and it should feel more like tidying up than tearing down.", "quiet": "Questions about love, money and values are in the air, but they're not aimed at you. Watch, take notes, and enjoy the show."}, "10": {"tight": "A fresh start is stirring something in you, so the intention you set today probably matters more than you think. Choose it with care.", "easy": "It's easy to plant an intention today. Make it a good one, and say it out loud.", "quiet": "A clean slate is on offer, and anyone can borrow it. Write one line about what you want."}, "23": {"tight": "The season turns toward depth, and something in you is in the spotlight. Expect some honesty with yourself.", "easy": "The season turns toward depth, and it suits you. The real conversations should come more easily than you expect.", "quiet": "The season turns toward depth, but you can dip in at your own pace. No need to dive."}, "24": {"tight": "Messages and plans are slippery today, and it lands close to home. Reread everything before you send it.", "easy": "Messages and plans are a little slippery today, but you're in good shape. It's a gentle day to revisit something unfinished.", "quiet": "Messages and plans get weird for some people today. You're mostly spared, so be kind to the ones who aren't."}, "25": {"tight": "Tonight is a night for taking stock, and it may hit harder than usual. Look at what you've grown, not just what's missing.", "easy": "Tonight is a night for taking stock, and it's warm toward you. Enjoy what you've built.", "quiet": "Tonight is a night for taking stock. You can just enjoy the moonlight."}}, "LABELS": ["Try this", "Small spell", "Tiny nudge"], "HEAD": {"conjunction": {"Sun": ["Today is about you, and that's allowed.", "You're easy to see today.", "Take up the space you're given."], "Moon": ["You feel everything a little louder today.", "Your feelings are the compass today.", "You know exactly how you feel."], "Rising": ["People are reading you clearly today.", "You walk in already warmed up.", "The room notices you before you speak."]}, "opposition": {"Sun": ["Someone else's needs are on your calendar.", "Today asks you to meet in the middle.", "Other people are the mirror today."], "Moon": ["Your mood and the room's mood disagree.", "What you feel and what you need are talking.", "Don't absorb everyone's weather today."], "Rising": ["Other people feel louder than usual.", "You're very aware of how you come across.", "Let them be loud. You don't have to match it."]}, "square": {"Sun": ["A small hurdle is making you stronger.", "Something is pushing back, and that's fine.", "It's not a crisis, just a nudge."], "Moon": ["Your mood is prickly, not permanent.", "Feelings first, decisions later.", "Small things feel big today. They aren't."], "Rising": ["You may feel a step behind. You're not.", "Show up as you are, wrinkles included.", "First impressions can wait a day."]}, "trine": {"Sun": ["Today cooperates with you.", "Nothing is in your way today.", "Take the win when it comes."], "Moon": ["Your feelings and your plans agree today.", "An unusually smooth day, emotionally.", "You can say the true thing gently."], "Rising": ["People meet you halfway today.", "You can be yourself with zero effort.", "The world is being easy on you."]}, "sextile": {"Sun": ["A small opening is on its way.", "A little help is closer than you think.", "Say yes to the small thing."], "Moon": ["A quiet tailwind is on your side.", "Your mood is easy to work with.", "Be kind to someone, starting with you."], "Rising": ["People are a little easier than usual.", "Small talk goes better than expected.", "Reach out. It will land well."]}}, "QUIET_HEAD": ["Nothing is poking at you today.", "A low-drama day, on purpose.", "You get to set the tone."], "EVENT_HEAD": {"3": {"tight": "This one is hitting close to home.", "easy": "The review should feel like tidying up.", "quiet": "You get to watch this one and take notes."}, "10": {"tight": "Your intention matters more than you think.", "easy": "Planting an intention is easy today.", "quiet": "A fresh start is yours to borrow."}, "23": {"tight": "Something in you is in the spotlight.", "easy": "The deep end suits you.", "quiet": "Dip into the deep end at your own pace."}, "24": {"tight": "Reread everything before you send it.", "easy": "Revisit something unfinished, gently.", "quiet": "The retrograde chaos mostly misses you."}, "25": {"tight": "Tonight's reflection may hit hard.", "easy": "Enjoy what you've built tonight.", "quiet": "Just enjoy the moonlight."}}, "EVN": {"3": "Venus retrograde in Scorpio", "10": "New Moon in Libra", "23": "Sun enters Scorpio", "24": "Mercury retrograde in Scorpio", "25": "Full Moon in Taurus"}, "MOON": {"1": "Gemini", "2": "Gemini", "3": "Cancer", "4": "Cancer", "5": "Leo", "6": "Leo", "7": "Virgo", "8": "Virgo", "9": "Libra", "10": "Libra", "11": "Scorpio", "12": "Scorpio", "13": "Scorpio", "14": "Sagittarius", "15": "Sagittarius", "16": "Capricorn", "17": "Capricorn", "18": "Capricorn", "19": "Aquarius", "20": "Aquarius", "21": "Pisces", "22": "Pisces", "23": "Pisces", "24": "Aries", "25": "Aries", "26": "Taurus", "27": "Taurus", "28": "Gemini", "29": "Gemini", "30": "Cancer", "31": "Cancer"}, "SIGNS": ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"], "ELEMENT": {"Aries": "fire", "Leo": "fire", "Sagittarius": "fire", "Taurus": "earth", "Virgo": "earth", "Capricorn": "earth", "Gemini": "air", "Libra": "air", "Aquarius": "air", "Cancer": "water", "Scorpio": "water", "Pisces": "water"}, "PRIORITY": ["conjunction", "opposition", "square", "trine", "sextile"]};
-function fcPick(list, key){ let h=0; for(const ch of String(key)){ h=(h*31 + ch.codePointAt(0)) >>> 0; } return list[h % list.length]; }
-function fcAspect(a,b){ let d=Math.abs(FC.SIGNS.indexOf(a)-FC.SIGNS.indexOf(b)); d=Math.min(d,12-d); return {0:'conjunction',2:'sextile',3:'square',4:'trine',6:'opposition'}[d]||null; }
-function fcStrongest(sign, natal){
-  const hits=[];
-  for(const pt of ['Moon','Sun','Rising']){ if(natal[pt] && FC.SIGNS.indexOf(natal[pt])>=0){ const a=fcAspect(sign,natal[pt]); if(a) hits.push([FC.PRIORITY.indexOf(a),pt,natal[pt]]); } }
-  if(!hits.length) return null;
-  const best=Math.min(...hits.map(h=>h[0])); const tied=hits.filter(h=>h[0]===best);
-  return [FC.PRIORITY[best], tied];
-}
-function forecastFor(person, day, natal){
-  natal = natal || {};
-  const moon = FC.MOON[String(day)]; if(!moon) return null;
-  const ev = FC.EVENTS[String(day)] || null;
-  const tone = fcPick(FC.TONE[moon], day+'|tone');
-  const label = fcPick(FC.LABELS, person+'|'+day+'|label');
-  const action = fcPick(FC.TRY[FC.ELEMENT[moon]], person+'|'+day+'|try');
-  const chip = ev ? FC.EVN[String(day)] : 'Moon in '+moon;
-  const hasChart = ['Sun','Moon','Rising'].some(k=>natal[k] && FC.SIGNS.indexOf(natal[k])>=0);
-  if(!hasChart) return {headline:'Add your Big 3 to unlock your sky.', body:'Add your Sun, Moon and Rising on your profile and this turns into your horoscope. '+tone, label, action, chip, isEvent:!!ev, needsChart:true};
-  if(ev){
-    const s = fcStrongest(ev.sign, natal);
-    const cat = s ? (['conjunction','opposition','square'].includes(s[0]) ? 'tight' : 'easy') : 'quiet';
-    return {headline:FC.EVENT_HEAD[String(day)][cat], body:FC.EVENT_BODY[String(day)][cat], label, action, chip, isEvent:true, needsChart:false};
-  }
-  const s = fcStrongest(moon, natal);
-  let head, body;
-  if(s){
-    const [asp, tied] = s; const pt = fcPick(tied, person+'|'+day+'|tie');
-    body = fcPick(FC.HORO[asp][pt[1]], person+'|'+day+'|you')+' '+tone;
-    head = fcPick(FC.HEAD[asp][pt[1]], person+'|'+day+'|head');
-  } else {
-    body = fcPick(FC.QUIET, person+'|'+day+'|quiet')+' '+tone; head = fcPick(FC.QUIET_HEAD, person+'|'+day+'|qhead');
-  }
-  return {headline:head, body, label, action, chip, isEvent:false, needsChart:false};
-}
-
-// The sign and body the sky is focused on that day, used by the chapter receipts.
+// What's actually "active" that day: the Sun for ordinary season days,
+// but the real transiting body for the two one-day events (the Moon for
+// the Aries full moon, Venus for its retrograde station).
 function dayTransit(day){
-  const ev = FC.EVENTS[String(day.n)];
-  if(ev) return {sign: ev.sign, body: ev.body};
-  return {sign: day.n >= 23 ? 'Scorpio' : 'Libra', body: 'The Sun'};
+  if(day.n===9) return {sign:"Aries", body:"The Moon"};
+  if(day.n===16) return {sign:"Scorpio", body:"Venus"};
+  const ch = CHAPTERS.find(c=>c.id===day.ch);
+  return {sign:(ch && ch.sign) || "Libra", body:"The Sun"};
 }
 
-// weeks: real Mon-Sun calendar weeks. Round 2 starts on a Thursday, so the
-// first week is short and the last one runs Mon to Sat.
+function personalizedAstroLines(day, person){
+  const pl = allData[person] && allData[person].placements;
+  if(!pl) return null;
+  const transit = dayTransit(day);
+  const lines = [];
+  [['sun','Sun'],['moon','Moon'],['rising','Rising']].forEach(([key,label])=>{
+    const natal = pl[key];
+    if(!natal) return;
+    const d = signDistance(transit.sign, natal);
+    if(d===null) return;
+    const aspect = aspectForDistance(d);
+    lines.push(`<strong>${label}</strong>: ${transit.body} in ${transit.sign} ${ASPECT_TEXT[aspect][key]}`);
+  });
+  return lines.length ? lines : null;
+}
+
+// weeks: real Mon-Sun calendar weeks, so the first and last are partial
+// since Sep 18 (a Friday) doesn't line up with a Monday. This time the
+// short week lands at the start instead of the end, and the run ends up
+// dividing into 5 clean weeks with no partial week at the tail.
 const WEEKS = [
-  {"label": "Week 1", "range": "Oct 1\u20134", "days": [1, 2, 3, 4]},
-  {"label": "Week 2", "range": "Oct 5\u201311", "days": [5, 6, 7, 8, 9, 10, 11]},
-  {"label": "Week 3", "range": "Oct 12\u201318", "days": [12, 13, 14, 15, 16, 17, 18]},
-  {"label": "Week 4", "range": "Oct 19\u201325", "days": [19, 20, 21, 22, 23, 24, 25]},
-  {"label": "Week 5 (short)", "range": "Oct 26\u201331", "days": [26, 27, 28, 29, 30, 31]}
+  {label:"Week 1 (short)",range:"Sep 18\u201320",days:[1,2,3]},
+  {label:"Week 2",range:"Sep 21\u201327",days:[4,5,6,7,8,9,10]},
+  {label:"Week 3",range:"Sep 28\u2013Oct 4",days:[11,12,13,14,15,16,17]},
+  {label:"Week 4",range:"Oct 5\u201311",days:[18,19,20,21,22,23,24]},
+  {label:"Week 5",range:"Oct 12\u201318",days:[25,26,27,28,29,30,31]},
 ];
 
 let currentPerson = PEOPLE[0];
@@ -971,7 +932,7 @@ let allData = {}; // {person: {placements, days:{n:{journaled,noPhone,gratitude}
 let placementsEditingSelf = null;
 
 function isEditable(){
-  return !!myIdentity && currentPerson === myIdentity;
+  return false; // Round 1 is an archive, nothing here can be edited
 }
 
 async function loadIdentity(){
@@ -1158,7 +1119,6 @@ function renderProfilePicSection(){
   // (legacy layout replaced by the profile header above)
 }
 
-// Round 2 starts every record at this version, so nothing here gets reset.
 // Bumped whenever the day-by-day schedule itself changes shape.
 // DO NOT bump this mid-challenge. Changing it runs applyScheduleReset on
 // everyone's data on their next load. Wave 1 (Today card, casting rule,
@@ -1329,28 +1289,12 @@ function migrateCurrentlyToLiveStatus(pd){
   pd.currentlyHistory = history;
 }
 
-// First time someone opens Round 2: bring over the things that are about her,
-// not about the round. Round 1's record is only ever read.
-async function seedFromRound1(p){
-  const fresh = emptyPersonData();
-  try{
-    const snap = await db.ref('recalData/recal:'+p).once('value');
-    if(snap.exists()){
-      const old = JSON.parse(snap.val());
-      if(old.placements && typeof old.placements === 'object') fresh.placements = Object.assign({}, fresh.placements, old.placements);
-      if(old.currently && typeof old.currently === 'object') fresh.currently = Object.assign({}, fresh.currently, old.currently);
-      fresh.hasProfilePic = !!old.hasProfilePic;
-    }
-  }catch(e){ console.error('could not read Round 1 for carry-over', p, e); }
-  return fresh;
-}
-
 async function loadAll(){
   for(const p of PEOPLE){
     try{
       const res = await storage.get(`recal:${p}`, true);
       if(editedBeforeFresh[p]){ continue; } // your own tap from the snapshot moment wins; it's already saved
-      allData[p] = res ? JSON.parse(res.value) : await seedFromRound1(p);
+      allData[p] = res ? JSON.parse(res.value) : emptyPersonData();
       lastSynced[p] = res ? res.value : null;
     }catch(e){
       console.error('load failed for', p, e);
@@ -1928,7 +1872,7 @@ function renderPlacementsEditForm(panel, pl){
     <div id="placementsInfoBody" style="display:none;margin-top:10px;">
       <p>This app isn't running a real ephemeris, and the screenshot reader is free basic text-scanning, not real image understanding, so it's rougher than a proper reading. Always check it against the actual screenshot.</p>
       <p style="margin-top:14px;">The "what today means for you" notes on each day also work at the sign level only (e.g. "3 signs apart, that's a square"), not exact degrees, which is what real astrology actually uses to judge how strong an aspect is. For a precise, degree-based read, check the Aspects tab in whatever app you used for your chart (Co-Star, The Pattern, etc.), or ask Claude directly with your real birth data, something like:</p>
-      <p style="font-style:italic;background:var(--track-off);padding:10px 12px;margin-top:8px;border:1px solid var(--line);">"Using my birth chart (born [date], [time], in [place]), give me a precise, degree-based reading of how [the event, e.g. the New Moon in Libra on October 10] aspects my Sun, Moon, and Rising."</p>
+      <p style="font-style:italic;background:var(--track-off);padding:10px 12px;margin-top:8px;border:1px solid var(--line);">"Using my birth chart (born [date], [time], in [place]), give me a precise, degree-based reading of how [the event, e.g. the Full Moon in Aries on September 26] aspects my Sun, Moon, and Rising."</p>
     </div>
     <div style="margin-top:20px;text-align:right;">
       <button id="placementsDoneBtn" class="gallery-toggle-btn" type="button">Done</button>
@@ -2219,29 +2163,29 @@ function renderChapters(){
 }
 
 function buildAstroBlock(day, person){
-  const pl = (allData[person] && allData[person].placements) || {};
-  const natal = {Sun: pl.sun||'', Moon: pl.moon||'', Rising: pl.rising||''};
-  const f = forecastFor(person, day.n, natal);
-  if(!f) return null;
-  const ti = todayInfo();
-  const isToday = ti.state==='during' && ti.dayNum===day.n;
-  const own = !!myIdentity && person===myIdentity;
-  const who = own ? 'Your' : person+'\u2019s';
-  const title = isToday ? who+' sky today' : who+' sky, '+day.d;
-  const wrap = document.createElement('div');
-  wrap.className = 'sky-card';
-  wrap.innerHTML = `
-    <div class="sky-top">
-      <div class="sky-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B4E8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg><span>${escapeHtml(title)}</span></div>
-      <div class="sky-chips">${f.isEvent?'<span class="sky-tag">Sky event</span>':''}<span class="sky-chip">${escapeHtml(f.chip)}</span></div>
-    </div>
-    <div class="sky-headline">${escapeHtml(f.headline)}</div>
-    <div class="sky-body">${escapeHtml(f.body)}</div>
-    ${f.needsChart && own ? '<button type="button" class="sky-link" data-act="profile">Add your Big 3</button>' : ''}
-    <div class="sky-small"><div class="sky-label">${escapeHtml(f.label)}</div><div class="sky-action">${escapeHtml(f.action)}</div></div>`;
-  const link = wrap.querySelector('[data-act="profile"]');
-  if(link) link.onclick = ()=> openProfile(person);
-  return wrap;
+  const astroLines = personalizedAstroLines(day, person);
+  if(!astroLines) return null;
+  const astroWrap = document.createElement('div');
+  astroWrap.style.cssText = 'margin:-6px 0 16px;border:1px solid var(--line);';
+  const astroHeader = document.createElement('div');
+  astroHeader.style.cssText = 'padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:\'Inter\';font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);';
+  const titleSpan = document.createElement('span');
+  titleSpan.textContent = `\u2728 What today means for ${person}`;
+  const signSpan = document.createElement('span');
+  signSpan.textContent = '+';
+  astroHeader.appendChild(titleSpan);
+  astroHeader.appendChild(signSpan);
+  const astroBody = document.createElement('div');
+  astroBody.style.cssText = 'display:none;padding:0 14px 14px;';
+  astroBody.innerHTML = astroLines.map(l=>`<div style="font-size:13px;color:var(--text-primary);line-height:1.6;margin-bottom:4px;">${l}</div>`).join('');
+  astroHeader.onclick = ()=>{
+    const open = astroBody.style.display !== 'none';
+    astroBody.style.display = open ? 'none' : 'block';
+    signSpan.textContent = open ? '+' : '\u2212';
+  };
+  astroWrap.appendChild(astroHeader);
+  astroWrap.appendChild(astroBody);
+  return astroWrap;
 }
 
 // The check-ins for one day, shared by the Today card and the chapter list.
@@ -2600,7 +2544,7 @@ function startReactionsSync(){
   if(!db || typeof db.ref !== 'function') return;
   PEOPLE.forEach(p=>{
     try{
-      db.ref('recalData/'+rk('recal-reactions:'+p)).on('value', (snap)=>{
+      db.ref('recalData/recal-reactions:'+p).on('value', (snap)=>{
         try{
           const val = snap.val();
           if(typeof val !== 'string' || val === reactionsSynced[p]) return;
@@ -2946,7 +2890,7 @@ function setupIntro(){
   const t = document.getElementById('introToggle');
   if(!m || !t) return;
   let seen = false;
-  try{ seen = localStorage.getItem('recal-intro-seen-r2') === '1'; }catch(e){}
+  try{ seen = localStorage.getItem('recal-intro-seen-r1') === '1'; }catch(e){}
   if(seen){
     m.classList.add('collapsed');
     t.style.display = 'inline-block';
@@ -2958,7 +2902,7 @@ function setupIntro(){
     m.classList.toggle('expanded', !collapsed);
     t.textContent = collapsed ? 'Read the intro +' : 'Hide the intro \u2212';
   };
-  try{ localStorage.setItem('recal-intro-seen-r2', '1'); }catch(e){}
+  try{ localStorage.setItem('recal-intro-seen-r1', '1'); }catch(e){}
 }
 
 // ---- Live sync: see everyone's check-ins without refreshing ----
@@ -3014,7 +2958,7 @@ function startLiveSync(){
   if(!db || typeof db.ref !== 'function') return;
   PEOPLE.forEach(p=>{
     try{
-      db.ref('recalData/'+rk('recal:'+p)).on('value', (snap)=>{
+      db.ref('recalData/recal:'+p).on('value', (snap)=>{
         try{
           const val = snap.val();
           if(typeof val !== 'string' || val === lastSynced[p] || isOwnWrite(p, val)) return;
@@ -3347,7 +3291,13 @@ async function renderPhotoJournal(){
 }
 
 const CHAPTER_ORDINALS = ['One','Two','Three','Four','Five'];
-const CHAPTER_META = {"1": {"eyebrow": "Libra season, Mercury in Scorpio", "subtitle": "The starting line"}, "2": {"eyebrow": "Venus retrograde in Scorpio", "subtitle": "Taking honest inventory"}, "3": {"eyebrow": "New Moon in Libra", "subtitle": "Intentions, then tiny steps"}, "4": {"eyebrow": "Scorpio season, Mercury retrograde", "subtitle": "Going a layer deeper"}, "5": {"eyebrow": "Full Moon in Taurus, Halloween", "subtitle": "Receipts for the month"}};
+const CHAPTER_META = {
+  1:{eyebrow:'Virgo season, closing out', subtitle:"Where the energy's been leaking"},
+  2:{eyebrow:'Sun enters Libra', subtitle:'The one we did out loud, together'},
+  3:{eyebrow:'Libra season, full moon in Aries', subtitle:'Feelings, but make them actions'},
+  4:{eyebrow:'Libra season deepens', subtitle:'Alignment over easy peace'},
+  5:{eyebrow:'New moon in Libra', subtitle:'Fresh intentions, real receipts'}
+};
 
 function chapterDateRange(chapterId){
   const chDays = DAYS.filter(d=>d.ch===chapterId);
@@ -3432,7 +3382,7 @@ function refreshReceiptsIfLoaded(){
 
 function chapterAstroCallout(chapterId){
   const chDays = DAYS.filter(d=>d.ch===chapterId);
-  const specialDay = chDays.find(d=>FC.EVENTS[String(d.n)]);
+  const specialDay = chDays.find(d=>d.n===11 || d.n===17);
   const transit = dayTransit(specialDay || chDays[0]);
   const hits = [];
   PEOPLE.forEach(p=>{
@@ -3595,7 +3545,7 @@ async function renderAll(){
 // ---- Instant open: paint from this device's last snapshot, then refresh ----
 // Only a copy of what this phone already saw. Firebase stays the source of
 // truth; the fresh load replaces it a moment later.
-const SNAPSHOT_KEY = 'recal-snapshot-r2';
+const SNAPSHOT_KEY = 'recal-snapshot-r1';
 let paintedFromSnapshot = false;
 let freshLoaded = false;
 const editedBeforeFresh = {};
