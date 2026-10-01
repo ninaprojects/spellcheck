@@ -50,7 +50,7 @@ self.addEventListener('push', (event) => {
   );
 });
 
-const CACHE_NAME = 'practical-magic-v2'; // bumped so phones drop the stale offline copy
+const CACHE_NAME = 'practical-magic-v3'; // bumped for Round 2 so phones drop the old offline copy
 const PRECACHE_URLS = ['./', './index.html'];
 
 self.addEventListener('install', (event) => {
@@ -74,19 +74,22 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.mode === 'navigate') {
+    // Only the app itself is kept as the offline copy. Other pages (the Round 1
+    // archive) must never overwrite it.
+    const isApp = /\/(index\.html)?$/.test(new URL(req.url).pathname);
     // Opening the app: always check GitHub for the newest index.html,
     // skipping the browser's HTTP cache (which could hold a copy up to 10
     // minutes old after an upload). Keep the fresh copy for offline use.
     event.respondWith(
       fetch(req, { cache: 'no-cache' })
         .then((res) => {
-          if (res && res.ok) {
+          if (isApp && res && res.ok) {
             const copy = res.clone();
             caches.open(CACHE_NAME).then((c) => c.put('./index.html', copy)).catch(() => {});
           }
           return res;
         })
-        .catch(() => caches.match('./index.html').then((r) => r || caches.match(req)))
+        .catch(() => caches.match(isApp ? './index.html' : req).then((r) => r || caches.match('./index.html')))
     );
     return;
   }
