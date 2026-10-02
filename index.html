@@ -1187,16 +1187,14 @@ function wireProfilePicInput(el){
     const btn = document.getElementById('profilePicBtn');
     const input = document.getElementById('profilePicInput');
     btn.onclick = ()=> input.click();
-    input.onchange = ()=>{
+    input.onchange = async ()=>{
       const file = input.files[0];
       if(!file) return;
-      const reader = new FileReader();
-      reader.onload = async ()=>{
-        const dataUrl = reader.result;
-        if(dataUrl.length > 4500000){
-          btn.textContent = 'Too large, try a smaller photo';
-          return;
-        }
+      btn.textContent = 'Preparing\u2026';
+      let dataUrl;
+      try{ dataUrl = await prepareUploadImage(file, 512, 0.85); }
+      catch(e){ console.error('profile photo prepare failed', e); btn.textContent = 'Couldn\u2019t read that photo, try another'; return; }
+      {
         try{
           await trackedSet(`recal-profile-pic:${currentPerson}`, dataUrl, true);
           pd.hasProfilePic = true;
@@ -1207,9 +1205,8 @@ function wireProfilePicInput(el){
           renderLeaderboard();
           renderTopbar();
           safeRender('renderTodayCard', renderTodayCard);
-        }catch(e){ console.error(e); }
-      };
-      reader.readAsDataURL(file);
+        }catch(e){ console.error(e); btn.textContent = 'Couldn\u2019t save, try again'; }
+      }
     };
   }
 
@@ -1878,6 +1875,37 @@ function buildLocationRow(obj, onSaved, photoKey){
   return wrap;
 }
 
+// Phone photos run 3 to 8 MB, far more than the shared database should hold per photo.
+// Redraw at a sensible size first. This also leaves the location stamp behind in the stored copy.
+async function prepareUploadImage(file, maxDim, quality){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const w0 = img.naturalWidth, h0 = img.naturalHeight;
+    if(!w0 || !h0) throw new Error('empty image');
+    let dim = maxDim, q = quality, out = '';
+    for(let attempt = 0; attempt < 3; attempt++){
+      const scale = Math.min(1, dim / Math.max(w0, h0));
+      const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      out = canvas.toDataURL('image/jpeg', q);
+      if(out.length < 2500000) break;
+      dim = Math.round(dim * 0.75); q = Math.max(0.6, q - 0.1);
+    }
+    if(!out || out.length < 100 || out.indexOf('data:image/jpeg') !== 0) throw new Error('could not encode');
+    return out;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function setPhotoModalCaption(bits, location){
   const el = document.getElementById('photoModalCaption');
   let html = bits.map((b)=> escapeHtml(b)).join(' \u00b7 ');
@@ -2147,31 +2175,26 @@ function renderWeekPanel(){
       const file = fileInput.files[0];
       if(!file) return;
       captureExifGps(file, `recal-photo:${currentPerson}:${currentWeekIdx}:${i}`);
-      if(!s.done){
-        s.done = true;
-        s.timestamp = new Date().toISOString();
-      }
-      const reader = new FileReader();
-      reader.onload = async ()=>{
-        const dataUrl = reader.result;
-        if(dataUrl.length > 4500000){
-          meta.textContent = "That image is too large, try a smaller photo";
-          return;
+      meta.textContent = 'Preparing photo\u2026';
+      let dataUrl;
+      try{ dataUrl = await prepareUploadImage(file, 1600, 0.82); }
+      catch(e){ console.error('photo prepare failed', e); meta.textContent = 'Couldn\u2019t read that photo, try another'; return; }
+      try{
+        await trackedSet(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
+        if(!s.done){
+          s.done = true;
+          s.timestamp = new Date().toISOString();
         }
-        try{
-          await trackedSet(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
-          s.hasPhoto = true;
-          s.photoType = file.type;
-          photoCache[`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`] = dataUrl;
-          savePerson(currentPerson);
-          renderWeekPanel();
-          renderOverview();
-          renderLeaderboard();
-          safeRender('renderPhotoJournal', renderPhotoJournal);
-          safeRender('renderCovenFeed', renderCovenFeed);
-        }catch(e){ console.error(e); }
-      };
-      reader.readAsDataURL(file);
+        s.hasPhoto = true;
+        s.photoType = 'image/jpeg';
+        photoCache[`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`] = dataUrl;
+        savePerson(currentPerson);
+        renderWeekPanel();
+        renderOverview();
+        renderLeaderboard();
+        safeRender('renderPhotoJournal', renderPhotoJournal);
+        safeRender('renderCovenFeed', renderCovenFeed);
+      }catch(e){ console.error(e); meta.textContent = 'Couldn\u2019t save that photo, try again'; }
     };
 
     actions.appendChild(photoBtn);
@@ -3488,31 +3511,26 @@ function makePhotoRow(person, dayNum, dd){
     }
   };
 
-  fileInput.onchange = ()=>{
+  fileInput.onchange = async ()=>{
     const file = fileInput.files[0];
     if(!file) return;
     captureExifGps(file, key);
-    const reader = new FileReader();
-    reader.onload = async ()=>{
-      const dataUrl = reader.result;
-      if(dataUrl.length > 4500000){
-        meta.textContent = "That image is too large, try a smaller photo";
-        return;
-      }
-      try{
-        await trackedSet(key, dataUrl, true);
-        dd.hasPhoto = true;
-        dd.photoType = file.type;
-        dd.photoAt = new Date().toISOString();
-        photoCache[key] = dataUrl;
-        savePerson(person);
-        meta.textContent = 'Saved';
-        photoBtn.textContent = 'View photo';
-        renderPhotoJournal();
-        row.replaceWith(makePhotoRow(person, dayNum, dd));
-      }catch(e){ console.error(e); }
-    };
-    reader.readAsDataURL(file);
+    meta.textContent = 'Preparing photo\u2026';
+    let dataUrl;
+    try{ dataUrl = await prepareUploadImage(file, 1600, 0.82); }
+    catch(e){ console.error('photo prepare failed', e); meta.textContent = 'Couldn\u2019t read that photo, try another'; return; }
+    try{
+      await trackedSet(key, dataUrl, true);
+      dd.hasPhoto = true;
+      dd.photoType = 'image/jpeg';
+      dd.photoAt = new Date().toISOString();
+      photoCache[key] = dataUrl;
+      savePerson(person);
+      meta.textContent = 'Saved';
+      photoBtn.textContent = 'View photo';
+      renderPhotoJournal();
+      row.replaceWith(makePhotoRow(person, dayNum, dd));
+    }catch(e){ console.error(e); meta.textContent = 'Couldn\u2019t save that photo, try again'; }
   };
 
   actions.appendChild(photoBtn);
