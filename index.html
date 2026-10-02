@@ -197,7 +197,7 @@
   .link-preview .lp-domain{font-size:11px;color:var(--text-secondary);}
 
   /* session rows (movement proof) */
-  .session-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);}
+  .session-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);}
   .session-row:first-of-type{border-top:none;}
   .session-info{flex:1;}
   .session-label{font-family:'Inter';font-weight:500;font-size:13px;color:var(--text-primary);}
@@ -512,6 +512,40 @@
   .receipt-scope .coven span{color:var(--r-gold-bright);}
 
   .receipt-format-toggle{display:flex;gap:8px;margin:16px 0;}
+  /* photo rows: anything after the label + toggle/button pair (preview, caption, location) gets its own full-width line */
+  .session-row>:nth-child(n+3){flex:0 0 100%;min-width:0;}
+
+  /* drawn sign, planet and pin icons */
+  .ico-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-primary);flex-shrink:0;vertical-align:middle;box-sizing:border-box;}
+  .pin-ico{flex-shrink:0;vertical-align:-0.25em;}
+  .big3-compact-line{display:flex;gap:10px;flex:1;min-width:0;}
+  .b3-col{flex:1;min-width:0;}
+  .b3-label{font-family:'Inter';font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px;}
+  .b3-Sun{color:#A86F00;} .b3-Moon{color:#7B54AE;} .b3-Rising{color:#1F73CC;}
+  .b3-sign{display:flex;flex-direction:column;align-items:flex-start;gap:6px;font-size:13px;font-weight:500;color:var(--text-primary);}
+  .b3-none{display:block;width:34px;height:34px;border-radius:50%;border:1px dashed var(--line);box-sizing:border-box;}
+
+  /* photo location */
+  .loc-row{margin-top:8px;font-size:12px;color:var(--text-secondary);}
+  .loc-line{display:inline-flex;align-items:center;gap:6px;}
+  .loc-link{color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;margin-left:10px;font-size:12px;}
+  .loc-panel{border:1px solid var(--line);padding:12px 14px;background:var(--bg);}
+  .loc-head{font-family:'Inter';font-weight:600;font-size:13px;color:var(--text-primary);}
+  .loc-sub{font-size:12px;color:var(--text-secondary);margin:2px 0 8px;}
+  .loc-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--bg);border:none;border-top:1px solid var(--line);padding:10px 2px;min-height:44px;cursor:pointer;font-family:'Inter';}
+  .loc-item-text{display:flex;flex-direction:column;min-width:0;}
+  .loc-name{font-weight:500;font-size:13px;color:var(--text-primary);}
+  .loc-meta{font-size:11px;color:var(--text-secondary);}
+  .loc-type{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:10px;margin-top:2px;}
+  .loc-type input{flex:1;min-width:0;margin-top:0;}
+  .loc-cancel{display:inline-block;margin:10px 0 0;}
+  .feed-loc{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);margin-top:4px;}
+  .modal-loc{display:inline-flex;align-items:center;gap:5px;margin-top:4px;}
+
+  /* save status */
+  #saveToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);transform:translate(-50%,8px);z-index:80;background:var(--text-primary);color:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;padding:8px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;max-width:calc(100vw - 32px);}
+  #saveToast.show{opacity:1;transform:translate(-50%,0);}
+  #saveToast.fail{background:#B3261E;white-space:normal;text-align:center;}
 </style>
 </head>
 <body>
@@ -844,10 +878,57 @@ const SIGN_GLYPHS = {
   Sagittarius:"\u2650", Capricorn:"\u2651", Aquarius:"\u2652", Pisces:"\u2653"
 };
 
+// Plain-text label, used inside dropdowns where drawn icons can't go.
+// The \uFE0E asks the phone for the flat glyph instead of the purple emoji.
 function signLabel(sign){
   if(!sign) return '';
   const glyph = SIGN_GLYPHS[sign];
-  return glyph ? `${sign} ${glyph}` : sign;
+  return glyph ? `${sign} ${glyph}\uFE0E` : sign;
+}
+
+// Drawn line icons for the signs plus Sun, Moon and Rising. Same thin round
+// stroke as the tab bar, set in a soft badge colored by element.
+const ICON_PATHS = {
+  Aries:'<path d="M12 21V10"/><path d="M12 10C12 6 9.6 4 7 4a3 3 0 0 0 0 6"/><path d="M12 10C12 6 14.4 4 17 4a3 3 0 0 1 0 6"/>',
+  Taurus:'<circle cx="12" cy="15.5" r="5"/><path d="M5.5 4a6.5 6.5 0 0 0 13 0"/>',
+  Gemini:'<path d="M5.5 4.5c4 2.2 9 2.2 13 0"/><path d="M5.5 19.5c4-2.2 9-2.2 13 0"/><path d="M9 5.5v13M15 5.5v13"/>',
+  Cancer:'<circle cx="7.3" cy="9.8" r="2.3"/><path d="M5 9.8C6.2 7 9.5 5.8 12.5 5.8c3 0 5.5 1.2 7 3.2"/><circle cx="16.7" cy="14.2" r="2.3"/><path d="M19 14.2c-1.2 2.8-4.5 4-7.5 4-3 0-5.5-1.2-7-3.2"/>',
+  Leo:'<circle cx="7.5" cy="15.5" r="2.7"/><path d="M10 14C10 8.5 11 5 14.5 5S19 8 19 11c0 4-1.8 6-1.8 8 0 1.6 1.2 2.2 2.8 1.6"/>',
+  Virgo:'<path d="M3.5 5.5v12.5M3.5 9c0-3.8 4.8-3.8 4.8 0v9M8.3 9c0-3.8 4.8-3.8 4.8 0v7c0 2.6 1.7 3.8 3.6 3.8"/><path d="M13.1 14.2c1.6-1.6 6.4-1.8 6.4 1.9 0 2.4-1.6 3.7-3.2 3.7"/>',
+  Libra:'<path d="M4.5 19.5h15"/><path d="M4.5 15h4.6a4.3 4.3 0 1 1 5.8 0h4.6"/>',
+  Scorpio:'<path d="M3.5 5.5v12.5M3.5 9c0-3.8 4.8-3.8 4.8 0v9M8.3 9c0-3.8 4.8-3.8 4.8 0v8c0 2.4 1.6 3.4 3.9 3.4h2"/><path d="M17.6 17.1l3 3.3-3 3.3" transform="translate(0 -.9)"/>',
+  Sagittarius:'<path d="M5 19L19 5"/><path d="M10 5h9v9"/><path d="M6.8 12.2l5 5"/>',
+  Capricorn:'<path d="M4 5.5c2.2 1.2 3.5 4 4.2 9l.8 3.5L12.3 7c.9-2.6 4.4-2.4 4.4 1.4 0 3-1.2 4.4-1.2 6.4 0 2.3 1.5 3.6 3.2 3.2 1.8-.5 1.8-3.3 0-3.7-1.5-.3-2.8.6-3.1 2.3"/>',
+  Aquarius:'<path d="M3.5 9.5L7 6l3.5 3.5L14 6l3.5 3.5L21 6"/><path d="M3.5 17L7 13.5 10.5 17 14 13.5 17.5 17 21 13.5"/>',
+  Pisces:'<path d="M6 4a8.5 8.5 0 0 1 0 16"/><path d="M18 4a8.5 8.5 0 0 0 0 16"/><path d="M5 12h14"/>',
+  Sun:'<circle cx="12" cy="12" r="6.2"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/>',
+  Moon:'<path d="M18.5 14.4A7 7 0 1 1 9.6 5.5a5.6 5.6 0 0 0 8.9 8.9z"/>',
+  Rising:'<path d="M12 19V6"/><path d="M6.5 11.5L12 6l5.5 5.5"/>'
+};
+const ELEMENT_OF = {
+  Aries:'fire', Leo:'fire', Sagittarius:'fire',
+  Taurus:'earth', Virgo:'earth', Capricorn:'earth',
+  Gemini:'air', Libra:'air', Aquarius:'air',
+  Cancer:'water', Scorpio:'water', Pisces:'water',
+  Sun:'Sun', Moon:'Moon', Rising:'Rising'
+};
+// [ring/solid color, soft tint]
+const ELEMENT_COLORS = {
+  fire:['#FF7A5A','#FFE5DD'], earth:['#6DBE8C','#E2F3E8'], air:['#6EC6D9','#DFF3F8'], water:['#7C8CE0','#E4E7FA'],
+  Sun:['#FFC94F','#FFF1CC'], Moon:['#C9A9E0','#F0E6F7'], Rising:['#4FA8FF','#DDEEFF']
+};
+function iconBadge(name, size, mode){
+  const paths = ICON_PATHS[name];
+  const col = ELEMENT_COLORS[ELEMENT_OF[name]];
+  if(!paths || !col) return '';
+  const fill = mode==='solid' ? col[0] : col[1];
+  const gs = Math.round(size*0.62*10)/10;
+  return `<span class="ico-badge" style="width:${size}px;height:${size}px;background:${fill};border:1px solid ${col[0]};"><svg width="${gs}" height="${gs}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg></span>`;
+}
+function signBadge(sign, size){ return iconBadge(sign, size||24, 'tint'); }
+function planetBadge(kind, size, mode){ return iconBadge(kind, size||24, mode||'tint'); }
+function PIN_SVG(s){
+  return `<svg class="pin-ico" width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.4s-6.8-5.5-6.8-11.3a6.8 6.8 0 0 1 13.6 0c0 5.8-6.8 11.3-6.8 11.3z" fill="#FF6FA8" stroke="#E0457F" stroke-width="1.2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.5" fill="#FFFEFD"/></svg>`;
 }
 
 function signDistance(signA, signB){
@@ -1117,7 +1198,7 @@ function wireProfilePicInput(el){
           return;
         }
         try{
-          await storage.set(`recal-profile-pic:${currentPerson}`, dataUrl, true);
+          await trackedSet(`recal-profile-pic:${currentPerson}`, dataUrl, true);
           pd.hasProfilePic = true;
           profilePicCache[currentPerson] = dataUrl;
           savePerson(currentPerson);
@@ -1140,11 +1221,11 @@ function renderProfilePicSection(){
     const editableHead = isEditable();
     const hasPicHead = !!profilePicCache[currentPerson];
     const plh = (allData[currentPerson] && allData[currentPerson].placements) || {};
-    const chip = (glyph, sign, border, fill)=> sign ? `<span class="profile-chip" style="border-color:${border};background:${fill};">${glyph} ${sign}</span>` : '';
+    const chip = (kind, sign, border, fill)=> sign ? `<span class="profile-chip" style="border-color:${border};background:${fill};display:inline-flex;align-items:center;gap:6px;padding:3px 12px 3px 4px;">${planetBadge(kind, 22, 'solid')}<span>${sign}</span></span>` : '';
     el.innerHTML = `<div class="profile-head">
       <span class="profile-ring" id="profilePicPreviewWrap" style="border-color:${PERSON_COLORS[currentPerson]||'var(--pink)'};">${avatarHtml(currentPerson, 96)}</span>
       <div class="profile-name">${currentPerson}</div>
-      <div class="profile-chips">${chip('\u2609', plh.sun, '#FFC94F', '#FFF1CC')}${chip('\u263D', plh.moon, '#C9A9E0', '#F0E6F7')}${chip('\u2191', plh.rising, '#4FA8FF', '#DDEEFF')}</div>
+      <div class="profile-chips">${chip('Sun', plh.sun, '#FFC94F', '#FFF1CC')}${chip('Moon', plh.moon, '#C9A9E0', '#F0E6F7')}${chip('Rising', plh.rising, '#4FA8FF', '#DDEEFF')}</div>
       ${editableHead ? `<button id="profilePicBtn" class="gallery-toggle-btn" type="button" style="min-height:44px;">${hasPicHead?'Change photo':'Add a profile pic'}</button>
       <input type="file" id="profilePicInput" accept="image/*" style="display:none;">` : ''}
     </div>`;
@@ -1379,10 +1460,12 @@ async function savePerson(p){
     if(!freshLoaded) editedBeforeFresh[p] = true;
     lastSynced[p] = json;
     rememberOwnWrite(p, json); // so our own writes echoing back (even late, out of order) aren't treated as remote
-    await storage.set(`recal:${p}`, json, true);
-    saveSnapshot();
+    const ok = await trackSave(storage.set(`recal:${p}`, json, true));
+    if(ok) saveSnapshot();
+    return ok;
   }catch(e){
     console.error("save failed", e);
+    return false;
   }
 }
 
@@ -1417,78 +1500,389 @@ function freshSessions(){
 
 // Brief "✓ Saved" confirmation under a field once its onchange actually
 // commits, so typing something doesn't feel like it vanished into nothing.
+// ---------- Save status ----------
+// Every save in the app reports here, so a tap on a toggle, a caption, a
+// photo or a place always ends in a visible "Saved" (or an honest failure).
+let pendingSaves = 0, saveFailed = false, saveWaiters = [], slowTimer = null, toastTimer = null;
+
+function saveToastEl(){
+  let el = document.getElementById('saveToast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'saveToast';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function showSaveToast(text, kind, hideAfterMs){
+  const el = saveToastEl();
+  el.textContent = text;
+  el.className = 'show ' + kind;
+  clearTimeout(toastTimer);
+  if(hideAfterMs) toastTimer = setTimeout(()=>{ el.className = ''; }, hideAfterMs);
+}
+function trackSave(promise){
+  if(pendingSaves === 0) saveFailed = false;
+  pendingSaves++;
+  showSaveToast('Saving\u2026', 'saving', 0);
+  clearTimeout(slowTimer);
+  slowTimer = setTimeout(()=>{ if(pendingSaves > 0) showSaveToast('Waiting for a connection\u2026', 'slow', 0); }, 6000);
+  return Promise.resolve(promise).then(()=>true, (e)=>{ console.error('save failed', e); saveFailed = true; return false; }).then((ok)=>{
+    pendingSaves--;
+    if(pendingSaves === 0){
+      clearTimeout(slowTimer);
+      const result = !saveFailed;
+      if(result) showSaveToast('\u2713 Saved', 'ok', 1800);
+      else showSaveToast('Couldn\u2019t save. Check your connection and try again.', 'fail', 0);
+      saveWaiters.splice(0).forEach(r=>r(result));
+    }
+    return ok;
+  });
+}
+function whenSavesSettle(){
+  return pendingSaves === 0 ? Promise.resolve(!saveFailed) : new Promise(r=>saveWaiters.push(r));
+}
+// Same as storage.set, but tracked, and it still throws on failure so callers' try/catch keep working.
+async function trackedSet(key, value, shared){
+  const ok = await trackSave(storage.set(key, value, shared));
+  if(!ok) throw new Error('save failed: ' + key);
+  return {key, value, shared};
+}
+
+// Small "Saving... / Saved" line under a field, tied to the real save result.
 function flashSaved(inputEl){
   let flash = inputEl.nextElementSibling;
   if(!flash || !flash.classList || !flash.classList.contains('save-flash')){
     flash = document.createElement('div');
     flash.className = 'save-flash';
-    flash.style.cssText = 'font-size:11px;color:var(--text-primary);margin-top:4px;opacity:0;transition:opacity .15s;';
-    flash.textContent = '\u2713 Saved';
+    flash.style.cssText = 'font-size:11px;margin-top:4px;transition:opacity .15s;';
     inputEl.insertAdjacentElement('afterend', flash);
   }
-  flash.style.opacity = '1';
+  const stamp = flash._stamp = (flash._stamp || 0) + 1;
   clearTimeout(flash._timer);
-  flash._timer = setTimeout(()=>{ flash.style.opacity = '0'; }, 1400);
+  flash.style.opacity = '1';
+  flash.style.color = 'var(--text-secondary)';
+  flash.textContent = 'Saving\u2026';
+  whenSavesSettle().then((ok)=>{
+    if(flash._stamp !== stamp) return;
+    flash.style.color = ok ? 'var(--text-primary)' : '#B3261E';
+    flash.textContent = ok ? '\u2713 Saved' : 'Couldn\u2019t save, try again';
+    if(ok) flash._timer = setTimeout(()=>{ flash.style.opacity = '0'; }, 2200);
+  });
 }
 
-async function getLocationTag(){
-  if(!navigator.geolocation) return null;
+// Text fields that save as you type (after a short pause) and again on blur,
+// without ever saving the same value twice.
+function bindAutosave(el, commit, ms){
+  el._committed = el.value;
+  let t = null;
+  const run = ()=>{
+    clearTimeout(t);
+    if(el.value === el._committed) return;
+    el._committed = el.value;
+    commit();
+  };
+  el.oninput = ()=>{ clearTimeout(t); t = setTimeout(run, ms || 700); };
+  el.onchange = run;
+}
+
+// ---------- Photo location: pick a real place ----------
+// Reads the GPS stamp inside a JPEG, if the phone left one in.
+function exifGpsFromBuffer(buf){
   try{
-    const pos = await new Promise((resolve, reject)=>{
-      navigator.geolocation.getCurrentPosition(resolve, reject, {timeout:8000});
-    });
-    const { latitude, longitude } = pos.coords;
-    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
-    const data = await res.json();
-    const parts = [data.city || data.locality, data.principalSubdivision].filter(Boolean);
-    return parts.length ? parts.join(', ') : null;
-  }catch(e){
-    console.error('location lookup failed', e);
-    return null;
+    const v = new DataView(buf);
+    if(v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return null;
+    let off = 2;
+    while(off + 4 <= v.byteLength){
+      if(v.getUint8(off) !== 0xFF) return null;
+      const marker = v.getUint8(off + 1);
+      if(marker === 0xDA || marker === 0xD9) return null;
+      const len = v.getUint16(off + 2);
+      if(marker === 0xE1 && v.getUint32(off + 4) === 0x45786966 && v.getUint16(off + 8) === 0){
+        return parseTiffGps(v, off + 10);
+      }
+      off += 2 + len;
+    }
+  }catch(e){ /* truncated or odd file, treat as no location */ }
+  return null;
+}
+function parseTiffGps(v, t){
+  const little = v.getUint16(t) === 0x4949;
+  const u16 = (o)=> v.getUint16(o, little);
+  const u32 = (o)=> v.getUint32(o, little);
+  if(u16(t + 2) !== 0x002A) return null;
+  const ifd0 = t + u32(t + 4);
+  let gpsOff = null;
+  const n0 = u16(ifd0);
+  for(let i = 0; i < n0; i++){
+    const e = ifd0 + 2 + i * 12;
+    if(u16(e) === 0x8825){ gpsOff = t + u32(e + 8); break; }
   }
+  if(gpsOff === null) return null;
+  const n = u16(gpsOff);
+  const tags = {};
+  for(let i = 0; i < n; i++){
+    const e = gpsOff + 2 + i * 12;
+    const tag = u16(e);
+    if(tag === 1 || tag === 3){
+      tags[tag] = String.fromCharCode(v.getUint8(e + 8));
+    } else if(tag === 2 || tag === 4){
+      const p = t + u32(e + 8);
+      const r = [];
+      for(let k = 0; k < 3; k++){ const num = u32(p + k * 8), den = u32(p + k * 8 + 4); r.push(den ? num / den : 0); }
+      tags[tag] = r;
+    }
+  }
+  if(!tags[2] || !tags[4]) return null;
+  let lat = tags[2][0] + tags[2][1] / 60 + tags[2][2] / 3600;
+  let lon = tags[4][0] + tags[4][1] / 60 + tags[4][2] / 3600;
+  if(tags[1] === 'S') lat = -lat;
+  if(tags[3] === 'W') lon = -lon;
+  if(!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) return null;
+  return {lat, lon};
+}
+function readPhotoGps(file){
+  return new Promise((resolve)=>{
+    try{
+      if(!file || !/jpe?g/i.test(file.type || '')){ resolve(null); return; }
+      const fr = new FileReader();
+      fr.onload = ()=> resolve(exifGpsFromBuffer(fr.result));
+      fr.onerror = ()=> resolve(null);
+      fr.readAsArrayBuffer(file.slice(0, 262144));
+    }catch(e){ resolve(null); }
+  });
+}
+// The photo's coordinates stay on this device only (never sent to the shared database).
+const GPS_KEY = (photoKey)=> 'r2-photo-gps:' + photoKey;
+async function captureExifGps(file, photoKey){
+  try{
+    const g = await readPhotoGps(file);
+    if(g) await storage.set(GPS_KEY(photoKey), JSON.stringify(g), false);
+    else await storage.delete(GPS_KEY(photoKey), false);
+  }catch(e){ console.error('photo gps capture failed', e); }
+}
+async function storedPhotoGps(photoKey){
+  try{
+    const r = await storage.get(GPS_KEY(photoKey), false);
+    return r ? JSON.parse(r.value) : null;
+  }catch(e){ return null; }
+}
+function getDeviceCoords(){
+  return new Promise((resolve)=>{
+    if(!navigator.geolocation){ resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p)=> resolve({lat:p.coords.latitude, lon:p.coords.longitude}),
+      ()=> resolve(null),
+      {timeout:8000, maximumAge:60000}
+    );
+  });
+}
+async function reverseCity(lat, lon){
+  try{
+    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+    const d = await res.json();
+    return {city: d.city || d.locality || '', state: d.principalSubdivision || ''};
+  }catch(e){ return {city:'', state:''}; }
+}
+const PLACE_KIND = {
+  fitness_centre:'Gym', sports_centre:'Sports center', swimming_pool:'Pool', park:'Park', garden:'Garden', pitch:'Field',
+  playground:'Playground', dog_park:'Dog park', track:'Track', stadium:'Stadium', nature_reserve:'Nature reserve', marina:'Marina',
+  cafe:'Cafe', restaurant:'Restaurant', bar:'Bar', pub:'Pub', fast_food:'Fast food', ice_cream:'Ice cream', bakery:'Bakery',
+  library:'Library', cinema:'Cinema', theatre:'Theater', arts_centre:'Arts center', community_centre:'Community center',
+  place_of_worship:'Place of worship', marketplace:'Market', university:'University', college:'College', school:'School',
+  museum:'Museum', gallery:'Gallery', viewpoint:'Viewpoint', attraction:'Attraction', artwork:'Artwork', zoo:'Zoo',
+  aquarium:'Aquarium', hotel:'Hotel', theme_park:'Theme park', beach:'Beach', peak:'Peak', bay:'Bay', water:'Water', coworking:'Coworking'
+};
+function placeKind(tags){
+  if(tags.leisure && PLACE_KIND[tags.leisure]) return PLACE_KIND[tags.leisure];
+  if(tags.amenity && PLACE_KIND[tags.amenity]) return PLACE_KIND[tags.amenity];
+  if(tags.tourism && PLACE_KIND[tags.tourism]) return PLACE_KIND[tags.tourism];
+  if(tags.natural && PLACE_KIND[tags.natural]) return PLACE_KIND[tags.natural];
+  if(tags.office && PLACE_KIND[tags.office]) return PLACE_KIND[tags.office];
+  if(tags.shop) return 'Shop';
+  if(tags.historic) return 'Historic site';
+  return '';
+}
+function distMeters(lat1, lon1, lat2, lon2){
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+function fmtDist(m){
+  const ft = m * 3.281;
+  if(ft < 1000) return `${Math.max(10, Math.round(ft / 10) * 10)} ft`;
+  return `${(m / 1609.34).toFixed(1)} mi`;
+}
+// Named places within ~200 m, nearest first. Free OpenStreetMap data, no key needed.
+async function fetchNearbyPlaces(lat, lon){
+  const a = `(around:200,${lat.toFixed(5)},${lon.toFixed(5)})`;
+  const q = `[out:json][timeout:8];(` +
+    `nwr${a}["name"]["amenity"~"^(cafe|restaurant|bar|pub|fast_food|ice_cream|bakery|library|cinema|theatre|arts_centre|community_centre|place_of_worship|marketplace|university|college|school)$"];` +
+    `nwr${a}["name"]["leisure"~"^(park|fitness_centre|sports_centre|swimming_pool|garden|pitch|playground|dog_park|track|stadium|nature_reserve|marina)$"];` +
+    `nwr${a}["name"]["shop"];` +
+    `nwr${a}["name"]["tourism"~"^(attraction|museum|gallery|viewpoint|artwork|zoo|aquarium|hotel|theme_park)$"];` +
+    `nwr${a}["name"]["natural"~"^(beach|peak|bay)$"];` +
+    `nwr${a}["name"]["historic"];` +
+    `nwr${a}["name"]["office"="coworking"];` +
+    `);out center 80;`;
+  const endpoints = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+  for(const url of endpoints){
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=> ctrl.abort(), 9000);
+      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'data=' + encodeURIComponent(q), signal:ctrl.signal});
+      clearTimeout(timer);
+      if(!res.ok) continue;
+      const data = await res.json();
+      const all = [];
+      (data.elements || []).forEach((el)=>{
+        const tags = el.tags || {};
+        const name = (tags.name || '').trim();
+        if(!name) return;
+        const plat = el.lat !== undefined ? el.lat : (el.center && el.center.lat);
+        const plon = el.lon !== undefined ? el.lon : (el.center && el.center.lon);
+        if(plat === undefined || plon === undefined) return;
+        all.push({name, kind: placeKind(tags), dist: distMeters(lat, lon, plat, plon)});
+      });
+      all.sort((x, y)=> x.dist - y.dist);
+      const seen = {};
+      const places = [];
+      all.forEach((p)=>{ const k = p.name.toLowerCase(); if(!seen[k]){ seen[k] = true; places.push(p); } });
+      return {ok:true, places: places.slice(0, 6)};
+    }catch(e){ console.error('places lookup failed', url, e); }
+  }
+  return {ok:false, places:[]};
 }
 
-// Builds the small "Add location" / "📍 Chicago, Illinois · remove" row
-// used under both daily and session photos. `obj` is the record holding
-// photoLocation (a day's dayData, or a session), `onSaved` re-renders
-// whatever section needs to reflect the change.
-function buildLocationRow(obj, onSaved){
+// The "Add location" row under a photo. `obj` holds photoLocation (a day or a
+// session), `onSaved` re-renders whatever needs to show the change, and
+// `photoKey` finds the photo's own GPS stamp if it has one.
+function buildLocationRow(obj, onSaved, photoKey){
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'margin-top:8px;font-size:12px;color:var(--text-secondary);';
+  wrap.className = 'loc-row';
+  const choose = (text)=>{ obj.photoLocation = text; onSaved(); };
+  const rebuild = ()=>{ wrap.replaceWith(buildLocationRow(obj, onSaved, photoKey)); };
+
+  async function openPicker(){
+    wrap.textContent = '';
+    const panel = document.createElement('div');
+    panel.className = 'loc-panel';
+    const head = document.createElement('div');
+    head.className = 'loc-head';
+    head.textContent = 'Where was this?';
+    const status = document.createElement('div');
+    status.className = 'loc-sub';
+    status.textContent = 'Finding places\u2026';
+    const list = document.createElement('div');
+    list.className = 'loc-list';
+    const typed = document.createElement('div');
+    typed.className = 'loc-type';
+    const typedInput = document.createElement('input');
+    typedInput.type = 'text';
+    typedInput.className = 'gratitude-input';
+    typedInput.maxLength = 80;
+    typedInput.placeholder = 'Or type a place';
+    const typedBtn = document.createElement('button');
+    typedBtn.type = 'button';
+    typedBtn.className = 'session-photo-btn';
+    typedBtn.textContent = 'Use this';
+    const useTyped = ()=>{ const v = typedInput.value.trim(); if(v) choose(v); };
+    typedBtn.onclick = useTyped;
+    typedInput.onkeydown = (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); useTyped(); } };
+    typed.appendChild(typedInput);
+    typed.appendChild(typedBtn);
+    const cancel = document.createElement('a');
+    cancel.href = '#';
+    cancel.className = 'loc-link loc-cancel';
+    cancel.textContent = 'Cancel';
+    cancel.onclick = (e)=>{ e.preventDefault(); rebuild(); };
+    panel.appendChild(head);
+    panel.appendChild(status);
+    panel.appendChild(list);
+    panel.appendChild(typed);
+    panel.appendChild(cancel);
+    wrap.appendChild(panel);
+
+    const addItem = (title, meta, onPick)=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'loc-item';
+      b.innerHTML = PIN_SVG(16) + '<span class="loc-item-text"><span class="loc-name"></span><span class="loc-meta"></span></span>';
+      b.querySelector('.loc-name').textContent = title;
+      const m = b.querySelector('.loc-meta');
+      if(meta) m.textContent = meta; else m.remove();
+      b.onclick = onPick;
+      list.appendChild(b);
+    };
+
+    let coords = photoKey ? await storedPhotoGps(photoKey) : null;
+    let source = 'photo';
+    if(!coords){ coords = await getDeviceCoords(); source = 'device'; }
+    if(!coords){
+      status.textContent = 'Couldn\u2019t get a location. You can still type a place below.';
+      return;
+    }
+    const where = source === 'photo' ? 'where this photo was taken' : 'where you are right now';
+    status.textContent = 'Looking near ' + where + '\u2026';
+    const [cityInfo, found] = await Promise.all([reverseCity(coords.lat, coords.lon), fetchNearbyPlaces(coords.lat, coords.lon)]);
+    const city = cityInfo.city;
+    if(found.places.length){
+      status.textContent = 'Near ' + where;
+    } else if(found.ok){
+      status.textContent = 'No named places right here, near ' + where + '.';
+    } else {
+      status.textContent = 'Couldn\u2019t load nearby places right now.';
+    }
+    found.places.forEach((p)=>{
+      addItem(p.name, [p.kind, fmtDist(p.dist)].filter(Boolean).join(' \u00b7 '), ()=> choose(city ? `${p.name}, ${city}` : p.name));
+    });
+    if(city){
+      const full = cityInfo.state ? `${city}, ${cityInfo.state}` : city;
+      addItem('Just the city', full, ()=> choose(full));
+    }
+  }
 
   if(obj.photoLocation){
-    wrap.textContent = `\ud83d\udccd ${obj.photoLocation}`;
+    const line = document.createElement('span');
+    line.className = 'loc-line';
+    line.innerHTML = PIN_SVG(16) + '<span class="loc-text"></span>';
+    line.querySelector('.loc-text').textContent = obj.photoLocation;
+    wrap.appendChild(line);
     if(isEditable()){
+      const change = document.createElement('a');
+      change.href = '#';
+      change.className = 'loc-link';
+      change.textContent = 'change';
+      change.onclick = (e)=>{ e.preventDefault(); openPicker(); };
+      wrap.appendChild(change);
       const removeLink = document.createElement('a');
       removeLink.href = '#';
+      removeLink.className = 'loc-link';
       removeLink.textContent = 'remove';
-      removeLink.style.cssText = 'color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;margin-left:8px;';
-      removeLink.onclick = (e)=>{ e.preventDefault(); obj.photoLocation=''; onSaved(); };
+      removeLink.onclick = (e)=>{ e.preventDefault(); obj.photoLocation = ''; onSaved(); };
       wrap.appendChild(removeLink);
     }
     return wrap;
   }
 
   if(!isEditable()) return wrap;
-
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'session-photo-btn';
   btn.textContent = 'Add location';
-  btn.onclick = async ()=>{
-    btn.textContent = 'Locating...';
-    btn.disabled = true;
-    const loc = await getLocationTag();
-    if(loc){
-      obj.photoLocation = loc;
-      onSaved();
-    } else {
-      btn.textContent = 'Could not get location, try again';
-      btn.disabled = false;
-    }
-  };
+  btn.onclick = ()=> openPicker();
   wrap.appendChild(btn);
   return wrap;
+}
+
+function setPhotoModalCaption(bits, location){
+  const el = document.getElementById('photoModalCaption');
+  let html = bits.map((b)=> escapeHtml(b)).join(' \u00b7 ');
+  if(location) html += (html ? '<br>' : '') + `<span class="modal-loc">${PIN_SVG(14)}<span>${escapeHtml(location)}</span></span>`;
+  el.innerHTML = html;
 }
 
 function makeShareId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -1752,6 +2146,7 @@ function renderWeekPanel(){
     fileInput.onchange = async ()=>{
       const file = fileInput.files[0];
       if(!file) return;
+      captureExifGps(file, `recal-photo:${currentPerson}:${currentWeekIdx}:${i}`);
       if(!s.done){
         s.done = true;
         s.timestamp = new Date().toISOString();
@@ -1764,7 +2159,7 @@ function renderWeekPanel(){
           return;
         }
         try{
-          await storage.set(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
+          await trackedSet(`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`, dataUrl, true);
           s.hasPhoto = true;
           s.photoType = file.type;
           photoCache[`recal-photo:${currentPerson}:${currentWeekIdx}:${i}`] = dataUrl;
@@ -1794,10 +2189,10 @@ function renderWeekPanel(){
       captionInput.placeholder = 'Caption (optional)';
       captionInput.value = s.photoCaption || '';
       captionInput.disabled = !isEditable();
-      captionInput.onchange = ()=>{ s.photoCaption = captionInput.value; savePerson(currentPerson); flashSaved(captionInput); };
+      bindAutosave(captionInput, ()=>{ s.photoCaption = captionInput.value; savePerson(currentPerson); flashSaved(captionInput); });
       row.appendChild(captionInput);
 
-      row.appendChild(buildLocationRow(s, ()=>{ savePerson(currentPerson); renderWeekPanel(); }));
+      row.appendChild(buildLocationRow(s, ()=>{ savePerson(currentPerson); renderWeekPanel(); safeRender('renderPhotoJournal', renderPhotoJournal); }, `recal-photo:${currentPerson}:${currentWeekIdx}:${i}`));
     }
 
     sessionsList.appendChild(row);
@@ -1872,8 +2267,9 @@ function placementsDefaultIsEdit(pl){
 
 function renderPlacementsCompact(panel, pl, editableSelf){
   const hasAny = pl.sun || pl.moon || pl.rising;
+  const b3 = (kind, sign)=> `<div class="b3-col"><div class="b3-label b3-${kind}">${kind}</div><div class="b3-sign">${sign ? signBadge(sign, 34) : '<span class="b3-none"></span>'}<span>${sign || '\u2014'}</span></div></div>`;
   const line = hasAny
-    ? `\u2609 ${pl.sun?signLabel(pl.sun):'\u2014'} &nbsp;\u00b7&nbsp; \u263d ${pl.moon?signLabel(pl.moon):'\u2014'} &nbsp;\u00b7&nbsp; \u2191 ${pl.rising?signLabel(pl.rising):'\u2014'}`
+    ? `${b3('Sun', pl.sun)}${b3('Moon', pl.moon)}${b3('Rising', pl.rising)}`
     : 'Not added yet.';
   panel.innerHTML = `
     <div class="big3-compact-row">
@@ -2262,7 +2658,7 @@ function buildDayChecks(day, person){
   gratInput.className='gratitude-input';
   gratInput.value = dd.gratitude || '';
   gratInput.disabled = !isEditable();
-  gratInput.onchange = ()=>{ dd.gratitude = gratInput.value; savePerson(currentPerson); flashSaved(gratInput); };
+  bindAutosave(gratInput, ()=>{ dd.gratitude = gratInput.value; savePerson(currentPerson); flashSaved(gratInput); });
   gratRow.appendChild(label);
   gratRow.appendChild(gratInput);
   checks.appendChild(gratRow);
@@ -2277,7 +2673,7 @@ function buildDayChecks(day, person){
     kInput.className = 'gratitude-input';
     kInput.value = allData[person].kickoffIntention || '';
     kInput.disabled = !isEditable();
-    kInput.onchange = ()=>{ allData[person].kickoffIntention = kInput.value; savePerson(currentPerson); flashSaved(kInput); };
+    bindAutosave(kInput, ()=>{ allData[person].kickoffIntention = kInput.value; savePerson(currentPerson); flashSaved(kInput); });
     kRow.appendChild(kLabel);
     kRow.appendChild(kInput);
     checks.appendChild(kRow);
@@ -2517,13 +2913,13 @@ function buildFeedEvents(){
       // Older days (before castAt existed) that went full coven are covered by
       // the one full-coven post, so they don't flood the feed with 4 cast posts each.
       if(isCast(d) && (d.castAt || !isFullCoven(n))) ev.push({id:`cast:${p}:${n}`, type:'cast', who:p, day:n, at:d.castAt||null});
-      if(d.hasPhoto) ev.push({id:`photo:${p}:${n}`, type:'photo', who:p, day:n, at:d.photoAt||null, caption:d.photoCaption||'', key:`recal-daily-photo:${p}:${n}`});
+      if(d.hasPhoto) ev.push({id:`photo:${p}:${n}`, type:'photo', who:p, day:n, at:d.photoAt||null, caption:d.photoCaption||'', location:d.photoLocation||'', key:`recal-daily-photo:${p}:${n}`});
     });
     Object.keys(pd.weeks||{}).forEach(wi=>{
       const wd = pd.weeks[wi];
       if(!wd) return;
       (wd.sessions||[]).forEach((s,i)=>{
-        if(s && s.done && s.timestamp) ev.push({id:`session:${p}:${wi}:${i}`, type:'session', who:p, at:s.timestamp, hasPhoto:!!s.hasPhoto, caption:s.photoCaption||'', key:`recal-photo:${p}:${wi}:${i}`});
+        if(s && s.done && s.timestamp) ev.push({id:`session:${p}:${wi}:${i}`, type:'session', who:p, at:s.timestamp, hasPhoto:!!s.hasPhoto, caption:s.photoCaption||'', location:s.photoLocation||'', key:`recal-photo:${p}:${wi}:${i}`});
       });
       sharesOfWeek(wd).forEach(s=>{
         if(s.timestamp) ev.push({id:shareEventId(p, wi, s), type:'article', who:p, at:s.timestamp, url:s.url, label:s.label||''});
@@ -2696,7 +3092,7 @@ function renderCovenFeed(){
           document.getElementById('photoModalImg').src = dataUrl;
           const bits = [`${e.who}${e.day?` \u00b7 Day ${e.day}`:''}`];
           if(e.caption) bits.push(e.caption);
-          document.getElementById('photoModalCaption').textContent = bits.join(' \u00b7 ');
+          setPhotoModalCaption(bits, e.location);
           document.getElementById('photoModal').classList.add('open');
         };
         slot.replaceWith(btn);
@@ -2707,6 +3103,15 @@ function renderCovenFeed(){
       cap.className = 'feed-caption';
       cap.textContent = e.caption;
       body.appendChild(cap);
+    }
+    if(parts.photo && e.location){
+      const loc = document.createElement('div');
+      loc.className = 'feed-loc';
+      loc.innerHTML = PIN_SVG(14);
+      const locText = document.createElement('span');
+      locText.textContent = e.location;
+      loc.appendChild(locText);
+      body.appendChild(loc);
     }
     if(parts.card){
       const c = document.createElement('div');
@@ -2864,7 +3269,7 @@ function renderNotifPrefs(){
     t.onclick = async ()=>{
       prefs[key] = !prefs[key];
       renderNotifPrefs();
-      try{ await storage.set(`recal-notif-prefs:${myIdentity}`, JSON.stringify(prefs), true); }catch(e){ console.error('prefs save failed', e); }
+      try{ await trackedSet(`recal-notif-prefs:${myIdentity}`, JSON.stringify(prefs), true); }catch(e){ console.error('prefs save failed', e); }
     };
     row.appendChild(t);
     panel.appendChild(row);
@@ -3086,6 +3491,7 @@ function makePhotoRow(person, dayNum, dd){
   fileInput.onchange = ()=>{
     const file = fileInput.files[0];
     if(!file) return;
+    captureExifGps(file, key);
     const reader = new FileReader();
     reader.onload = async ()=>{
       const dataUrl = reader.result;
@@ -3094,7 +3500,7 @@ function makePhotoRow(person, dayNum, dd){
         return;
       }
       try{
-        await storage.set(key, dataUrl, true);
+        await trackedSet(key, dataUrl, true);
         dd.hasPhoto = true;
         dd.photoType = file.type;
         dd.photoAt = new Date().toISOString();
@@ -3103,6 +3509,7 @@ function makePhotoRow(person, dayNum, dd){
         meta.textContent = 'Saved';
         photoBtn.textContent = 'View photo';
         renderPhotoJournal();
+        row.replaceWith(makePhotoRow(person, dayNum, dd));
       }catch(e){ console.error(e); }
     };
     reader.readAsDataURL(file);
@@ -3122,10 +3529,10 @@ function makePhotoRow(person, dayNum, dd){
     captionInput.placeholder = 'Caption (optional)';
     captionInput.value = dd.photoCaption || '';
     captionInput.disabled = !isEditable();
-    captionInput.onchange = ()=>{ dd.photoCaption = captionInput.value; savePerson(person); flashSaved(captionInput); };
+    bindAutosave(captionInput, ()=>{ dd.photoCaption = captionInput.value; savePerson(person); flashSaved(captionInput); });
     row.appendChild(captionInput);
 
-    row.appendChild(buildLocationRow(dd, ()=>{ savePerson(person); renderChapters(); }));
+    row.appendChild(buildLocationRow(dd, ()=>{ savePerson(person); renderChapters(); safeRender('renderPhotoJournal', renderPhotoJournal); }, key));
   }
 
   return row;
@@ -3338,8 +3745,7 @@ async function renderPhotoJournal(){
         document.getElementById('photoModalImg').src = dataUrl;
         const bits = [captionName];
         if(item.caption) bits.push(item.caption);
-        if(item.location) bits.push('\ud83d\udccd '+item.location);
-        document.getElementById('photoModalCaption').textContent = bits.join(' \u00b7 ');
+        setPhotoModalCaption(bits, item.location);
         document.getElementById('photoModal').classList.add('open');
       };
     })();
@@ -3523,7 +3929,7 @@ document.getElementById('formatStoryBtn').onclick = ()=>{
 document.getElementById('receiptQuoteInput').onchange = async ()=>{
   const el = document.getElementById('receiptQuoteInput');
   const val = el.value.trim();
-  try{ await storage.set('recal-quote:'+receiptChapterId, val, true); }catch(e){ console.error(e); }
+  try{ await trackedSet('recal-quote:'+receiptChapterId, val, true); }catch(e){ console.error(e); }
   renderReceiptCard(val);
   flashSaved(el);
 };
