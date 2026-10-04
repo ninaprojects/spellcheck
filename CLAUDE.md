@@ -23,7 +23,7 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 - `workers/media/`: the media Worker source (`spellcheck-media-worker.js`) and its README. A copy of what is deployed.
 - `tests/`: the test suite. Run `python3 tests/run_all.py`. See `tests/README.md`.
 - `README.md`: describes the original Round 1 standalone setup and is out of date.
-- RETIRED: `notify.js`, `.github/workflows/daily-notify.yml`, `.github/workflows/evening-nudge.yml`. Pushes moved to the Cloudflare push Worker because GitHub Actions started 3 to 6 hours late. Nina has confirmed the workflows are disabled. The files should still be deleted. Never re-enable them: `notify.js` counts days from Sep 18 and would send duplicate, wrongly numbered pushes.
+- RETIRED and deleted: `notify.js` and the two GitHub Actions workflows (`daily-notify.yml`, `evening-nudge.yml`) were removed from the repo in Oct 2026 (pull request #1), and their GitHub secret was deleted. Pushes moved to the Cloudflare push Worker because GitHub Actions started 3 to 6 hours late. Never bring them back: `notify.js` counted days from Sep 18 and would send duplicate, wrongly numbered pushes.
 
 ## Data layer
 
@@ -97,7 +97,7 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 
 ## Known open items (verify before acting, then delete when fixed)
 
-- Delete `notify.js` and both workflows from the repo, and remove the `FIREBASE_SERVICE_ACCOUNT` secret from GitHub (the Worker holds the only copy that is needed).
+- GitHub secret scanning shows a Google API key alert for the Firebase web key in `index.html`, `round1.html`, and `sw.js`. That key is meant to be public in client code, and the alert was closed as "Won't fix" in Oct 2026. Do not rotate, remove, or "fix" it, because the app needs it to register devices for notifications. If a different secret is ever flagged, treat it as urgent.
 - The media link previews build their HTML from the saved link's `url` and `image` without escaping them (`renderMediaPreviewHtml`). Because the database allows public writes, someone with the database address could plant a bad link. Verify, then escape or validate those two fields.
 - Media Worker endpoints are public with CORS `*`, so anyone who finds the URL (it is in this public repo) can spend the Spotify, TMDb, and Google Books quotas. Consider checking the `Origin` header against ninaprojects.github.io, adding a Cloudflare rate limit, and caching results.
 - Timezone mismatch: the app calculates "today" from the device's local time, but the push Worker calculates it in Pacific time. This can disagree near midnight for anyone not in Pacific (Kellye is in Mountain Time). A decision is needed on whether the coven runs on Pacific time.
