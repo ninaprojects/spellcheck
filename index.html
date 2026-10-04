@@ -527,8 +527,14 @@
 
   /* photo location */
   .loc-row{margin-top:8px;font-size:12px;color:var(--text-secondary);}
-  .loc-line{display:inline-flex;align-items:center;gap:6px;}
-  .loc-link{color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;margin-left:10px;font-size:12px;}
+  .loc-pill{display:inline-flex;align-items:center;gap:8px;background:#F3F0E9;border-radius:999px;padding:6px 8px 6px 12px;font-size:13px;font-weight:500;color:var(--text-primary);max-width:100%;box-sizing:border-box;}
+  .loc-pill .loc-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .loc-actions{margin-top:6px;}
+  .loc-link{color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;margin-right:14px;font-size:12px;}
+  .chk-ico{flex-shrink:0;}
+  .saved-view{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;line-height:1.4;color:var(--text-primary);margin-top:4px;cursor:pointer;}
+  .saved-view .saved-text{flex:1;min-width:0;overflow-wrap:anywhere;}
+  .saved-edit{font-size:12px;font-weight:400;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;flex-shrink:0;}
   .loc-panel{border:1px solid var(--line);padding:12px 14px;background:var(--bg);}
   .loc-head{font-family:'Inter';font-weight:600;font-size:13px;color:var(--text-primary);}
   .loc-sub{font-size:12px;color:var(--text-secondary);margin:2px 0 8px;}
@@ -686,11 +692,11 @@
 
   <section class="view" data-view="profile" hidden>
   <div id="profilePicSection"></div>
+  <div class="section-title" id="nav-placements">The big 3</div>
+  <div class="placements" id="placementsPanel"></div>
   <div class="section-title" id="nav-notifs">Notifications</div>
   <div id="notifSection"></div>
   <div id="notifPrefs"></div>
-  <div class="section-title" id="nav-placements">The big 3</div>
-  <div class="placements" id="placementsPanel"></div>
   <div class="section-title" id="nav-currently">Currently</div>
   <div class="placements">
     <div class="currently-row">
@@ -1213,16 +1219,13 @@ function wireProfilePicInput(el){
 function renderProfilePicSection(){
   const el = document.getElementById('profilePicSection');
   if(!myIdentity){ el.innerHTML = ''; return; }
-  // Profile page header: big photo, name, Big 3 chips, change-photo button
+  // Profile page header: big photo, name, change-photo button (the Big 3 sits right below)
   {
     const editableHead = isEditable();
     const hasPicHead = !!profilePicCache[currentPerson];
-    const plh = (allData[currentPerson] && allData[currentPerson].placements) || {};
-    const chip = (kind, sign, border, fill)=> sign ? `<span class="profile-chip" style="border-color:${border};background:${fill};display:inline-flex;align-items:center;gap:6px;padding:3px 12px 3px 4px;">${planetBadge(kind, 22, 'solid')}<span>${sign}</span></span>` : '';
     el.innerHTML = `<div class="profile-head">
       <span class="profile-ring" id="profilePicPreviewWrap" style="border-color:${PERSON_COLORS[currentPerson]||'var(--pink)'};">${avatarHtml(currentPerson, 96)}</span>
       <div class="profile-name">${currentPerson}</div>
-      <div class="profile-chips">${chip('Sun', plh.sun, '#FFC94F', '#FFF1CC')}${chip('Moon', plh.moon, '#C9A9E0', '#F0E6F7')}${chip('Rising', plh.rising, '#4FA8FF', '#DDEEFF')}</div>
       ${editableHead ? `<button id="profilePicBtn" class="gallery-toggle-btn" type="button" style="min-height:44px;">${hasPicHead?'Change photo':'Add a profile pic'}</button>
       <input type="file" id="profilePicInput" accept="image/*" style="display:none;">` : ''}
     </div>`;
@@ -1585,6 +1588,57 @@ function bindAutosave(el, commit, ms){
   el.onchange = run;
 }
 
+// A field that has been saved folds down into plain text with a check, like a
+// finished item. Tap it (or Edit) to open the box again. It never folds while
+// you are still typing, only after you leave the box and the save has landed.
+function CHECK_SVG(size, color){
+  return `<svg class="chk-ico" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="${color}"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#FFFEFD" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function bindSavedField(el, commit, ms){
+  bindAutosave(el, commit, ms);
+  el.onkeydown = (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); el.blur(); } };
+  queueMicrotask(()=>{
+    if(!el.parentNode) return;
+    const editable = !el.disabled;
+    const view = document.createElement('div');
+    view.className = 'saved-view';
+    view.innerHTML = CHECK_SVG(16, '#6DBE8C') + '<span class="saved-text"></span>' + (editable ? '<a href="#" class="saved-edit">Edit</a>' : '');
+    el.parentNode.insertBefore(view, el);
+    const textEl = view.querySelector('.saved-text');
+    el._editing = false;
+    const flashEl = ()=>{ const f = el.nextElementSibling; return (f && f.classList && f.classList.contains('save-flash')) ? f : null; };
+    const sync = ()=>{
+      const has = el.value.trim() !== '';
+      const folded = has && !el._editing;
+      textEl.textContent = el.value.trim();
+      view.style.display = folded ? 'flex' : 'none';
+      el.style.display = folded ? 'none' : '';
+      const f = flashEl();
+      if(f) f.style.display = folded ? 'none' : '';
+    };
+    const openEdit = (e)=>{
+      if(e) e.preventDefault();
+      if(!editable) return;
+      el._editing = true;
+      sync();
+      el.focus();
+      try{ el.setSelectionRange(el.value.length, el.value.length); }catch(err){}
+    };
+    if(editable){
+      view.onclick = openEdit;
+    }
+    el.addEventListener('blur', ()=>{
+      whenSavesSettle().then((ok)=>{
+        if(!ok) return; // stay open so the "couldn't save" note under the box stays visible
+        if(document.activeElement === el) return;
+        el._editing = false;
+        sync();
+      });
+    });
+    sync();
+  });
+}
+
 // ---------- Photo location: pick a real place ----------
 // Reads the GPS stamp inside a JPEG, if the phone left one in.
 function exifGpsFromBuffer(buf){
@@ -1843,24 +1897,28 @@ function buildLocationRow(obj, onSaved, photoKey){
   }
 
   if(obj.photoLocation){
-    const line = document.createElement('span');
-    line.className = 'loc-line';
-    line.innerHTML = PIN_SVG(16) + '<span class="loc-text"></span>';
-    line.querySelector('.loc-text').textContent = obj.photoLocation;
-    wrap.appendChild(line);
+    const pill = document.createElement('span');
+    pill.className = 'loc-pill';
+    pill.title = obj.photoLocation;
+    pill.innerHTML = PIN_SVG(16) + '<span class="loc-text"></span>' + CHECK_SVG(18, '#1A1A1A');
+    pill.querySelector('.loc-text').textContent = obj.photoLocation;
+    wrap.appendChild(pill);
     if(isEditable()){
+      const actions = document.createElement('div');
+      actions.className = 'loc-actions';
       const change = document.createElement('a');
       change.href = '#';
       change.className = 'loc-link';
       change.textContent = 'change';
       change.onclick = (e)=>{ e.preventDefault(); openPicker(); };
-      wrap.appendChild(change);
+      actions.appendChild(change);
       const removeLink = document.createElement('a');
       removeLink.href = '#';
       removeLink.className = 'loc-link';
       removeLink.textContent = 'remove';
       removeLink.onclick = (e)=>{ e.preventDefault(); obj.photoLocation = ''; onSaved(); };
-      wrap.appendChild(removeLink);
+      actions.appendChild(removeLink);
+      wrap.appendChild(actions);
     }
     return wrap;
   }
@@ -2212,7 +2270,7 @@ function renderWeekPanel(){
       captionInput.placeholder = 'Caption (optional)';
       captionInput.value = s.photoCaption || '';
       captionInput.disabled = !isEditable();
-      bindAutosave(captionInput, ()=>{ s.photoCaption = captionInput.value; savePerson(currentPerson); flashSaved(captionInput); });
+      bindSavedField(captionInput, ()=>{ s.photoCaption = captionInput.value; savePerson(currentPerson); flashSaved(captionInput); });
       row.appendChild(captionInput);
 
       row.appendChild(buildLocationRow(s, ()=>{ savePerson(currentPerson); renderWeekPanel(); safeRender('renderPhotoJournal', renderPhotoJournal); }, `recal-photo:${currentPerson}:${currentWeekIdx}:${i}`));
@@ -2681,7 +2739,7 @@ function buildDayChecks(day, person){
   gratInput.className='gratitude-input';
   gratInput.value = dd.gratitude || '';
   gratInput.disabled = !isEditable();
-  bindAutosave(gratInput, ()=>{ dd.gratitude = gratInput.value; savePerson(currentPerson); flashSaved(gratInput); });
+  bindSavedField(gratInput, ()=>{ dd.gratitude = gratInput.value; savePerson(currentPerson); flashSaved(gratInput); });
   gratRow.appendChild(label);
   gratRow.appendChild(gratInput);
   checks.appendChild(gratRow);
@@ -2696,7 +2754,7 @@ function buildDayChecks(day, person){
     kInput.className = 'gratitude-input';
     kInput.value = allData[person].kickoffIntention || '';
     kInput.disabled = !isEditable();
-    bindAutosave(kInput, ()=>{ allData[person].kickoffIntention = kInput.value; savePerson(currentPerson); flashSaved(kInput); });
+    bindSavedField(kInput, ()=>{ allData[person].kickoffIntention = kInput.value; savePerson(currentPerson); flashSaved(kInput); });
     kRow.appendChild(kLabel);
     kRow.appendChild(kInput);
     checks.appendChild(kRow);
@@ -3361,7 +3419,7 @@ function renderProfileBookends(){
     input.placeholder = editable ? ph : '';
     input.value = pd[key] || '';
     input.disabled = !editable;
-    input.onchange = ()=>{ pd[key] = input.value; savePerson(currentPerson); flashSaved(input); };
+    bindSavedField(input, ()=>{ pd[key] = input.value; savePerson(currentPerson); flashSaved(input); });
     panel.appendChild(lab);
     panel.appendChild(input);
   });
@@ -3547,7 +3605,7 @@ function makePhotoRow(person, dayNum, dd){
     captionInput.placeholder = 'Caption (optional)';
     captionInput.value = dd.photoCaption || '';
     captionInput.disabled = !isEditable();
-    bindAutosave(captionInput, ()=>{ dd.photoCaption = captionInput.value; savePerson(person); flashSaved(captionInput); });
+    bindSavedField(captionInput, ()=>{ dd.photoCaption = captionInput.value; savePerson(person); flashSaved(captionInput); });
     row.appendChild(captionInput);
 
     row.appendChild(buildLocationRow(dd, ()=>{ savePerson(person); renderChapters(); safeRender('renderPhotoJournal', renderPhotoJournal); }, key));
