@@ -322,12 +322,29 @@
   .feed-caption{font-size:13px;font-weight:300;color:var(--text-primary);}
   .feed-item .link-preview{margin-top:0;}
   .react-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-  .react-chip{min-width:48px;height:34px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-family:'Inter';}
+  .react-chip{min-width:48px;min-height:34px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-family:'Inter';}
   .react-chip .g{font-size:14px;}
   .react-chip .c{font-size:11px;font-weight:600;}
+  .react-chip .lbl{font-size:12.5px;font-weight:500;}
   .react-chip.mine{border:2px solid var(--pink);background:#FFE3EE;}
   .react-chip:disabled{opacity:1;cursor:default;}
   .react-who{font-size:11px;color:var(--text-secondary);margin-top:-2px;}
+  .cmt-list{display:flex;flex-direction:column;gap:6px;}
+  .cmt{font-size:13px;line-height:1.4;color:var(--text-primary);overflow-wrap:anywhere;}
+  .cmt b{font-weight:600;}
+  .cmt-g{color:var(--text-secondary);}
+  .cmt-time{font-size:11px;color:var(--text-secondary);margin-left:6px;}
+  .cmt-del{font-size:11px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;margin-left:8px;}
+  .cmt-link{align-self:flex-start;background:none;border:none;padding:4px 0;font-family:'Inter';font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);cursor:pointer;}
+  .cmt-compose{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .cmt-compose .cmt-g{font-size:14px;}
+  .cmt-input{flex:1;min-width:140px;height:38px;border:1px solid var(--pink);background:var(--bg);padding:0 10px;font-size:14px;font-family:'Inter';color:var(--text-primary);border-radius:0;}
+  .cmt-send{height:38px;padding:0 14px;border:1px solid var(--text-primary);background:var(--text-primary);color:var(--bg);font-family:'Inter';font-size:12.5px;font-weight:500;cursor:pointer;}
+  .cmt-skip{font-size:12px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;}
+  .notif-prompt{border:1px solid var(--line);background:var(--bg);padding:14px 16px;margin:14px 0;}
+  .np-title{font-family:'Inter';font-weight:600;font-size:14px;color:var(--text-primary);}
+  .np-body{font-size:13px;font-weight:300;color:var(--text-secondary);line-height:1.45;margin:4px 0 10px;}
+  .np-actions{display:flex;gap:10px;align-items:center;}
   .feed-more{margin-top:12px;width:100%;min-height:44px;border:1px solid var(--line);background:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;color:var(--text-primary);cursor:pointer;}
 
   /* Wave 3: top bar, views, bottom tabs, profile */
@@ -567,6 +584,7 @@
   </div>
 
   <section class="view" data-view="today">
+  <div id="notifPromptWrap"></div>
   <div class="masthead">
     <h1>Spell Check</h1>
     <div class="tagline">a month of practical magic</div>
@@ -781,7 +799,7 @@ function loadScriptOnce(url){
 // of this round can never overwrite Day 1 of Round 1. Profile photos, device
 // tokens and notification switches are the same people, so they stay shared.
 const ROUND_PREFIX = 'r2:';
-const ROUND_KEY_RE = /^(recal:|recal-photo:|recal-daily-photo:|recal-reactions:|recal-quote:)/;
+const ROUND_KEY_RE = /^(recal:|recal-photo:|recal-daily-photo:|recal-reactions:|recal-comments:|recal-quote:)/;
 function rk(key){ return ROUND_KEY_RE.test(key) ? ROUND_PREFIX+key : key; }
 
 const storage = {
@@ -1137,17 +1155,18 @@ async function renderNotifSection(){
   el.innerHTML = `<div class="identity-banner">Want a heads up on your phone for big days?
     <div class="identity-gate"><button id="enableNotifBtn" class="gallery-toggle-btn">Turn on notifications</button></div>
   </div>`;
-  document.getElementById('enableNotifBtn').onclick = enableNotifications;
+  document.getElementById('enableNotifBtn').onclick = ()=> enableNotifications('enableNotifBtn');
 }
 
-async function enableNotifications(){
-  const btn = document.getElementById('enableNotifBtn');
+async function enableNotifications(btnId){
+  const btn = document.getElementById(typeof btnId === 'string' ? btnId : 'enableNotifBtn');
   if(btn){ btn.textContent = 'Asking...'; btn.disabled = true; }
   try{
     const permission = await Notification.requestPermission();
     if(permission !== 'granted'){
       document.getElementById('notifSection').innerHTML =
         `<div class="identity-banner">No worries, notifications stayed off. You can allow them later in your browser or phone's site settings.</div>`;
+      renderNotifPrompt();
       return;
     }
     const registration = await navigator.serviceWorker.ready;
@@ -1157,11 +1176,66 @@ async function enableNotifications(){
       await storage.set('recal-fcm-token:'+myIdentity, token, true);
     }
     renderNotifSection();
+    renderNotifPrompt();
+    showSaveToast('\u2713 Notifications on. Brace yourself.', 'ok', 2400);
   }catch(e){
     console.error('enable notifications failed', e);
     document.getElementById('notifSection').innerHTML =
       `<div class="identity-banner">Something went wrong turning notifications on. Try again, or check your browser's notification settings.</div>`;
+    renderNotifPrompt();
   }
+}
+
+// A gentle card at the top of Today for anyone who isn't set up for pushes yet. "Not now" hides it for 3 days.
+const NOTIF_PROMPT_KEY = 'r2-notif-prompt-until';
+async function renderNotifPrompt(){
+  const el = document.getElementById('notifPromptWrap');
+  if(!el) return;
+  el.innerHTML = '';
+  if(!myIdentity || !('Notification' in window) || VAPID_KEY === "PASTE_YOUR_VAPID_KEY") return;
+  try{ if(Number(localStorage.getItem(NOTIF_PROMPT_KEY) || 0) > Date.now()) return; }catch(e){}
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  let kind = null;
+  if(isIos && !isStandalone) kind = 'install';
+  else if(Notification.permission === 'denied') kind = 'blocked';
+  else if(Notification.permission === 'default') kind = 'ask';
+  else {
+    // Allowed on this device. Make sure a device is actually registered for her.
+    try{ const t = await storage.get('recal-fcm-token:' + myIdentity, true); if(!t) kind = 'ask'; }catch(e){}
+  }
+  if(!kind) return;
+  const copy = {
+    ask: ['Permission to be a little annoying?', 'A morning spell, and an evening nudge if your day\u2019s still open. We\u2019ll keep it charming. Mostly.'],
+    install: ['Tiny chore before the magic', 'On iPhone, notifications only work once Spell Check lives on your Home Screen. Tap Share, then Add to Home Screen, then open it from there. Thirty seconds and zero eye of newt.'],
+    blocked: ['Someone slammed the door on us', 'Rude, but understandable. To let us back in, open your phone\u2019s Settings, then Notifications, then Spell Check.']
+  }[kind];
+  const card = document.createElement('div');
+  card.className = 'notif-prompt';
+  const title = document.createElement('div'); title.className = 'np-title'; title.textContent = copy[0];
+  const bodyEl = document.createElement('div'); bodyEl.className = 'np-body'; bodyEl.textContent = copy[1];
+  const actions = document.createElement('div'); actions.className = 'np-actions';
+  const hide = ()=>{
+    try{ localStorage.setItem(NOTIF_PROMPT_KEY, String(Date.now() + 3 * 86400000)); }catch(e){}
+    el.innerHTML = '';
+  };
+  if(kind === 'ask'){
+    const yes = document.createElement('button');
+    yes.type = 'button'; yes.id = 'promptEnableBtn'; yes.className = 'gallery-toggle-btn'; yes.textContent = 'Turn on';
+    yes.onclick = ()=> enableNotifications('promptEnableBtn');
+    actions.appendChild(yes);
+    const later = document.createElement('a');
+    later.href = '#'; later.className = 'cmt-skip'; later.textContent = 'Not now';
+    later.onclick = (ev)=>{ ev.preventDefault(); hide(); };
+    actions.appendChild(later);
+  } else {
+    const ok = document.createElement('button');
+    ok.type = 'button'; ok.className = 'gallery-toggle-btn'; ok.textContent = 'Got it';
+    ok.onclick = hide;
+    actions.appendChild(ok);
+  }
+  card.appendChild(title); card.appendChild(bodyEl); card.appendChild(actions);
+  el.appendChild(card);
 }
 
 // --- Profile pictures ---
@@ -1504,6 +1578,9 @@ function freshSessions(){
 // Every save in the app reports here, so a tap on a toggle, a caption, a
 // photo or a place always ends in a visible "Saved" (or an honest failure).
 let pendingSaves = 0, saveFailed = false, saveWaiters = [], slowTimer = null, toastTimer = null;
+// Saves that happen on their own when the app opens stay quiet. The pill appears once she has touched something.
+let userInteracted = false, batchLoud = false;
+['pointerdown', 'keydown', 'touchstart'].forEach(ev => window.addEventListener(ev, ()=>{ userInteracted = true; }, {capture: true, passive: true}));
 
 function saveToastEl(){
   let el = document.getElementById('saveToast');
@@ -1524,17 +1601,18 @@ function showSaveToast(text, kind, hideAfterMs){
   if(hideAfterMs) toastTimer = setTimeout(()=>{ el.className = ''; }, hideAfterMs);
 }
 function trackSave(promise){
-  if(pendingSaves === 0) saveFailed = false;
+  if(pendingSaves === 0){ saveFailed = false; batchLoud = false; }
   pendingSaves++;
-  showSaveToast('Saving\u2026', 'saving', 0);
+  if(userInteracted) batchLoud = true;
+  if(batchLoud) showSaveToast('Saving\u2026', 'saving', 0);
   clearTimeout(slowTimer);
-  slowTimer = setTimeout(()=>{ if(pendingSaves > 0) showSaveToast('Waiting for a connection\u2026', 'slow', 0); }, 6000);
+  slowTimer = setTimeout(()=>{ if(pendingSaves > 0 && batchLoud) showSaveToast('Waiting for a connection\u2026', 'slow', 0); }, 6000);
   return Promise.resolve(promise).then(()=>true, (e)=>{ console.error('save failed', e); saveFailed = true; return false; }).then((ok)=>{
     pendingSaves--;
     if(pendingSaves === 0){
       clearTimeout(slowTimer);
       const result = !saveFailed;
-      if(result) showSaveToast('\u2713 Saved', 'ok', 1800);
+      if(result){ if(batchLoud) showSaveToast('\u2713 Saved', 'ok', 1800); }
       else showSaveToast('Couldn\u2019t save. Check your connection and try again.', 'fail', 0);
       saveWaiters.splice(0).forEach(r=>r(result));
     }
@@ -3044,7 +3122,7 @@ function feedTimeLabel(e){
 function feedSafeKey(id){ return String(id).replace(/[.#$\[\]\/]/g,'_'); }
 
 // ---- Reactions: one small JSON record per person, only she writes hers ----
-const REACTION_GLYPHS = [['\u2661','Love'],['\u2726','Sparkle'],['\u263E','Moon']];
+const REACTION_GLYPHS = [['\u2661','Heart swelling'],['\u2726','Spellbound'],['\u263E','Calm tides']];
 const reactionsData = {}; // {person: {eventKey: [glyph,...]}}
 const reactionsSynced = {};
 
@@ -3058,19 +3136,116 @@ async function loadReactions(){
   }
 }
 
+let feedCompose = null;        // {id, mode:'note'|'comment', glyph, text}: the open box under one post
+let feedComposeFocus = false;
+let feedRenderPending = false;
+
 async function toggleReaction(eventId, glyph){
   if(!myIdentity) return;
   const key = feedSafeKey(eventId);
   const mine = reactionsData[myIdentity] || (reactionsData[myIdentity] = {});
   const list = mine[key] || [];
-  mine[key] = list.includes(glyph) ? list.filter(g=>g!==glyph) : list.concat([glyph]);
+  const turningOn = !list.includes(glyph);
+  mine[key] = turningOn ? list.concat([glyph]) : list.filter(g=>g!==glyph);
   if(!mine[key].length) delete mine[key];
+  let notesChanged = false;
+  if(turningOn){
+    // The reaction is saved right away. The line is optional and rides along if it comes soon.
+    feedCompose = {id:eventId, mode:'note', glyph, text:''};
+    feedComposeFocus = true;
+  } else {
+    if(feedCompose && feedCompose.id === eventId && feedCompose.glyph === glyph) feedCompose = null;
+    const cm = commentsData[myIdentity] && commentsData[myIdentity][key];
+    if(cm){
+      const kept = cm.filter(c=> c.g !== glyph);
+      if(kept.length !== cm.length){
+        if(kept.length) commentsData[myIdentity][key] = kept; else delete commentsData[myIdentity][key];
+        notesChanged = true;
+      }
+    }
+  }
   safeRender('renderCovenFeed', renderCovenFeed);
   try{
     const json = JSON.stringify(mine);
     reactionsSynced[myIdentity] = json;
-    await storage.set(`recal-reactions:${myIdentity}`, json, true);
+    await trackedSet(`recal-reactions:${myIdentity}`, json, true);
   }catch(e){ console.error('reaction save failed', e); }
+  if(notesChanged) await saveMyComments();
+}
+
+// ---- Comments: a flat list under each post. Like reactions, each person writes only her own record. ----
+// A "note" is a comment that carries a reaction symbol (g). It shows in the list and rides along in the push.
+const commentsData = {}; // {person: {eventKey: [{id, t, at, g?}]}}
+const commentsSynced = {};
+
+async function loadComments(){
+  for(const p of PEOPLE){
+    try{
+      const res = await storage.get(`recal-comments:${p}`, true);
+      commentsData[p] = res ? JSON.parse(res.value) : {};
+      commentsSynced[p] = res ? res.value : null;
+    }catch(e){ console.error('comments load failed', p, e); commentsData[p] = {}; }
+  }
+}
+
+async function saveMyComments(){
+  if(!myIdentity) return;
+  try{
+    const json = JSON.stringify(commentsData[myIdentity] || {});
+    commentsSynced[myIdentity] = json;
+    await trackedSet(`recal-comments:${myIdentity}`, json, true);
+  }catch(e){ console.error('comment save failed', e); }
+}
+
+async function postComment(eventId, text, glyph){
+  if(!myIdentity) return;
+  const t = String(text || '').trim().slice(0, 280);
+  if(!t) return;
+  const key = feedSafeKey(eventId);
+  const mine = commentsData[myIdentity] || (commentsData[myIdentity] = {});
+  const entry = {id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), t, at: new Date().toISOString()};
+  if(glyph) entry.g = glyph;
+  (mine[key] = mine[key] || []).push(entry);
+  safeRender('renderCovenFeed', renderCovenFeed);
+  await saveMyComments();
+}
+
+async function deleteComment(eventId, commentId){
+  if(!myIdentity) return;
+  const key = feedSafeKey(eventId);
+  const mine = commentsData[myIdentity];
+  if(!mine || !mine[key]) return;
+  mine[key] = mine[key].filter(c=> c.id !== commentId);
+  if(!mine[key].length) delete mine[key];
+  safeRender('renderCovenFeed', renderCovenFeed);
+  await saveMyComments();
+}
+
+function commentsForEvent(key){
+  const out = [];
+  PEOPLE.forEach(p=>{
+    ((commentsData[p] && commentsData[p][key]) || []).forEach(c=> out.push(Object.assign({who: p}, c)));
+  });
+  out.sort((a, b)=> String(a.at).localeCompare(String(b.at)));
+  return out;
+}
+
+function startCommentsSync(){
+  if(!db || typeof db.ref !== 'function') return;
+  PEOPLE.forEach(p=>{
+    try{
+      db.ref('recalData/' + rk('recal-comments:' + p)).on('value', (snap)=>{
+        try{
+          const val = snap.val();
+          if(typeof val !== 'string' || val === commentsSynced[p]) return;
+          if(p === myIdentity) return; // our own record: this device is the source of truth
+          commentsSynced[p] = val;
+          commentsData[p] = JSON.parse(val);
+          safeRender('renderCovenFeed', renderCovenFeed);
+        }catch(e){ console.error('comments sync failed', p, e); }
+      });
+    }catch(e){ console.error('could not attach comments listener', p, e); }
+  });
 }
 
 function startReactionsSync(){
@@ -3094,6 +3269,108 @@ function startReactionsSync(){
 function joinNames(arr){
   if(arr.length<=1) return arr.join('');
   return arr.slice(0,-1).join(', ') + ' and ' + arr[arr.length-1];
+}
+
+function appendFeedComments(body, e, key){
+  const list = commentsForEvent(key);
+  if(list.length){
+    const wrap = document.createElement('div');
+    wrap.className = 'cmt-list';
+    list.forEach(c=>{
+      const row = document.createElement('div');
+      row.className = 'cmt';
+      const who = document.createElement('b');
+      who.textContent = c.who;
+      row.appendChild(who);
+      if(c.g){
+        const g = document.createElement('span');
+        g.className = 'cmt-g';
+        g.textContent = ' ' + c.g;
+        row.appendChild(g);
+      }
+      const txt = document.createElement('span');
+      txt.textContent = ' ' + c.t;
+      row.appendChild(txt);
+      const tm = document.createElement('span');
+      tm.className = 'cmt-time';
+      tm.textContent = feedTimeLabel({at: c.at});
+      row.appendChild(tm);
+      if(c.who === myIdentity){
+        const del = document.createElement('a');
+        del.href = '#';
+        del.className = 'cmt-del';
+        del.textContent = 'delete';
+        del.onclick = (ev)=>{ ev.preventDefault(); deleteComment(e.id, c.id); };
+        row.appendChild(del);
+      }
+      wrap.appendChild(row);
+    });
+    body.appendChild(wrap);
+  }
+  if(!myIdentity) return;
+
+  const open = feedCompose && feedCompose.id === e.id;
+  if(!open){
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.className = 'cmt-link';
+    link.textContent = 'Say something';
+    link.onclick = ()=>{ feedCompose = {id: e.id, mode: 'comment', text: ''}; feedComposeFocus = true; renderCovenFeed(); };
+    body.appendChild(link);
+    return;
+  }
+
+  const isNote = feedCompose.mode === 'note';
+  const box = document.createElement('div');
+  box.className = 'cmt-compose';
+  if(isNote){
+    const g = document.createElement('span');
+    g.className = 'cmt-g';
+    g.textContent = feedCompose.glyph;
+    box.appendChild(g);
+  }
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'cmt-input';
+  input.maxLength = 280;
+  input.placeholder = isNote ? 'Say something, if you\u2019re feeling chatty' : 'Say something nice, or at least funny';
+  input.setAttribute('aria-label', input.placeholder);
+  input.value = feedCompose.text || '';
+  input.oninput = ()=>{ feedCompose.text = input.value; };
+  const finish = ()=>{
+    if(document.activeElement === input) input.blur();
+    feedCompose = null;
+    feedRenderPending = false;
+    renderCovenFeed();
+  };
+  const send = ()=>{
+    const text = input.value.trim();
+    const glyph = isNote ? feedCompose.glyph : undefined;
+    if(text) postComment(e.id, text, glyph);
+    finish();
+  };
+  input.onkeydown = (ev)=>{ if(ev.key === 'Enter'){ ev.preventDefault(); send(); } };
+  input.onblur = ()=>{
+    if(!feedRenderPending) return;
+    setTimeout(()=>{
+      const a = document.activeElement;
+      if(feedRenderPending && !(a && a.classList && a.classList.contains('cmt-input'))){ feedRenderPending = false; renderCovenFeed(); }
+    }, 200);
+  };
+  box.appendChild(input);
+  const sendBtn = document.createElement('button');
+  sendBtn.type = 'button';
+  sendBtn.className = 'cmt-send';
+  sendBtn.textContent = isNote ? 'Send' : 'Post';
+  sendBtn.onclick = send;
+  box.appendChild(sendBtn);
+  const skip = document.createElement('a');
+  skip.href = '#';
+  skip.className = 'cmt-skip';
+  skip.textContent = isNote ? 'Skip' : 'Cancel';
+  skip.onclick = (ev)=>{ ev.preventDefault(); finish(); };
+  box.appendChild(skip);
+  body.appendChild(box);
 }
 
 function feedItemHtmlParts(e){
@@ -3121,6 +3398,9 @@ function renderCovenFeed(){
   const el = document.getElementById('covenFeed');
   const moreEl = document.getElementById('covenFeedMore');
   if(!el) return;
+  // Never rebuild the feed under someone who is mid-sentence. It redraws as soon as she leaves the box.
+  const ae = document.activeElement;
+  if(ae && ae.classList && ae.classList.contains('cmt-input') && el.contains(ae)){ feedRenderPending = true; return; }
   const events = buildFeedEvents();
   if(!events.length){
     el.innerHTML = `<div class="feed-empty">Nothing here yet. Cast today's spell and it'll show up here.</div>`;
@@ -3216,7 +3496,7 @@ function renderCovenFeed(){
       chip.className = 'react-chip' + (mineOn ? ' mine' : '');
       chip.setAttribute('aria-label', `${label} reaction`);
       chip.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
-      chip.innerHTML = `<span class="g">${g}</span><span class="c">${names.length || ''}</span>`;
+      chip.innerHTML = `<span class="g">${g}</span><span class="lbl">${label}</span><span class="c">${names.length || ''}</span>`;
       if(canReact) chip.onclick = ()=> toggleReaction(e.id, g);
       else chip.disabled = true;
       row.appendChild(chip);
@@ -3230,10 +3510,17 @@ function renderCovenFeed(){
       who.textContent = `${joinNames(list)} reacted`;
       body.appendChild(who);
     }
+    appendFeedComments(body, e, key);
 
     item.appendChild(body);
     el.appendChild(item);
   });
+
+  if(feedComposeFocus){
+    feedComposeFocus = false;
+    const inp = el.querySelector('.cmt-input');
+    if(inp) inp.focus();
+  }
 
   if(moreEl){
     moreEl.innerHTML = '';
@@ -3329,7 +3616,7 @@ function renderNotifPrefs(){
   const rows = [
     ['morning', 'Morning spell', 'Daily at 8am Pacific', 'acc-yellow'],
     ['nudge', 'Evening nudge', '7pm Pacific, only if your spell isn\u2019t cast', 'acc-pink'],
-    ['reactions', 'Reactions', 'When the coven reacts to your stuff', 'acc-blue'],
+    ['reactions', 'Reactions and comments', 'When the coven reacts to or comments on your stuff', 'acc-blue'],
     ['activity', 'Coven activity', 'When someone casts her spell, the coven goes full, or a photo, link, or Currently update goes up', 'acc-lavender']
   ];
   el.innerHTML = '';
@@ -4053,6 +4340,7 @@ async function renderAll(){
   safeRender('renderStatus', renderStatus);
   safeRender('renderIdentityBanner', renderIdentityBanner);
   safeRender('renderNotifSection', renderNotifSection);
+  safeRender('renderNotifPrompt', renderNotifPrompt);
   safeRender('renderProfilePicSection', renderProfilePicSection);
   safeRender('renderTodayCard', renderTodayCard);
   safeRender('renderStreakCard', renderStreakCard);
@@ -4087,7 +4375,7 @@ function saveSnapshot(){
   try{
     const people = {};
     PEOPLE.forEach(p=>{ if(allData[p]) people[p] = JSON.stringify(allData[p]); });
-    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({at: Date.now(), people, reactions: reactionsData, prefs: notifPrefs}));
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({at: Date.now(), people, reactions: reactionsData, comments: commentsData, prefs: notifPrefs}));
   }catch(e){ /* storage full or unavailable, fine */ }
   PEOPLE.forEach(p=>{
     const src = profilePicCache[p];
@@ -4112,6 +4400,7 @@ function applySnapshot(){
     }catch(e){ allData[p] = emptyPersonData(); }
     try{ const pic = localStorage.getItem('recal-snap-pic:'+p); if(pic) profilePicCache[p] = pic; }catch(e){}
     reactionsData[p] = (snap.reactions && snap.reactions[p]) || {};
+    commentsData[p] = (snap.comments && snap.comments[p]) || {};
     notifPrefs[p] = Object.assign({}, NOTIF_PREF_DEFAULTS, (snap.prefs && snap.prefs[p]) || {});
   });
   return true;
@@ -4135,6 +4424,7 @@ function applySnapshot(){
   try{
     await loadAll();
     try{ await loadReactions(); }catch(e){ console.error('reactions load failed', e); }
+    try{ await loadComments(); }catch(e){ console.error('comments load failed', e); }
     try{ await loadNotifPrefs(); }catch(e){ console.error('prefs load failed', e); }
     await preloadProfilePics();
   }catch(e){
@@ -4150,6 +4440,7 @@ function applySnapshot(){
   try{ setupScrollspy(); }catch(e){ console.error('scrollspy setup failed', e); }
   try{ startLiveSync(); }catch(e){ console.error('live sync setup failed', e); }
   try{ startReactionsSync(); }catch(e){ console.error('reactions sync setup failed', e); }
+  try{ startCommentsSync(); }catch(e){ console.error('comments sync setup failed', e); }
 })();
 
 function setupScrollspy(){

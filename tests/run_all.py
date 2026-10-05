@@ -17,7 +17,7 @@ for i, js in enumerate(scripts):
         print(r.stderr[:400]); ok = False
 
 # 2. Browser tests against mocked Firebase, location lookups, and photo files
-for name in ['t_main.py', 't_saved.py', 't_photo.py', 'errs.py']:
+for name in ['t_main.py', 't_saved.py', 't_photo.py', 't_social.py', 'errs.py']:
     r = subprocess.run([sys.executable, '-B', os.path.join(HERE, name)], capture_output=True, text=True)
     out = r.stdout.strip().splitlines()
     fails = [l for l in out if l.startswith('FAIL')]
@@ -27,5 +27,14 @@ for name in ['t_main.py', 't_saved.py', 't_photo.py', 'errs.py']:
     if r.returncode != 0 or fails or (name == 'errs.py' and 'unexpected errors: []' not in r.stdout):
         ok = False
         if r.returncode != 0: print(r.stderr[-600:])
+# 3. The push Worker, end to end with a fake Firebase and a fake push service
+r = subprocess.run(['node', os.path.join(HERE, 'worker_test.mjs')], capture_output=True, text=True)
+out = [l for l in r.stdout.splitlines() if l.startswith('PASS') or l.startswith('FAIL') or 'checks,' in l]
+print('worker_test.mjs: ' + (out[-1] if out else r.stderr[-300:]))
+for l in out:
+    if l.startswith('FAIL'): print('   ' + l)
+if r.returncode != 0:
+    ok = False
+
 print('\nALL PASSED' if ok else '\nSOMETHING FAILED')
 sys.exit(0 if ok else 1)

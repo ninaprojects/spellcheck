@@ -16,6 +16,9 @@
 // activity): someone casting today's spell, the full-coven moment, new
 // photos (daily or workout proof), shared links, and Currently updates.
 // Check-ins like water stay silent.
+// Round 2 additions: labeled reactions with optional notes, comments (pushed to the
+// poster and anyone who already commented), a push every time all four cast, streak
+// milestones, "on a roll" pushes, and a Sunday recap.
 // The very first run just marks everything existing as seen, so nobody
 // gets a flood of old ones.
 //
@@ -57,6 +60,157 @@ function domainOf(u) {
   try { return new URL(/^https?:\/\//i.test(u) ? u : 'https://' + u).hostname.replace(/^www\./, ''); } catch (e) { return ''; }
 }
 const NOW_VERB = { reading: 'reading', watching: 'watching', listening: 'listening to' };
+
+// ---------- Round 2 social copy (reviewed and approved by Nina) ----------
+const REACTION_COPY = {
+  '\u2661': { title: (who) => `${who}\u2019s heart is swelling \u2661`, body: (t) => `On ${t}. We\u2019d ask you to stay humble, but we\u2019ve met you.` },
+  '\u2726': { title: (who) => `${who} is spellbound \u2726`, body: (t) => `On ${t}. A bow is customary. Several bows are encouraged.` },
+  '\u263E': { title: (who) => `${who} sent you calm tides \u263E`, body: (t) => `On ${t}. Unclench your shoulders, the coven\u2019s got this.` }
+};
+
+// Every time all four have cast today. Rotates by day so it never repeats day after day.
+const EVERY_TIME = [
+  ['Day {N}, conjured \u2726', 'All four spells cast. The coven is unstoppable and slightly smug.'],
+  ['All four of us, Day {N} \u2726', 'Every spell cast, nobody left behind. Frankly, we\u2019re glowing.'],
+  ['Full coven, Day {N} \u2726', 'Four for four. Somebody tell the sky.'],
+  ['Day {N}: the whole coven showed up \u2726', 'All four spells cast. Take the victory lap.'],
+  ['Four spells, Day {N} \u2726', 'Everyone\u2019s in. The cauldron is bubbling.'],
+  ['Day {N} is officially ours \u2726', 'All four of us cast. Go be smug about it.']
+];
+// On these streak lengths the milestone line replaces the everyday one, so nobody gets two pushes.
+export const COVEN_MILESTONES = {
+  3: ['Three in a row \u2726', 'All four of us, three days running. Okay, who invited the overachievers?'],
+  7: ['A full week, all four \u2726', 'Seven days where every one of us cast. We are, frankly, a lot to be around right now.'],
+  14: ['Fourteen days. All four of us \u2726', 'Two weeks of everyone casting. The group chat is about to be unbearable, and we\u2019re here for it.'],
+  21: ['Twenty-one days \u2726', 'Three full weeks, all four of us. This stopped being a habit and became a personality.'],
+  31: ['All 31 days. All four of us \u2726', 'Not one day missed, start to finish. Happy Halloween, witches. Go be insufferable about it.']
+};
+export function covenMessage(day, streak) {
+  const m = COVEN_MILESTONES[streak];
+  if (m) return { title: m[0], body: m[1] };
+  const [t, b] = EVERY_TIME[day % EVERY_TIME.length];
+  return { title: t.replace('{N}', day), body: b + (streak >= 2 ? ` That\u2019s ${numWord(streak)} days running.` : '') };
+}
+
+// A personal streak of this many days in a row. One push to the other three, one private one to her.
+export const ROLL_STEPS = [5, 10, 15, 20, 25];
+const ROLL_OTHERS = {
+  5: 'Five days in a row. Somebody say something nice before it goes to her head.',
+  10: 'Ten days in a row. The applause is due, and we\u2019ll wait.',
+  15: 'Fifteen days in a row and not even a little tired. Suspicious.',
+  20: 'Twenty days in a row. Somebody get her a cape.',
+  25: 'Twenty-five days in a row. The finish line is nervous, and it should be.'
+};
+const ROLL_SELF = {
+  5: 'Five days in a row. We noticed, and we\u2019re acting very normal about it.',
+  10: 'Ten days in a row. We\u2019re proud, and we\u2019re being weird about it.',
+  15: 'Fifteen days running. All you, cape optional, ego encouraged.',
+  20: 'Twenty days in a row. Your cape is on order and ships whenever we get around to it.',
+  25: 'Twenty-five days in a row. Don\u2019t look down, just keep going.'
+};
+export function rollMessage(item) {
+  if (item.type === 'rollself') return { title: 'You\u2019re on a roll \u2726', body: ROLL_SELF[item.streak] };
+  return { title: `${item.actor} is on a roll \u2726`, body: ROLL_OTHERS[item.streak] };
+}
+
+// Sunday recap.
+function oxford(a) {
+  if (a.length <= 1) return a.join('');
+  if (a.length === 2) return `${a[0]} and ${a[1]}`;
+  return `${a.slice(0, -1).join(', ')}, and ${a[a.length - 1]}`;
+}
+export function recapMessage(stats) {
+  if (stats.perfect) return { title: 'A perfect week \u2726', body: 'Every one of us cast, every day. Come admire us, we\u2019ll wait.' };
+  if (stats.spells * 2 < stats.possible) {
+    return { title: 'A softer week', body: `We cast ${stats.spells} ${stats.spells === 1 ? 'spell' : 'spells'}. Even witches nap. A fresh week starts tomorrow, and we\u2019re all in it.` };
+  }
+  const parts = [`cast ${stats.spells} spells`];
+  if (stats.photos) parts.push(`shared ${stats.photos} ${stats.photos === 1 ? 'photo' : 'photos'}`);
+  if (stats.reactions) parts.push(`sent ${stats.reactions} ${stats.reactions === 1 ? 'reaction' : 'reactions'}`);
+  return { title: 'The week, in numbers \u2726', body: `We ${oxford(parts)}. Come see the damage.` };
+}
+function eventDayNumber(key, data) {
+  const parts = key.split(':');
+  const type = parts[0];
+  if (type === 'cast' || type === 'photo') { const n = Number(parts[2]); return Number.isFinite(n) ? n : null; }
+  if (type === 'session') {
+    const list = (((data[parts[1]] || {}).weeks || {})[parts[2]] || {}).sessions;
+    const x = list && list[Number(parts[3])];
+    return x && x.timestamp ? pacificDayNumber(new Date(x.timestamp)) : null;
+  }
+  if (type === 'cur') {
+    const t = new Date(parts.slice(3).join(':').replace(/_/g, '.'));
+    return isNaN(t) ? null : pacificDayNumber(t);
+  }
+  if (type === 'article') {
+    const wd = ((data[parts[1]] || {}).weeks || {})[parts[2]];
+    const sh = sharesOf(wd).find(x => (x.id || 'a0') === (parts[3] || 'a0'));
+    return sh && sh.timestamp ? pacificDayNumber(new Date(sh.timestamp)) : null;
+  }
+  return null;
+}
+// The seven days ending today (or fewer, early in the round).
+export function weekStats(data, reactions, today) {
+  const start = Math.max(1, today - 6), end = today;
+  const inRange = (d) => d !== null && d >= start && d <= end;
+  let spells = 0, photos = 0, reactionCount = 0, perfect = true;
+  for (let n = start; n <= end; n++) {
+    let all = true;
+    for (const p of PEOPLE) {
+      const d = data[p] && data[p].days ? data[p].days[n] : null;
+      if (isCast(d)) spells++; else all = false;
+      if (d && d.hasPhoto) photos++;
+    }
+    if (!all) perfect = false;
+  }
+  for (const p of PEOPLE) {
+    const pd = data[p];
+    if (!pd) continue;
+    for (const wd of Object.values(pd.weeks || {})) {
+      for (const s of ((wd && wd.sessions) || [])) {
+        if (s && s.done && s.hasPhoto && s.timestamp && inRange(pacificDayNumber(new Date(s.timestamp)))) photos++;
+      }
+    }
+  }
+  for (const reactor of PEOPLE) {
+    for (const [key, glyphs] of Object.entries(reactions[reactor] || {})) {
+      if (inRange(eventDayNumber(key, data))) reactionCount += (glyphs || []).length;
+    }
+  }
+  return { spells, photos, reactions: reactionCount, possible: PEOPLE.length * (end - start + 1), perfect };
+}
+
+// Comments: who is it about, and what is it called.
+function describePost(eventKey) {
+  const parts = eventKey.split(':');
+  const type = parts[0];
+  if (type === 'coven') return { owner: null, noun: `Day ${parts[1]} full-coven moment` };
+  const owner = PEOPLE.includes(parts[1]) ? parts[1] : null;
+  const noun = type === 'cast' ? `Day ${parts[2]} spell`
+    : type === 'photo' ? `Day ${parts[2]} photo`
+    : type === 'session' ? 'movement session'
+    : type === 'article' ? 'shared link'
+    : type === 'cur' ? 'Currently update'
+    : 'post';
+  return { owner, noun };
+}
+export function composeComments(items) {
+  const events = uniq(items.map(i => i.eventKey));
+  if (items.length === 1) {
+    const it = items[0];
+    if (it.role === 'owner') return { title: `${it.author} has opinions about your ${it.noun}`, body: trunc(it.t, 90) };
+    const whose = it.owner ? `${it.owner}\u2019s` : 'the';
+    return { title: `${it.author} couldn\u2019t stay out of it`, body: `On ${whose} ${it.noun}: ${trunc(it.t, 90)}` };
+  }
+  const where = events.length === 1 && items.every(i => i.role === 'owner') ? `your ${items[0].noun}` : 'the coven feed';
+  return { title: 'The comments are getting rowdy', body: `${items.length} new on ${where}. Go see who said what.` };
+}
+// A note is a comment that carries a reaction symbol. It rides along in that reaction's push.
+function noteFor(comments, reactor, eventKey, glyph) {
+  const list = ((comments[reactor] || {})[eventKey]) || [];
+  for (let i = list.length - 1; i >= 0; i--) if (list[i] && list[i].g === glyph && list[i].t) return list[i].t;
+  return '';
+}
 const trunc = (t, n = 90) => { t = String(t || '').trim(); return t.length > n ? t.slice(0, n - 1).trimEnd() + '\u2026' : t; };
 
 // ---------- scheduled copy (moved here from notify.js, unchanged) ----------
@@ -172,7 +326,20 @@ function activityEvents(data, today) {
     }
   }
   if (today >= 1 && today <= 31 && PEOPLE.every(p => data[p] && data[p].days && isCast(data[p].days[today]))) {
-    ev.set(`coven:${today}`, { type: 'coven', actor: null, day: today });
+    let streak = 0;
+    for (let n = today; n >= 1 && PEOPLE.every(p => data[p] && data[p].days && isCast(data[p].days[n])); n--) streak++;
+    ev.set(`coven:${today}`, { type: 'coven', actor: null, day: today, streak });
+  }
+  // Personal streaks: a push to the other three and a private one to her.
+  for (const p of PEOPLE) {
+    const pd = data[p];
+    if (!pd || !pd.days || !isCast(pd.days[today])) continue;
+    let streak = 0;
+    for (let n = today; n >= 1 && isCast(pd.days[n]); n--) streak++;
+    if (ROLL_STEPS.includes(streak)) {
+      ev.set(`roll:${p}:${today}:${streak}`, { type: 'roll', actor: p, streak, day: today });
+      ev.set(`rollself:${p}:${today}:${streak}`, { type: 'rollself', actor: p, streak, day: today });
+    }
   }
   return ev;
 }
@@ -215,7 +382,7 @@ function headline(who, type, its, castCount) {
 
 export function composeActivity(items, castTodayCount) {
   const coven = items.find(i => i.type === 'coven');
-  if (coven) return { title: `Day ${coven.day}, conjured \u2726`, body: 'All four spells cast.' };
+  if (coven) return covenMessage(coven.day, coven.streak || 1);
   const actors = uniq(items.map(i => i.actor));
   if (actors.length === 1) {
     const who = actors[0];
@@ -297,9 +464,15 @@ export function composeMessage(items) {
     return { title: 'While you were asleep', body: `${joinNames(reactors)} reacted to ${target} ${glyphs.join(' ')}` };
   }
   if (items.length === 1) {
+    const it = items[0];
+    const copy = REACTION_COPY[it.glyph];
+    if (copy) {
+      const note = String(it.note || '').trim();
+      return { title: copy.title(it.reactor), body: note ? `\u201c${trunc(note, 90)}\u201d On ${target}.` : copy.body(target) };
+    }
     return { title: `${reactors[0]} sent you a ${glyphs[0]}`, body: `On ${target}.` };
   }
-  return { title: `${joinNames(reactors)} reacted ${glyphs.join(' ')}`, body: `On ${target}. The coven sees you.` };
+  return { title: `${joinNames(reactors)} reacted ${glyphs.join(' ')}`, body: `On ${target}. The coven sees you, and it\u2019s being weird about how good you are.` };
 }
 
 export async function run(env, now) {
@@ -337,7 +510,7 @@ export async function run(env, now) {
     const d = describe(r.eventKey);
     if (!d || d.owner === r.reactor) continue;
     if (!(await prefsFor(d.owner)).reactions) continue;
-    (pending[d.owner] = pending[d.owner] || []).push({ id, reactor: r.reactor, glyph: r.glyph, eventKey: r.eventKey, text: d.text, heldOvernight: quiet });
+    (pending[d.owner] = pending[d.owner] || []).push({ id, reactor: r.reactor, glyph: r.glyph, eventKey: r.eventKey, text: d.text, heldOvernight: quiet, holdUntil: now.getTime() + 60 * 1000 });
   }
 
   // Drop anything un-reacted before it went out.
@@ -392,8 +565,9 @@ export async function run(env, now) {
         }
       }
       aSeen.add(id); changed = true;
-      for (const r of PEOPLE) {
-        if (r === e.actor) continue; // never about your own activity
+      // A private streak push goes only to her. Everything else is never about your own activity.
+      const targets = e.type === 'rollself' ? [e.actor] : PEOPLE.filter(r => r !== e.actor);
+      for (const r of targets) {
         if (!(await prefsFor(r)).activity) continue;
         (pendingActivity[r] = pendingActivity[r] || []).push({ id, ...e });
       }
@@ -402,26 +576,105 @@ export async function run(env, now) {
   }
   const castTodayCount = PEOPLE.filter(p => data[p] && data[p].days && isCast(data[p].days[today])).length;
 
+  // ---- comments ----
+  const comments = {};
+  for (const p of PEOPLE) comments[p] = (await readKey(R2 + 'recal-comments:' + p)) || {};
+  const liveComments = new Map();
+  for (const author of PEOPLE) {
+    for (const [eventKey, list] of Object.entries(comments[author])) {
+      for (const c of (list || [])) {
+        if (c && c.id && c.t) liveComments.set(`${author}|${eventKey}|${c.id}`, { author, eventKey, id: c.id, t: c.t, at: c.at, g: c.g });
+      }
+    }
+  }
+  const pendingComments = state.pendingComments || {};
+  if (!state.commentsInit) {
+    // First run with comments: mark whatever exists as seen, silently.
+    state.commentsSeen = Array.from(liveComments.keys());
+    state.commentsInit = true;
+    changed = true;
+    console.log('Comments baseline: marked', liveComments.size, 'existing comments as seen.');
+  } else {
+    const cSeen = new Set(state.commentsSeen || []);
+    for (const [uid, c] of liveComments) {
+      if (cSeen.has(uid)) continue;
+      cSeen.add(uid); changed = true;
+      if (c.g) continue; // a note rides along with its reaction push
+      if (now.getTime() - new Date(c.at).getTime() > 6 * 3600 * 1000) continue; // old news
+      const info = describePost(c.eventKey);
+      const recipients = new Set();
+      if (info.owner && info.owner !== c.author) recipients.add(info.owner);
+      for (const o of liveComments.values()) {
+        if (o.eventKey === c.eventKey && !o.g && o.author !== c.author && String(o.at) < String(c.at)) recipients.add(o.author);
+      }
+      for (const r of recipients) {
+        if (!(await prefsFor(r)).reactions) continue;
+        (pendingComments[r] = pendingComments[r] || []).push({ uid, author: c.author, eventKey: c.eventKey, t: c.t, owner: info.owner, noun: info.noun, role: r === info.owner ? 'owner' : 'also' });
+      }
+    }
+    state.commentsSeen = Array.from(cSeen).filter(u => liveComments.has(u));
+  }
+
   const sent = [];
   if (!quiet && Object.keys(pendingActivity).length) {
     let accessTokenA = null;
+    const isRoll = (i) => i.type === 'roll' || i.type === 'rollself';
     for (const r of Object.keys(pendingActivity)) {
       const items = pendingActivity[r].filter(i => liveActivity.has(i.id)); // undone before it went out? skip it
       if (!items.length) { delete pendingActivity[r]; changed = true; continue; }
       const token = await readRaw('recal-fcm-token:' + r);
       if (!token) { delete pendingActivity[r]; changed = true; continue; }
-      const msg = composeActivity(items, castTodayCount);
+      // A streak push replaces that person's plain "cast her spell" push, so nobody gets two for one moment.
+      // When the whole coven is celebrated in this same moment, that push already covers everyone's streaks.
+      // Only her own private streak push still goes out.
+      const covenNow = items.some(i => i.type === 'coven');
+      const rollItems = items.filter(i => isRoll(i) && !(covenNow && i.type === 'roll'));
+      const rollActors = new Set(items.filter(isRoll).map(i => i.actor));
+      const rest = items.filter(i => !isRoll(i) && !(i.type === 'cast' && rollActors.has(i.actor)));
+      const batches = rollItems.slice(0, 2).map(i => ({ items: [i], msg: rollMessage(i) }));
+      if (rest.length) batches.push({ items: rest, msg: composeActivity(rest, castTodayCount) });
+      let failed = false;
+      const left = [];
+      for (const b of batches) {
+        if (failed) { left.push(...b.items); continue; }
+        try {
+          if (!accessTokenA) accessTokenA = await getAccessToken(env);
+          await sendPush(env, accessTokenA, token, b.msg);
+          sent.push({ owner: r, ...b.msg });
+          console.log('Activity to', r, '|', b.msg.title, '|', b.msg.body);
+        } catch (e) {
+          failed = true;
+          console.error('Activity send failed for', r, e && e.message);
+          b.items.forEach(i => { i.tries = (i.tries || 0) + 1; });
+          left.push(...b.items);
+        }
+      }
+      const kept = left.filter(i => (i.tries || 0) < 5);
+      if (kept.length) pendingActivity[r] = kept; else delete pendingActivity[r];
+      changed = true;
+    }
+  }
+
+  if (!quiet && Object.keys(pendingComments).length) {
+    let accessTokenC = null;
+    for (const r of Object.keys(pendingComments)) {
+      const items = pendingComments[r].filter(i => liveComments.has(i.uid)); // deleted before it went out? skip it
+      if (!items.length) { delete pendingComments[r]; changed = true; continue; }
+      if (!(await prefsFor(r)).reactions) { delete pendingComments[r]; changed = true; continue; }
+      const token = await readRaw('recal-fcm-token:' + r);
+      if (!token) { delete pendingComments[r]; changed = true; continue; }
+      const msg = composeComments(items);
       try {
-        if (!accessTokenA) accessTokenA = await getAccessToken(env);
-        await sendPush(env, accessTokenA, token, msg);
+        if (!accessTokenC) accessTokenC = await getAccessToken(env);
+        await sendPush(env, accessTokenC, token, msg);
         sent.push({ owner: r, ...msg });
-        console.log('Activity to', r, '|', msg.title, '|', msg.body);
-        delete pendingActivity[r]; changed = true;
+        console.log('Comments to', r, '|', msg.title, '|', msg.body);
+        delete pendingComments[r]; changed = true;
       } catch (e) {
-        console.error('Activity send failed for', r, e && e.message);
+        console.error('Comment send failed for', r, e && e.message);
         items.forEach(i => { i.tries = (i.tries || 0) + 1; });
-        pendingActivity[r] = items;
-        if (items.some(i => i.tries >= 5)) delete pendingActivity[r];
+        pendingComments[r] = items.filter(i => i.tries < 5);
+        if (!pendingComments[r].length) delete pendingComments[r];
         changed = true;
       }
     }
@@ -433,9 +686,13 @@ export async function run(env, now) {
       const items = pending[owner];
       const prefs = await prefsFor(owner);
       if (!prefs.reactions) { delete pending[owner]; changed = true; continue; }
+      // Give a note typed right after the tap a moment to arrive, so it rides along.
+      const ready = items.filter(i => !i.holdUntil || i.holdUntil <= now.getTime());
+      if (!ready.length) continue;
       const token = await readRaw('recal-fcm-token:' + owner);
       if (!token) { console.log('No device token for', owner, ', dropping', items.length); delete pending[owner]; changed = true; continue; }
-      const msg = composeMessage(items);
+      ready.forEach(i => { i.note = noteFor(comments, i.reactor, i.eventKey, i.glyph); });
+      const msg = composeMessage(ready);
       try {
         if (!accessToken) accessToken = await getAccessToken(env);
         await sendPush(env, accessToken, token, msg);
@@ -445,12 +702,15 @@ export async function run(env, now) {
         // Stays pending and retries next run, but gives up after 5 tries so a
         // dead device token can't retry forever.
         console.error('Send failed for', owner, e && e.message);
-        items.forEach(i => { i.tries = (i.tries || 0) + 1; });
-        if (items.some(i => i.tries >= 5)) delete pending[owner];
+        ready.forEach(i => { i.tries = (i.tries || 0) + 1; });
+        if (ready.some(i => i.tries >= 5)) pending[owner] = items.filter(i => !ready.includes(i)); 
+        if (pending[owner] && !pending[owner].length) delete pending[owner];
         changed = true;
         continue;
       }
-      delete pending[owner]; changed = true;
+      pending[owner] = items.filter(i => !ready.includes(i));
+      if (!pending[owner].length) delete pending[owner];
+      changed = true;
     }
   }
 
@@ -462,23 +722,28 @@ export async function run(env, now) {
   // is skipped rather than sent late. Sent-status is tracked per person, so a
   // failed send retries next minute (up to 5 times) without double-sending.
   const ptHour = pacificHour(now);
+  const isSunday = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short' }).format(now) === 'Sun';
   if (today >= 1 && today <= 31) {
     state.sched = state.sched || {};
     const castOn = (p, n) => !!(data[p] && data[p].days && isCast(data[p].days[n]));
     let streak = 0;
     for (let n = today - 1; n >= 1 && PEOPLE.every(p => castOn(p, n)); n--) streak++;
-    for (const job of ['morning', 'nudge']) {
-      const inWindow = job === 'morning' ? (ptHour >= 8 && ptHour < 12) : (ptHour >= 19 && ptHour < 22);
+    for (const job of ['morning', 'nudge', 'recap']) {
+      const inWindow = job === 'morning' ? (ptHour >= 8 && ptHour < 12)
+        : job === 'nudge' ? (ptHour >= 19 && ptHour < 22)
+        : (isSunday && today >= 7 && ptHour >= 18 && ptHour < 22); // Sunday recap, from 6pm
       if (!inWindow) continue;
       let rec = state.sched[job];
       if (!rec || rec.day !== today) { rec = state.sched[job] = { day: today, done: [], tries: {} }; changed = true; }
       for (const person of PEOPLE) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
-        if (!(await prefsFor(person))[job]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
+        if (!(await prefsFor(person))[job === 'recap' ? 'activity' : job]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
         let msg;
         if (job === 'morning') {
           msg = { title: `\u2728 Day ${today} of Spells, Witches`, body: SPECIAL[today] || AFFIRMATIONS[today] || `Day ${today} is live. Go check in.` };
+        } else if (job === 'recap') {
+          msg = recapMessage(weekStats(data, reactions, today));
         } else {
           const dd = data[person] && data[person].days ? data[person].days[today] : null;
           if (isCast(dd)) { console.log(person, 'already cast Day', today, ', no nudge.'); finish(); continue; }
@@ -505,7 +770,7 @@ export async function run(env, now) {
   if (changed) {
     // Keep "seen" from growing forever: only ids that still exist matter.
     const trimmed = Array.from(seen).filter(id => live.has(id));
-    await writeKey(STATE_KEY, { initialized: true, seen: trimmed, pending, activityInit: !!state.activityInit, activityV: state.activityV || 1, activitySeen: state.activitySeen || [], pendingActivity, sched: state.sched || {} });
+    await writeKey(STATE_KEY, { initialized: true, seen: trimmed, pending, activityInit: !!state.activityInit, activityV: state.activityV || 1, activitySeen: state.activitySeen || [], pendingActivity, commentsInit: !!state.commentsInit, commentsSeen: state.commentsSeen || [], pendingComments, sched: state.sched || {} });
   }
   return { sent, quiet };
 }

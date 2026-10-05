@@ -54,10 +54,11 @@ OVERPASS = {"elements":[
 BDC = {"city":"Santa Monica","locality":"Santa Monica","principalSubdivision":"California"}
 
 class Env:
-    def __init__(self, pw, fb, geo=(34.0195,-118.4912), overpass='ok', width=390, height=844, who='Nina', fail_sets=False, set_delay=120):
+    def __init__(self, pw, fb, geo=(34.0195,-118.4912), overpass='ok', width=390, height=844, who='Nina', fail_sets=False, set_delay=120, ua=None, notif='default'):
         self.reqs=[]
         self.browser = pw.chromium.launch()
         ctx_args = dict(viewport={'width':width,'height':height}, device_scale_factor=2, has_touch=True, is_mobile=True)
+        if ua: ctx_args['user_agent'] = ua
         if geo:
             ctx_args.update(geolocation={'latitude':geo[0],'longitude':geo[1]}, permissions=['geolocation'])
         self.ctx = self.browser.new_context(**ctx_args)
@@ -65,6 +66,7 @@ class Env:
         self.errors=[]
         import datetime
         self.page.clock.install(time=datetime.datetime(2026,10,1,12,0,0))
+        self.page.add_init_script("window.__NREQ = 0; try{ Object.defineProperty(Notification, 'permission', {get: ()=> '%s', configurable:true}); Notification.requestPermission = ()=>{ window.__NREQ++; return Promise.resolve('%s'==='denied'?'denied':'granted'); }; }catch(e){}" % (notif, notif))
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
         self.page.on('console', lambda m: self.errors.append('console:'+m.text) if m.type=='error' else None)
         self.page.add_init_script("window.__FB = %s; window.__FAIL_SETS=%s; window.__SET_DELAY=%d; localStorage.setItem('recal-whoami','%s');" % (json.dumps(fb), 'true' if fail_sets else 'false', set_delay, who))
