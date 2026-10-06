@@ -21,6 +21,8 @@ To test a different copy of the app, set `SPELLCHECK_APP` to its path. For a dif
 - `t_saved.py`: saved fields folding to text with a check, editing them again, failed saves, and other people's read-only view.
 - `t_photo.py`: big phone photos, shrinking, orientation, dropping the location stamp, and bad files.
 - `t_social.py`: labeled reactions, the optional note, comments, the typing guard, and the notification prompt in every situation.
+- `t_zoom.py`: every text box on every screen is 16px or larger (so iPhone never zooms in), double-tap zoom is off, and nothing scrolls sideways.
+- `t_big3.py`: the Big 3 card. Every symbol sits at the true centre of its circle, the labels and names are centred under it, and the small Edit link is in the corner.
 - `errs.py`: walks every tab and fails on any unexpected browser error.
 - `worker_test.mjs`: the push Worker end to end, covering reaction, comment, all-four, streak, and recap pushes, plus the rules that stop duplicates.
 

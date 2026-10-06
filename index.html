@@ -248,7 +248,7 @@
   .day-full.open{display:block;}
 
   /* placements */
-  .placements{border:1px solid var(--line);padding:22px 24px;}
+  .placements{border:1px solid var(--line);padding:22px 24px;position:relative;}
   .placements textarea{
     width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text-primary);
     padding:10px 11px;font-family:'Inter';font-weight:300;font-size:13px;min-height:56px;resize:vertical;
@@ -265,6 +265,9 @@
     padding:9px 11px;font-family:'Inter';font-weight:400;font-size:13px;
   }
   .big3-compact-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .b3-edit{position:absolute;top:8px;right:12px;background:none;border:none;border-bottom:1px solid var(--line);border-radius:0;padding:0 0 1px;margin:0;font-family:'Inter';font-size:11px;line-height:1.3;color:var(--text-secondary);cursor:pointer;}
+  .b3-edit::after{content:'';position:absolute;inset:-12px -12px -14px -18px;} /* the tappable area stays comfortable even though the link is tiny */
+  .b3-edit:hover{color:var(--text-primary);border-color:var(--text-primary);}
   .big3-compact-line{font-family:'Inter';font-size:14px;color:var(--text-primary);font-weight:500;}
   /* intro collapses after the first visit */
   .masthead.collapsed p.sub:not(.lede){display:none;}
@@ -322,10 +325,12 @@
   .feed-caption{font-size:13px;font-weight:300;color:var(--text-primary);}
   .feed-item .link-preview{margin-top:0;}
   .react-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-  .react-chip{min-width:48px;min-height:34px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-family:'Inter';}
+  .react-chip{min-width:44px;min-height:32px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-family:'Inter';}
   .react-chip .g{font-size:14px;}
   .react-chip .c{font-size:11px;font-weight:600;}
   .react-chip .lbl{font-size:12.5px;font-weight:500;}
+  .cmt-note-title{font-size:12px;font-weight:500;color:var(--text-secondary);margin-top:6px;}
+  .react-row .cmt-link{margin-left:2px;}
   .react-chip.mine{border:2px solid var(--pink);background:#FFE3EE;}
   .react-chip:disabled{opacity:1;cursor:default;}
   .react-who{font-size:11px;color:var(--text-secondary);margin-top:-2px;}
@@ -536,10 +541,10 @@
   .ico-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-primary);flex-shrink:0;vertical-align:middle;box-sizing:border-box;}
   .pin-ico{flex-shrink:0;vertical-align:-0.25em;}
   .big3-compact-line{display:flex;gap:10px;flex:1;min-width:0;}
-  .b3-col{flex:1;min-width:0;}
-  .b3-label{font-family:'Inter';font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px;}
+  .b3-col{flex:1;min-width:0;text-align:center;}
+  .b3-label{font-family:'Inter';font-size:10px;font-weight:600;letter-spacing:.16em;padding-left:.16em;text-transform:uppercase;margin-bottom:6px;text-align:center;}
   .b3-Sun{color:#A86F00;} .b3-Moon{color:#7B54AE;} .b3-Rising{color:#1F73CC;}
-  .b3-sign{display:flex;flex-direction:column;align-items:flex-start;gap:6px;font-size:13px;font-weight:500;color:var(--text-primary);}
+  .b3-sign{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--text-primary);}
   .b3-none{display:block;width:34px;height:34px;border-radius:50%;border:1px dashed var(--line);box-sizing:border-box;}
 
   /* photo location */
@@ -569,6 +574,11 @@
   #saveToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);transform:translate(-50%,8px);z-index:80;background:var(--text-primary);color:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;padding:8px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;max-width:calc(100vw - 32px);}
   #saveToast.show{opacity:1;transform:translate(-50%,0);}
   #saveToast.fail{background:#B3261E;white-space:normal;text-align:center;}
+
+  /* iPhone zooms the page when you tap a text box whose text is under 16px, so every box stays at 16px. */
+  input:not([type=file]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]), textarea, select{font-size:16px !important;}
+  /* A quick second tap (like water +8) should not zoom. Pinch-to-zoom still works. */
+  html, body, button, a, input, select, textarea, label, .tab, .toggle, .react-chip{touch-action:manipulation;}
 </style>
 </head>
 <body>
@@ -941,13 +951,18 @@ const ELEMENT_COLORS = {
   fire:['#FF7A5A','#FFE5DD'], earth:['#6DBE8C','#E2F3E8'], air:['#6EC6D9','#DFF3F8'], water:['#7C8CE0','#E4E7FA'],
   Sun:['#FFC94F','#FFF1CC'], Moon:['#C9A9E0','#F0E6F7'], Rising:['#4FA8FF','#DDEEFF']
 };
+// Several symbols are drawn a little off-centre inside their 24-unit box. These nudges bring each one to the true centre.
+const GLYPH_NUDGE = {
+  Aries:[0,-0.5], Taurus:[0,-0.25], Leo:[-0.4,-0.91], Virgo:[0.5,-0.65], Libra:[0,-1.51], Scorpio:[-0.05,-2.15],
+  Capricorn:[-0.02,0.33], Aquarius:[-0.25,0.5], Moon:[0.31,-0.31], Rising:[0,-0.5]
+};
 function iconBadge(name, size, mode){
   const paths = ICON_PATHS[name];
   const col = ELEMENT_COLORS[ELEMENT_OF[name]];
   if(!paths || !col) return '';
   const fill = mode==='solid' ? col[0] : col[1];
   const gs = Math.round(size*0.62*10)/10;
-  return `<span class="ico-badge" style="width:${size}px;height:${size}px;background:${fill};border:1px solid ${col[0]};"><svg width="${gs}" height="${gs}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg></span>`;
+  return `<span class="ico-badge" style="width:${size}px;height:${size}px;background:${fill};border:1px solid ${col[0]};"><svg width="${gs}" height="${gs}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${GLYPH_NUDGE[name] ? `<g transform="translate(${GLYPH_NUDGE[name][0]} ${GLYPH_NUDGE[name][1]})">${paths}</g>` : paths}</svg></span>`;
 }
 function signBadge(sign, size){ return iconBadge(sign, size||24, 'tint'); }
 function planetBadge(kind, size, mode){ return iconBadge(kind, size||24, mode||'tint'); }
@@ -2433,7 +2448,7 @@ function renderPlacementsCompact(panel, pl, editableSelf){
   panel.innerHTML = `
     <div class="big3-compact-row">
       <div class="big3-compact-line">${line}</div>
-      ${editableSelf ? `<button id="placementsEditBtn" class="gallery-toggle-btn" type="button">Edit</button>` : ''}
+      ${editableSelf ? `<button id="placementsEditBtn" class="b3-edit" type="button" aria-label="Edit your Big 3">Edit</button>` : ''}
     </div>
   `;
   if(editableSelf){
@@ -3271,6 +3286,17 @@ function joinNames(arr){
   return arr.slice(0,-1).join(', ') + ' and ' + arr[arr.length-1];
 }
 
+function appendFeedLink(row, e){
+  if(!myIdentity) return;
+  if(feedCompose && feedCompose.id === e.id) return; // the box is open, so the link steps aside
+  const link = document.createElement('button');
+  link.type = 'button';
+  link.className = 'cmt-link';
+  link.textContent = 'Say something';
+  link.onclick = ()=>{ feedCompose = {id: e.id, mode: 'comment', text: ''}; feedComposeFocus = true; renderCovenFeed(); };
+  row.appendChild(link);
+}
+
 function appendFeedComments(body, e, key){
   const list = commentsForEvent(key);
   if(list.length){
@@ -3308,26 +3334,18 @@ function appendFeedComments(body, e, key){
     body.appendChild(wrap);
   }
   if(!myIdentity) return;
-
   const open = feedCompose && feedCompose.id === e.id;
-  if(!open){
-    const link = document.createElement('button');
-    link.type = 'button';
-    link.className = 'cmt-link';
-    link.textContent = 'Say something';
-    link.onclick = ()=>{ feedCompose = {id: e.id, mode: 'comment', text: ''}; feedComposeFocus = true; renderCovenFeed(); };
-    body.appendChild(link);
-    return;
-  }
+  if(!open) return;
 
   const isNote = feedCompose.mode === 'note';
   const box = document.createElement('div');
   box.className = 'cmt-compose';
   if(isNote){
-    const g = document.createElement('span');
-    g.className = 'cmt-g';
-    g.textContent = feedCompose.glyph;
-    box.appendChild(g);
+    const hit = REACTION_GLYPHS.find(([g])=> g === feedCompose.glyph);
+    const ttl = document.createElement('div');
+    ttl.className = 'cmt-note-title';
+    ttl.textContent = `${feedCompose.glyph} ${hit ? hit[1] : ''}`.trim();
+    body.appendChild(ttl);
   }
   const input = document.createElement('input');
   input.type = 'text';
@@ -3496,11 +3514,13 @@ function renderCovenFeed(){
       chip.className = 'react-chip' + (mineOn ? ' mine' : '');
       chip.setAttribute('aria-label', `${label} reaction`);
       chip.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
-      chip.innerHTML = `<span class="g">${g}</span><span class="lbl">${label}</span><span class="c">${names.length || ''}</span>`;
+      chip.title = label;
+      chip.innerHTML = `<span class="g">${g}</span>${mineOn ? `<span class="lbl">${label}</span>` : ''}<span class="c">${names.length || ''}</span>`;
       if(canReact) chip.onclick = ()=> toggleReaction(e.id, g);
       else chip.disabled = true;
       row.appendChild(chip);
     });
+    appendFeedLink(row, e);
     if(row.children.length) body.appendChild(row);
     if(everyone.size){
       const list = Array.from(everyone).map(n=> n===myIdentity ? 'You' : n);
