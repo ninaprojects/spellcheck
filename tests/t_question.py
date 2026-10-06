@@ -29,6 +29,8 @@ with sync_playwright() as pw:
     e = Env(pw, seed_nina(), now=D8); e.open(); pg = e.page
     check('Q1 the card shows on Day 8', vis(pg, '#questionWrap .qa-card'))
     check('Q1 it asks the Day 8 question', 'said no to' in pg.inner_text('#questionWrap').lower(), pg.inner_text('#questionWrap')[:120])
+    check('Q1 it says it is the daily question we all answer', 'daily question we all answer' in pg.inner_text('#questionWrap').lower())
+    check('Q1 the card is the night sky style', pg.evaluate("!!document.querySelector('#questionWrap .qa-card.qa-sky')"))
     check('Q1 Spill it is disabled when empty', pg.is_disabled('#qaCast'))
     check('Q1 no spoiler note when nobody has answered', 'no spoilers' not in pg.inner_text('#questionWrap').lower())
     pg.fill('#qaInput', 'x' * 200)
@@ -74,9 +76,17 @@ with sync_playwright() as pw:
     pg.locator('#covenFeed .qa-ans .react-chip').first.click(); pg.wait_for_timeout(600)
     ks = pg.evaluate("Object.keys(window.__FB).filter(k=>k.indexOf('qa%3A')>=0||k.indexOf('qa:Kellye')>=0)")
     check('Q10 reacting saves under the answer id', len(ks) > 0, pg.evaluate("Object.keys(window.__FB)"))
+    # your own answer has no reactions or comment link, others do
+    mine = pg.evaluate("[...document.querySelectorAll('#covenFeed .qa-ans')].map(r=>[r.textContent.includes('Nina'), !!r.querySelector('.react-chip, .comment-link, .react-row')])")
+    check('Q10 no reactions row on your own answer', all(not has for isme, has in mine if isme), mine)
     # Card is on own Today only
     go(pg, 'profile')
     check('Q11 no question card off Today', not vis(pg, '#questionWrap .qa-card'))
+    e.close()
+
+    # no sideways scroll at 360
+    e = Env(pw, seed_nina(), width=360, now=D8); e.open(); pg = e.page
+    check('Q13 no sideways overflow at 360px', pg.evaluate("document.documentElement.scrollWidth") <= 360, pg.evaluate("document.documentElement.scrollWidth"))
     e.close()
 
     # Snapshot round trip
