@@ -244,5 +244,31 @@ for (const p of PEOPLE) putPerson(p, person({ 5: cast() }));
 await runAt(plus(D5, 60));
 check('someone without notifications is skipped, the others still hear', sentTo('Carolina').length === 0 && sentTo('Nina').length === 1, pushes);
 
+// ===== the daily brew =====
+{
+  const D6 = '2026-10-06T19:10:00Z'; // 12:10pm Pacific, Day 6
+  const brewTo = (who) => sentTo(who).filter(x => x.title === 'Today\u2019s brew');
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  await runAt('2026-10-06T18:30:00Z'); // 11:30am Pacific
+  check('brew: not before noon Pacific', !pushes.some(x => x.title === 'Today\u2019s brew'), pushes);
+  put('recal-notif-prefs:Lauren', { morning: false });
+  put('r2:recal-qa:Kellye', { 6: { t: 'My sense of humor.', at: '2026-10-06T16:00:00Z' } });
+  await runAt(D6);
+  check('brew: Nina gets the Day 6 question', brewTo('Nina').length === 1 && brewTo('Nina')[0].body === W.QUESTIONS[6], brewTo('Nina'));
+  check('brew: Day 6 question text', W.QUESTIONS[6] === 'What is something about yourself you like more than you did a year ago?');
+  check('brew: someone who already answered is skipped', brewTo('Kellye').length === 0);
+  check('brew: the morning switch off means no brew', brewTo('Lauren').length === 0);
+  check('brew: Carolina gets it too', brewTo('Carolina').length === 1);
+  await runAt(plus(D6, 120));
+  check('brew: sent once per person per day', brewTo('Nina').length === 0 && brewTo('Carolina').length === 0, pushes);
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  await runAt('2026-10-05T22:30:00Z');
+  check('brew: no question on a day without one', !pushes.some(x => x.title === 'Today\u2019s brew'), pushes);
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);

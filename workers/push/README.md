@@ -50,6 +50,7 @@ These must match `index.html`, or pushes and the app disagree:
 - `CHALLENGE_START` here and in `index.html`. Both are Oct 1, 2026 for Round 2.
 - The day numbers in `SPECIAL` and `AFFIRMATIONS` with the tagged days in the app's `DAYS` list. Special push messages are for days 1, 3, 10, 23, 24, 25, and 31. Day 16 is tagged "Halfway" in the app but uses a normal affirmation here.
 - `FEED_LINES`, `pickLine`, and `lineKey` with the app's feed code, so a push and its feed post read the same.
+- `QUESTIONS` here and in `index.html` (Day 6 to 31). The `brew` job sends the day's question at noon to 10pm Pacific, once per person, and skips anyone who already answered or turned the morning switch off.
 - Record keys use the `r2:` prefix. Device tokens (`recal-fcm-token:<Name>`) and notification switches (`recal-notif-prefs:<Name>`) are shared between rounds and have no prefix.
 
 Known gap: this Worker works out "today" in Pacific time. The app uses each phone's local time. The two can disagree near midnight for anyone outside Pacific.

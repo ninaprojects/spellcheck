@@ -218,6 +218,36 @@ const trunc = (t, n = 90) => { t = String(t || '').trim(); return t.length > n ?
 // started them 3 to 6 hours late. Cloudflare's cron is punctual, so they live
 // here now. Copy is identical to notify.js.
 // Round 2 morning messages (Oct 1 to 31), the same lines as the in-app prompts' pushes in the review doc.
+// Daily brew questions. Keep in sync with QUESTIONS in index.html.
+export const QUESTIONS = {
+  6:'What is something about yourself you like more than you did a year ago?',
+  7:'What is a place that feels like a deep breath to you?',
+  8:'What is the last thing you said no to that felt amazing?',
+  9:'What is the lowest-effort thing that made you happy today?',
+  10:'What is one intention you are planting this month, in five words or fewer?',
+  11:'What is something on your calendar this week that you are actually looking forward to?',
+  12:'What is one thing you have been pretending not to want?',
+  13:'What song has been on repeat, and what does it say about you right now?',
+  14:'What is a tiny adventure you could have before Friday?',
+  15:'What is the best thing you have eaten this week?',
+  16:'What have you done this month that Day 1 you would not have believed?',
+  17:'What is one habit you would bet on yourself keeping?',
+  18:'What is something you do just because it makes you feel put together?',
+  19:'What is something one of the other three said lately that stuck with you?',
+  20:'What is a small luxury you will not give up, whatever the budget?',
+  21:'What is a feeling you had today that you did not expect?',
+  22:'What did you choose this month just for you, and not to keep the peace?',
+  23:'Scorpio season is here. What is something you want to get to the bottom of?',
+  24:'What is one text you are glad you did not send?',
+  25:'What is one thing you can point to that grew this month?',
+  26:'What did your body ask for most this month, and did you listen?',
+  27:'What did you do this month that you would do again in a heartbeat?',
+  28:'What is the funniest thing that happened this month?',
+  29:'What is the smallest version of your keeper habit that you could do on your worst day?',
+  30:'What is a photo from this month that you keep going back to?',
+  31:'What did this month give you that you did not know you needed?'
+};
+
 export const SPECIAL = {
   1: "Day 1, witches. Round 2 starts now, with no catching up and no guilt. Say your intention out loud to someone today, then cast one small spell.",
   3: "Venus went retrograde overnight \ud83d\udd2e so love, money and values are up for review. No dramatic decisions, just an honest audit of where your time and money go versus what you say matters.",
@@ -728,8 +758,9 @@ export async function run(env, now) {
     const castOn = (p, n) => !!(data[p] && data[p].days && isCast(data[p].days[n]));
     let streak = 0;
     for (let n = today - 1; n >= 1 && PEOPLE.every(p => castOn(p, n)); n--) streak++;
-    for (const job of ['morning', 'nudge', 'recap']) {
+    for (const job of ['morning', 'brew', 'nudge', 'recap']) {
       const inWindow = job === 'morning' ? (ptHour >= 8 && ptHour < 12)
+        : job === 'brew' ? (ptHour >= 12 && ptHour < 22 && !!QUESTIONS[today])
         : job === 'nudge' ? (ptHour >= 19 && ptHour < 22)
         : (isSunday && today >= 7 && ptHour >= 18 && ptHour < 22); // Sunday recap, from 6pm
       if (!inWindow) continue;
@@ -738,10 +769,14 @@ export async function run(env, now) {
       for (const person of PEOPLE) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
-        if (!(await prefsFor(person))[job === 'recap' ? 'activity' : job]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
+        if (!(await prefsFor(person))[job === 'recap' ? 'activity' : job === 'brew' ? 'morning' : job]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
         let msg;
         if (job === 'morning') {
           msg = { title: `\u2728 Day ${today} of Spells, Witches`, body: SPECIAL[today] || AFFIRMATIONS[today] || `Day ${today} is live. Go check in.` };
+        } else if (job === 'brew') {
+          const qa = await readKey(R2 + 'recal-qa:' + person);
+          if (qa && qa[today]) { console.log(person, 'already answered the Day', today, 'brew, no push.'); finish(); continue; }
+          msg = { title: `Today\u2019s brew`, body: QUESTIONS[today] };
         } else if (job === 'recap') {
           msg = recapMessage(weekStats(data, reactions, today));
         } else {

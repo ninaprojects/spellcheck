@@ -667,6 +667,35 @@
   .sheet-actions{text-align:center;margin-top:14px;}
   .sheet-actions .txt-link{margin-top:14px;}
 
+
+  /* The daily question */
+  #questionWrap:empty{display:none;}
+  .qa-card{border:1px solid var(--line);background:var(--bg);padding:18px 18px 20px;margin:4px 0 22px;}
+  .qa-card.folded{border:none;padding:0;background:none;}
+  .qa-label{font-family:'Inter';font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6B4E8A;}
+  .qa-q{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;line-height:1.25;color:var(--text-primary);margin:8px 0 14px;}
+  .qa-card .gratitude-input{width:100%;margin-bottom:6px;}
+  .qa-note{font-size:12px;color:var(--text-secondary);font-weight:300;line-height:1.5;text-align:center;margin-top:12px;}
+  .qa-center{text-align:center;margin-top:14px;}
+  .qa-fold{border:1px solid var(--line);background:#FBF8F3;padding:14px 16px;}
+  .qa-fold-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .qa-fold-q{font-size:12px;color:var(--text-secondary);font-weight:300;line-height:1.4;margin:6px 0;}
+  .qa-fold-a{font-family:'Noto Serif Display',Georgia,serif;font-style:italic;font-size:16px;line-height:1.35;color:var(--text-primary);}
+  .qa-strip-title{margin-top:18px;}
+  .qa-strip{border-top:1px solid var(--line);}
+  .qa-row{display:flex;gap:12px;align-items:flex-start;width:100%;min-height:48px;padding:12px 0;background:none;border:none;border-bottom:1px solid var(--line);text-align:left;cursor:pointer;font-family:'Inter';color:var(--text-primary);}
+  .qa-row-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
+  .qa-row-name{font-size:12px;font-weight:600;}
+  .qa-row-ans{font-size:13px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .qa-row.open .qa-row-ans{white-space:normal;}
+  .qa-row-ans.pending, .qa-ans-text.pending{color:var(--text-secondary);font-style:italic;}
+  .qa-thread{margin-top:6px;}
+  .qa-thread-q{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:16px;line-height:1.3;margin:2px 0 4px;color:var(--text-primary);}
+  .qa-ans{border-top:1px solid var(--line);padding:12px 0 6px;}
+  .qa-ans-head{display:flex;gap:10px;align-items:center;font-size:12px;margin-bottom:4px;}
+  .qa-ans-text{font-size:13.5px;line-height:1.45;margin:0 0 8px 36px;color:var(--text-primary);overflow-wrap:anywhere;}
+  .qa-ans .react-row, .qa-ans .react-who, .qa-ans .cmt-list, .qa-ans .cmt-compose, .qa-ans .cmt-note-title{margin-left:36px;}
+
   /* save status */
   #saveToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);transform:translate(-50%,8px);z-index:80;background:var(--text-primary);color:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;padding:8px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;max-width:calc(100vw - 32px);}
   #saveToast.show{opacity:1;transform:translate(-50%,0);}
@@ -706,6 +735,7 @@
     <a href="#" id="introToggle" class="big3-toggle-link intro-toggle" style="display:none;">Read the intro +</a>
   </div>
   <div class="status" id="status"></div>
+  <div id="questionWrap"></div>
   <div id="nav-today"><div id="todayCardWrap"></div></div>
   <div class="section-title" id="nav-week">Also this week</div>
   <div class="section-subnote"><span id="weekTitle">Week 1</span>, <span id="weekRange"></span>. Log things on the day they happen.</div>
@@ -908,7 +938,7 @@ function loadScriptOnce(url){
 // of this round can never overwrite Day 1 of Round 1. Profile photos, device
 // tokens and notification switches are the same people, so they stay shared.
 const ROUND_PREFIX = 'r2:';
-const ROUND_KEY_RE = /^(recal:|recal-photo:|recal-daily-photo:|recal-reactions:|recal-comments:|recal-quote:)/;
+const ROUND_KEY_RE = /^(recal:|recal-photo:|recal-daily-photo:|recal-reactions:|recal-comments:|recal-quote:|recal-qa:)/;
 function rk(key){ return ROUND_KEY_RE.test(key) ? ROUND_PREFIX+key : key; }
 
 const storage = {
@@ -3382,6 +3412,13 @@ function buildFeedEvents(){
     const at = times.length===PEOPLE.length ? times.sort().slice(-1)[0] : null;
     ev.push({id:`coven:${n}`, type:'coven', who:null, day:n, at});
   }
+  // The daily question: one thread per day, once anybody has answered.
+  Object.keys(QUESTIONS).forEach(k=>{
+    const n = Number(k);
+    const times = PEOPLE.map(p=> qaAnswer(p, n)).filter(Boolean).map(a=> a.at).filter(Boolean);
+    if(!times.length) return;
+    ev.push({id:`qa:${n}`, type:'qa', who:null, day:n, at: times.sort().slice(-1)[0]});
+  });
   // Sort newest first. Items with no clock time sit at the end of their day.
   ev.forEach(e=>{
     if(e.at) e.sortKey = new Date(e.at).getTime() + (e.type==='coven' ? 1 : 0); // full-coven post sits just above the spell that completed it
@@ -3465,6 +3502,227 @@ async function toggleReaction(eventId, glyph){
     await trackedSet(`recal-reactions:${myIdentity}`, json, true);
   }catch(e){ console.error('reaction save failed', e); }
   if(notesChanged) await saveMyComments();
+}
+
+// ---- The daily question: one line a day, and the others' answers unlock once you have answered ----
+// Days 1 to 7 had no question. The wording was approved line by line.
+const QUESTIONS = {
+  6:'What is something about yourself you like more than you did a year ago?',
+  7:'What is a place that feels like a deep breath to you?',
+  8:'What is the last thing you said no to that felt amazing?',
+  9:'What is the lowest-effort thing that made you happy today?',
+  10:'What is one intention you are planting this month, in five words or fewer?',
+  11:'What is something on your calendar this week that you are actually looking forward to?',
+  12:'What is one thing you have been pretending not to want?',
+  13:'What song has been on repeat, and what does it say about you right now?',
+  14:'What is a tiny adventure you could have before Friday?',
+  15:'What is the best thing you have eaten this week?',
+  16:'What have you done this month that Day 1 you would not have believed?',
+  17:'What is one habit you would bet on yourself keeping?',
+  18:'What is something you do just because it makes you feel put together?',
+  19:'What is something one of the other three said lately that stuck with you?',
+  20:'What is a small luxury you will not give up, whatever the budget?',
+  21:'What is a feeling you had today that you did not expect?',
+  22:'What did you choose this month just for you, and not to keep the peace?',
+  23:'Scorpio season is here. What is something you want to get to the bottom of?',
+  24:'What is one text you are glad you did not send?',
+  25:'What is one thing you can point to that grew this month?',
+  26:'What did your body ask for most this month, and did you listen?',
+  27:'What did you do this month that you would do again in a heartbeat?',
+  28:'What is the funniest thing that happened this month?',
+  29:'What is the smallest version of your keeper habit that you could do on your worst day?',
+  30:'What is a photo from this month that you keep going back to?',
+  31:'What did this month give you that you did not know you needed?'
+};
+const QA_MAX = 140;
+const qaData = {}; // {person: {dayNumber: {t, at}}}, each person writes only her own record
+const qaSynced = {};
+let qaEditing = false;
+
+async function loadQa(){
+  for(const p of PEOPLE){
+    try{
+      const res = await storage.get(`recal-qa:${p}`, true);
+      qaData[p] = res ? JSON.parse(res.value) : {};
+      qaSynced[p] = res ? res.value : null;
+    }catch(e){ console.error('question answers load failed', p, e); qaData[p] = {}; }
+  }
+}
+
+async function saveMyQa(){
+  if(!myIdentity) return;
+  try{
+    const json = JSON.stringify(qaData[myIdentity] || {});
+    qaSynced[myIdentity] = json;
+    await trackedSet(`recal-qa:${myIdentity}`, json, true);
+  }catch(e){ console.error('question answer save failed', e); }
+}
+
+function startQaSync(){
+  if(!db || typeof db.ref !== 'function') return;
+  PEOPLE.forEach(p=>{
+    try{
+      db.ref('recalData/' + rk('recal-qa:' + p)).on('value', (snap)=>{
+        try{
+          const val = snap.val();
+          if(typeof val !== 'string' || val === qaSynced[p]) return;
+          if(p === myIdentity) return; // our own record: this device is the source of truth
+          qaSynced[p] = val;
+          qaData[p] = JSON.parse(val);
+          safeRender('renderQuestionCard', renderQuestionCard);
+          safeRender('renderCovenFeed', renderCovenFeed);
+        }catch(e){ console.error('question answers sync failed', p, e); }
+      });
+    }catch(e){ console.error('could not attach question answers listener', p, e); }
+  });
+}
+
+function qaAnswer(p, n){
+  const a = qaData[p] && qaData[p][n];
+  return (a && typeof a.t === 'string' && a.t) ? a : null;
+}
+function qaTodayDay(){
+  const ti = todayInfo();
+  return ti.state === 'during' ? ti.dayNum : null;
+}
+// Answers open up once you have answered, or once the day is over for everyone.
+function qaRevealed(n){
+  if(!myIdentity) return false;
+  if(qaAnswer(myIdentity, n)) return true;
+  const ti = todayInfo();
+  if(ti.state === 'after') return true;
+  return ti.state === 'during' && n < ti.dayNum;
+}
+function qaWaitingLine(answered){
+  return answered.length ? `${joinNames(answered)} already answered. No spoilers until you do.` : '';
+}
+
+async function answerQuestion(n, text){
+  if(!myIdentity) return false;
+  const t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, QA_MAX);
+  if(!t) return false;
+  const mine = qaData[myIdentity] || (qaData[myIdentity] = {});
+  const prev = mine[n];
+  mine[n] = {t, at: (prev && prev.at) || new Date().toISOString()};
+  qaEditing = false;
+  safeRender('renderQuestionCard', renderQuestionCard);
+  safeRender('renderCovenFeed', renderCovenFeed);
+  await saveMyQa();
+  return true;
+}
+
+function renderQuestionCard(){
+  const wrap = document.getElementById('questionWrap');
+  if(!wrap) return;
+  const n = qaTodayDay();
+  const q = n && QUESTIONS[n];
+  // Only on your own day. Someone else's Today is theirs.
+  if(!q || !myIdentity || currentPerson !== myIdentity){ wrap.innerHTML = ''; return; }
+  const ae = document.activeElement;
+  if(ae && ae.id === 'qaInput' && wrap.contains(ae)) return; // never redraw under someone who is typing
+  const mine = qaAnswer(myIdentity, n);
+  const others = PEOPLE.filter(p=> p !== myIdentity);
+  const answered = others.filter(p=> qaAnswer(p, n));
+
+  if(!mine || qaEditing){
+    const waiting = qaWaitingLine(answered);
+    wrap.innerHTML = `
+      <div class="qa-card">
+        <div class="qa-label">Today’s brew</div>
+        <div class="qa-q">${escapeHtml(q)}</div>
+        <input type="text" id="qaInput" class="gratitude-input" maxlength="${QA_MAX}" placeholder="One line is plenty" aria-label="Your answer">
+        <button type="button" id="qaCast" class="pill-btn" disabled>Spill it</button>
+        ${qaEditing ? `<div class="qa-center"><button type="button" id="qaCancel" class="txt-link quiet">Cancel</button></div>` : ''}
+        ${waiting ? `<div class="qa-note">${answered.length} of ${PEOPLE.length} answered. ${escapeHtml(waiting)}</div>` : ''}
+      </div>`;
+    const input = document.getElementById('qaInput'), btn = document.getElementById('qaCast');
+    input.value = mine ? mine.t : '';
+    btn.disabled = !input.value.trim();
+    input.oninput = ()=>{ btn.disabled = !input.value.trim(); };
+    const go = async ()=>{ if(btn.disabled) return; btn.disabled = true; await answerQuestion(n, input.value); };
+    btn.onclick = go;
+    input.onkeydown = (ev)=>{ if(ev.key === 'Enter'){ ev.preventDefault(); go(); } };
+    const cancel = document.getElementById('qaCancel');
+    if(cancel) cancel.onclick = ()=>{ qaEditing = false; renderQuestionCard(); };
+    if(qaEditing){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    return;
+  }
+
+  // answered: the card folds, and the others' answers open up under it
+  const rows = others.map(p=>{
+    const a = qaAnswer(p, n);
+    return `<button type="button" class="qa-row" data-who="${p}" aria-expanded="false">
+      ${avatarHtml(p, 28)}
+      <span class="qa-row-text"><span class="qa-row-name">${p}</span>
+      <span class="qa-row-ans${a ? '' : ' pending'}">${a ? escapeHtml(a.t) : 'Still thinking.'}</span></span>
+    </button>`;
+  }).join('');
+  wrap.innerHTML = `
+    <div class="qa-card folded">
+      <div class="qa-fold">
+        <div class="qa-fold-top"><span class="qa-label">Answered</span><button type="button" id="qaEdit" class="txt-link quiet">Edit until midnight</button></div>
+        <div class="qa-fold-q">${escapeHtml(q)}</div>
+        <div class="qa-fold-a">${escapeHtml(mine.t)}</div>
+      </div>
+      <div class="section-title qa-strip-title">Today’s answers</div>
+      <div class="qa-strip">${rows}</div>
+      <div class="qa-center"><a href="#coven/tea" class="txt-link">See all in The Tea</a></div>
+    </div>`;
+  document.getElementById('qaEdit').onclick = ()=>{ qaEditing = true; renderQuestionCard(); };
+  wrap.querySelectorAll('.qa-row').forEach(b=>{
+    b.onclick = ()=>{
+      const on = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', on ? 'true' : 'false');
+      b.classList.toggle('open', on);
+    };
+  });
+}
+
+// The thread in The Tea: the question, then each answer with her own reactions and notes.
+function appendQaThread(body, e){
+  const n = e.day;
+  const q = QUESTIONS[n] || '';
+  const wrap = document.createElement('div');
+  wrap.className = 'qa-thread';
+  const qEl = document.createElement('div');
+  qEl.className = 'qa-thread-q';
+  qEl.textContent = q;
+  wrap.appendChild(qEl);
+  if(!qaRevealed(n)){
+    const answered = PEOPLE.filter(p=> p !== myIdentity && qaAnswer(p, n));
+    const note = document.createElement('div');
+    note.className = 'qa-note';
+    note.textContent = qaWaitingLine(answered);
+    wrap.appendChild(note);
+    if(myIdentity && n === qaTodayDay()){
+      const go = document.createElement('div');
+      go.className = 'qa-center';
+      go.innerHTML = '<a href="#today" class="txt-link">Answer it on Today</a>';
+      wrap.appendChild(go);
+    }
+    body.appendChild(wrap);
+    return;
+  }
+  const today = qaTodayDay();
+  const answers = PEOPLE.map(p=>({p, a: qaAnswer(p, n)}))
+    .filter(x=> x.a || n === today) // days gone by only show who answered
+    .sort((x, y)=> (x.a ? 0 : 1) - (y.a ? 0 : 1) || String(x.a && x.a.at).localeCompare(String(y.a && y.a.at)));
+  answers.forEach(({p, a})=>{
+    const row = document.createElement('div');
+    row.className = 'qa-ans';
+    const head = document.createElement('div');
+    head.className = 'qa-ans-head';
+    head.innerHTML = avatarHtml(p, 26) + `<b></b>`;
+    head.querySelector('b').textContent = p;
+    row.appendChild(head);
+    const txt = document.createElement('div');
+    txt.className = 'qa-ans-text' + (a ? '' : ' pending');
+    txt.textContent = a ? a.t : 'Still thinking.';
+    row.appendChild(txt);
+    if(a) appendReactions(row, {id:`qa:${p}:${n}`, who:p, type:'qa-ans', day:n});
+    wrap.appendChild(row);
+  });
+  body.appendChild(wrap);
 }
 
 // ---- Comments: a flat list under each post. Like reactions, each person writes only her own record. ----
@@ -3686,9 +3944,48 @@ function feedItemHtmlParts(e){
       const card = e.link ? renderMediaPreviewHtml(e.link) : `<div class="link-preview"><div class="lp-text"><div class="lp-title">${escapeHtml(e.value)}</div></div></div>`;
       return {text: FEED_LINES[e.field] ? feedLine(e.field, e.id, e.who) : `${name}${CURRENTLY_VERBS[e.field] || 'is currently into'}`, card};
     }
+    case 'qa': return {text:`<strong>Day ${e.day}\u2019s brew</strong>`};
     case 'coven': return {text: e.day % 2 ? `Day ${e.day}, conjured. All four spells cast.` : `Full coven for Day ${e.day}.`};
   }
   return {text:''};
+}
+
+function appendReactions(body, e){
+  // reactions (not on your own posts, and only once you've picked who you are)
+  const key = feedSafeKey(e.id);
+  const canReact = !!myIdentity && e.who !== myIdentity;
+  const row = document.createElement('div');
+  row.className = 'react-row';
+  const everyone = new Set();
+  REACTION_GLYPHS.forEach(([g, label])=>{
+    const names = PEOPLE.filter(p=> (reactionsData[p] && reactionsData[p][key] || []).includes(g));
+    names.forEach(n=> everyone.add(n));
+    const mineOn = !!myIdentity && names.includes(myIdentity);
+    if(!canReact && !names.length) return;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'react-chip' + (mineOn ? ' mine' : '');
+    chip.setAttribute('aria-label', `${label} reaction`);
+    chip.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
+    chip.title = label;
+    const flashing = mineOn && reactionFlash && reactionFlash.key === key && reactionFlash.glyph === g && (Date.now() - reactionFlash.at) < REACTION_LABEL_MS;
+    const elapsed = flashing ? Date.now() - reactionFlash.at : 0;
+    chip.innerHTML = `<span class="g">${g}</span>${flashing ? `<span class="lbl" style="animation-delay:-${elapsed}ms">${label}</span>` : ''}<span class="c">${names.length || ''}</span>`;
+    if(canReact) chip.onclick = ()=> toggleReaction(e.id, g);
+    else chip.disabled = true;
+    row.appendChild(chip);
+  });
+  appendFeedLink(row, e);
+  if(row.children.length) body.appendChild(row);
+  if(everyone.size){
+    const list = Array.from(everyone).map(n=> n===myIdentity ? 'You' : n);
+    list.sort((a,b)=> a==='You' ? -1 : b==='You' ? 1 : 0);
+    const who = document.createElement('div');
+    who.className = 'react-who';
+    who.textContent = `${joinNames(list)} reacted`;
+    body.appendChild(who);
+  }
+  appendFeedComments(body, e, key);
 }
 
 function renderCovenFeed(){
@@ -3709,10 +4006,10 @@ function renderCovenFeed(){
   shown.forEach(e=>{
     const parts = feedItemHtmlParts(e);
     const item = document.createElement('div');
-    item.className = 'feed-item' + (e.type==='coven' ? ' system' : '');
+    item.className = 'feed-item' + ((e.type==='coven' || e.type==='qa') ? ' system' : '');
 
     const av = document.createElement('div');
-    if(e.type==='coven'){
+    if(e.type==='coven' || e.type==='qa'){
       av.className = 'feed-avatar system';
       av.textContent = '\u2726';
     } else {
@@ -3777,41 +4074,8 @@ function renderCovenFeed(){
       body.appendChild(c);
     }
 
-    // reactions (not on your own posts, and only once you've picked who you are)
-    const key = feedSafeKey(e.id);
-    const canReact = !!myIdentity && e.who !== myIdentity;
-    const row = document.createElement('div');
-    row.className = 'react-row';
-    const everyone = new Set();
-    REACTION_GLYPHS.forEach(([g, label])=>{
-      const names = PEOPLE.filter(p=> (reactionsData[p] && reactionsData[p][key] || []).includes(g));
-      names.forEach(n=> everyone.add(n));
-      const mineOn = !!myIdentity && names.includes(myIdentity);
-      if(!canReact && !names.length) return;
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'react-chip' + (mineOn ? ' mine' : '');
-      chip.setAttribute('aria-label', `${label} reaction`);
-      chip.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
-      chip.title = label;
-      const flashing = mineOn && reactionFlash && reactionFlash.key === key && reactionFlash.glyph === g && (Date.now() - reactionFlash.at) < REACTION_LABEL_MS;
-      const elapsed = flashing ? Date.now() - reactionFlash.at : 0;
-      chip.innerHTML = `<span class="g">${g}</span>${flashing ? `<span class="lbl" style="animation-delay:-${elapsed}ms">${label}</span>` : ''}<span class="c">${names.length || ''}</span>`;
-      if(canReact) chip.onclick = ()=> toggleReaction(e.id, g);
-      else chip.disabled = true;
-      row.appendChild(chip);
-    });
-    appendFeedLink(row, e);
-    if(row.children.length) body.appendChild(row);
-    if(everyone.size){
-      const list = Array.from(everyone).map(n=> n===myIdentity ? 'You' : n);
-      list.sort((a,b)=> a==='You' ? -1 : b==='You' ? 1 : 0);
-      const who = document.createElement('div');
-      who.className = 'react-who';
-      who.textContent = `${joinNames(list)} reacted`;
-      body.appendChild(who);
-    }
-    appendFeedComments(body, e, key);
+    if(e.type === 'qa'){ appendQaThread(body, e); }
+    else appendReactions(body, e);
 
     item.appendChild(body);
     el.appendChild(item);
@@ -4800,6 +5064,7 @@ async function renderAll(){
   safeRender('renderNotifPrompt', renderNotifPrompt);
   safeRender('renderProfilePicSection', renderProfilePicSection);
   safeRender('renderTodayCard', renderTodayCard);
+  safeRender('renderQuestionCard', renderQuestionCard);
   safeRender('renderStreakCard', renderStreakCard);
   safeRender('renderCovenFeed', renderCovenFeed);
   safeRender('renderResetLink', renderResetLink);
@@ -4832,7 +5097,7 @@ function saveSnapshot(){
   try{
     const people = {};
     PEOPLE.forEach(p=>{ if(allData[p]) people[p] = JSON.stringify(allData[p]); });
-    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({at: Date.now(), people, reactions: reactionsData, comments: commentsData, prefs: notifPrefs}));
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({at: Date.now(), people, reactions: reactionsData, comments: commentsData, qa: qaData, prefs: notifPrefs}));
   }catch(e){ /* storage full or unavailable, fine */ }
   PEOPLE.forEach(p=>{
     const src = profilePicCache[p];
@@ -4858,6 +5123,7 @@ function applySnapshot(){
     try{ const pic = localStorage.getItem('recal-snap-pic:'+p); if(pic) profilePicCache[p] = pic; }catch(e){}
     reactionsData[p] = (snap.reactions && snap.reactions[p]) || {};
     commentsData[p] = (snap.comments && snap.comments[p]) || {};
+    qaData[p] = (snap.qa && snap.qa[p]) || {};
     notifPrefs[p] = Object.assign({}, NOTIF_PREF_DEFAULTS, (snap.prefs && snap.prefs[p]) || {});
   });
   return true;
@@ -4882,6 +5148,7 @@ function applySnapshot(){
     await loadAll();
     try{ await loadReactions(); }catch(e){ console.error('reactions load failed', e); }
     try{ await loadComments(); }catch(e){ console.error('comments load failed', e); }
+    try{ await loadQa(); }catch(e){ console.error('question answers load failed', e); }
     try{ await loadNotifPrefs(); }catch(e){ console.error('prefs load failed', e); }
     await preloadProfilePics();
   }catch(e){
@@ -4898,6 +5165,7 @@ function applySnapshot(){
   try{ startLiveSync(); }catch(e){ console.error('live sync setup failed', e); }
   try{ startReactionsSync(); }catch(e){ console.error('reactions sync setup failed', e); }
   try{ startCommentsSync(); }catch(e){ console.error('comments sync setup failed', e); }
+  try{ startQaSync(); }catch(e){ console.error('question answers sync setup failed', e); }
 })();
 
 function setupScrollspy(){

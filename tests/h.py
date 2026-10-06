@@ -54,7 +54,7 @@ OVERPASS = {"elements":[
 BDC = {"city":"Santa Monica","locality":"Santa Monica","principalSubdivision":"California"}
 
 class Env:
-    def __init__(self, pw, fb, geo=(34.0195,-118.4912), overpass='ok', width=390, height=844, who='Nina', fail_sets=False, set_delay=120, ua=None, notif='default'):
+    def __init__(self, pw, fb, geo=(34.0195,-118.4912), overpass='ok', width=390, height=844, who='Nina', fail_sets=False, set_delay=120, ua=None, notif='default', now=(2026,10,1,12,0,0)):
         self.reqs=[]
         self.browser = pw.chromium.launch()
         ctx_args = dict(viewport={'width':width,'height':height}, device_scale_factor=2, has_touch=True, is_mobile=True)
@@ -65,7 +65,7 @@ class Env:
         self.page = self.ctx.new_page()
         self.errors=[]
         import datetime
-        self.page.clock.install(time=datetime.datetime(2026,10,1,12,0,0))
+        self.page.clock.install(time=datetime.datetime(*now))
         self.page.add_init_script("window.__NREQ = 0; try{ Object.defineProperty(Notification, 'permission', {get: ()=> '%s', configurable:true}); Notification.requestPermission = ()=>{ window.__NREQ++; return Promise.resolve('%s'==='denied'?'denied':'granted'); }; }catch(e){}" % (notif, notif))
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
         self.page.on('console', lambda m: self.errors.append('console:'+m.text) if m.type=='error' else None)
