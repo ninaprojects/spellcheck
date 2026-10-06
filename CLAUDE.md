@@ -14,7 +14,7 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 
 ## Files
 
-- `index.html`: the entire app. Single file, HTML/CSS/JS, no build step. Views: Today, Coven, Journey, Receipts, plus a Profile view reached from the top bar avatar.
+- `index.html`: the entire app. Single file, HTML/CSS/JS, no build step. Views: Today, Coven, Journey, and Me. Me is the profile view (`data-view="profile"`, `#profile`). It is also reached from the top bar avatar and from any person's avatar, which show that person's profile. The Me tab always shows your own. There is no Receipts tab: an old `#receipts` link lands on Journey.
 - `round1.html`: read-only Round 1 archive. Its storage layer is stubbed so it cannot write to Firebase.
 - `sw.js`: service worker. Offline support, installability, and manual display of push notifications through a raw `push` listener.
 - `manifest.json` and the icon PNGs: PWA install files.
@@ -68,6 +68,8 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 - Name picker: `renderIdentityBanner()` puts "Who's using this?" at the very top of Today for any phone that does not know who is using it. This is every fresh install, because the iPhone Home Screen app starts with blank storage. Keep it first: notifications cannot be set up until she has picked her name, so burying it below the intro stalls the whole setup.
 - Notification prompt: `renderNotifPrompt()` shows a card at the top of Today for anyone not set up for pushes (ask, iPhone-not-installed, or blocked), hidden for 3 days after "Not now".
 - The Saved pill stays quiet until the first touch, so saves that happen on their own when the app opens do not flash it. Failures always show.
+- What we conjured (the coven receipt): each Journey chapter ends with a `.rcpt-block` (`buildReceiptBlock`), collapsed to a stat strip and an Open button. One receipt is open at a time (`openReceipt`). `mountReceiptPanel()` wires it after `renderChapters()`. The quote is anonymous, anyone can edit it, up to 80 characters, saved with `trackedSet('recal-quote:<chapter>', ..., true)`. `renderChapters()` skips its rebuild while the quote box has focus, or typing would be wiped.
+- The receipt card is a fixed design size: 340x425 (square) and 300x533 (story). `fitReceiptPreview()` scales it down to the phone for the preview only. The PNG is drawn by `downloadReceipt()` from an unscaled off-screen copy at exactly 1080x1350 or 1080x1920, so it never depends on screen width. Everything on the card must fit inside that size with every optional line on; `tests/t_receipts.py` checks the longest case at three phone widths. If you add a line to the card, shrink something else or that test will fail.
 - Round prefix: use `rk()` for any new shared key that belongs to Round 2.
 
 ## Testing
@@ -111,4 +113,4 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 - Timezone mismatch: the app calculates "today" from the device's local time, but the push Worker calculates it in Pacific time. This can disagree near midnight for anyone not in Pacific (Kellye is in Mountain Time). A decision is needed on whether the coven runs on Pacific time.
 - No export or backup of journal entries and photos. Receipt PNG download is the only export. A planned "Wrapped" keepsake would cover export. A scheduled backup of `recalData` should exist before the Firebase rules are tightened.
 - Firebase rules allow public read and write on `recalData`. Journal entries and photos are readable by anyone with the database URL. Securing this needs the Worker and app changes described in hard rule 8.
-- Decisions pending, do not build until Nina decides: moving Receipts into Journey (placed inside each chapter) and adding a Me tab; a streak grace day; a poke button; per-person custom daily goals; sending pushes on each person's own clock instead of Pacific. Sleep tracking is the strongest fit if health data is ever added. Do not add macro or calorie tracking.
+- Decisions pending, do not build until Nina decides: a streak grace day; a poke button; per-person custom daily goals; sending pushes on each person's own clock instead of Pacific. Sleep tracking is the strongest fit if health data is ever added. Do not add macro or calorie tracking.

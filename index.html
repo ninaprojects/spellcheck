@@ -533,6 +533,43 @@
   .receipt-scope .coven{font-size:11px;color:var(--r-paper-dim);letter-spacing:.03em;}
   .receipt-scope .coven span{color:var(--r-gold-bright);}
 
+  /* The card is a fixed design size (340x425 square, 300x533 story). The preview scales it to fit the phone.
+     The PNG is drawn from an unscaled copy, so it never depends on screen width. */
+.receipt-scope{overflow-x:auto}
+.receipt-scope .card{flex:none}
+.receipt-scope .card.format-square{padding:22px 24px 18px}
+.receipt-scope .card.format-story{padding:28px 22px 22px}
+.receipt-scope .card.format-story .chapter{margin-top:22px}
+.receipt-scope .card.format-square .chapter{margin-top:12px}
+.receipt-scope .card.format-square .chapter-title{font-size:26px}
+.receipt-scope .card.format-story .chapter-title{font-size:30px}
+.receipt-scope .divider{margin:12px 0}
+.receipt-scope .stats{gap:10px 14px}
+.receipt-scope .stat-num{font-size:22px}
+.receipt-scope .stat-label{font-size:10px;margin-top:3px}
+.receipt-scope .chart-callout{margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.receipt-scope .quote-block{padding-top:12px}
+.receipt-scope .quote{font-size:13px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.receipt-scope .quote-who{margin-top:5px}
+.receipt-scope .footer-row{margin-top:12px}
+.receipt-scope .card>*{flex-shrink:0}
+  .receipt-scope .footer-row .coven,.receipt-scope .footer-row .moon-date{font-size:10px;white-space:nowrap;}
+  .receipt-scope .footer-row{margin-top:10px;}
+  .receipt-scope .card.format-story .footer-row{flex-direction:column;align-items:flex-start;gap:3px;}
+  .receipt-scope .card.format-story .footer-row .moon-date{text-align:left;}
+  .receipt-scope .callouts{display:flex;flex-wrap:wrap;column-gap:12px;row-gap:2px;margin-top:8px;font-size:10px;color:var(--r-lavender);position:relative;z-index:2;}
+  .receipt-scope .callouts span{white-space:nowrap;}
+  .receipt-scope .card-fit{position:relative;flex:none;}
+  .receipt-scope .card-fit>.card{position:absolute;left:0;top:0;transform-origin:0 0;}
+  /* What we conjured: the coven receipt at the bottom of each Journey chapter */
+  .rcpt-block{border:1px solid var(--line);border-top:none;padding:18px 20px 20px;background:#FBF8F3;}
+  .rcpt-label{font-family:'Inter';font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6B4E8A;}
+  .rcpt-block h4{margin:6px 0 4px;font-family:'Inter';font-size:15px;font-weight:500;color:var(--text-primary);}
+  .rcpt-note{font-size:12px;color:var(--text-secondary);font-weight:300;margin:0 0 12px;line-height:1.5;}
+  .rcpt-strip{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;color:var(--text-secondary);margin-bottom:14px;}
+  .rcpt-strip b{display:block;font-size:18px;font-weight:600;color:var(--text-primary);}
+  .rcpt-btn{display:block;width:100%;min-height:44px;padding:11px;border:1px solid var(--text-primary);background:var(--bg);color:var(--text-primary);font-family:'Inter';font-weight:500;font-size:14px;letter-spacing:.02em;cursor:pointer;}
+  .rcpt-block .receipt-scope{margin:0 0 14px;}
   .receipt-format-toggle{display:flex;gap:8px;margin:16px 0;}
   /* photo rows: anything after the label + toggle/button pair (preview, caption, location) gets its own full-width line */
   .session-row>:nth-child(n+3){flex:0 0 100%;min-width:0;}
@@ -699,25 +736,6 @@
   <div id="photoModal" class="photo-modal"><div><img id="photoModalImg" src=""><div id="photoModalCaption" style="color:#fff;text-align:center;font-family:'Inter';font-size:13px;margin-top:10px;"></div></div></div>
   </section>
 
-  <section class="view" data-view="receipts" hidden>
-  <div class="section-title" id="nav-receipts">Chapter Receipts</div>
-  <div class="section-subnote">Real numbers, pulled live. Add a quote whenever someone says something worth keeping, then download it in whichever shape you need.</div>
-  <div class="week-panel">
-    <div class="week-panel-head">
-      <div><h3>Pick a chapter</h3></div>
-      <select id="receiptChapterSelect"></select>
-    </div>
-    <label class="grat-label">Quote for this chapter, submitted anonymously, anyone can add or change it</label>
-    <input type="text" id="receiptQuoteInput" class="gratitude-input" placeholder="Drop a good line from the group chat">
-    <div class="receipt-format-toggle">
-      <button id="formatCardBtn" type="button" class="gallery-toggle-btn active">Square</button>
-      <button id="formatStoryBtn" type="button" class="gallery-toggle-btn">Story</button>
-    </div>
-    <div id="receiptPreviewWrap"></div>
-    <button id="downloadReceiptBtn" type="button" class="session-photo-btn" style="margin-top:16px;">Download PNG</button>
-  </div>
-  </section>
-
   <section class="view" data-view="profile" hidden>
   <div id="profilePicSection"></div>
   <div class="section-title" id="nav-placements">The big 3</div>
@@ -762,7 +780,7 @@
   <a href="#today" class="tab" data-tab="today"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"></path></svg><span>Today</span></a>
   <a href="#coven" class="tab" data-tab="coven"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="9" cy="9" r="3"></circle><circle cx="17" cy="10" r="2.5"></circle><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5M15 15.2c2.6-.4 4.8.8 5.5 3.8"></path></svg><span>Coven</span></a>
   <a href="#journey" class="tab" data-tab="journey"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg><span>Journey</span></a>
-  <a href="#receipts" class="tab" data-tab="receipts"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z"></path><path d="M9 8h6M9 12h6"></path></svg><span>Receipts</span></a>
+  <a href="#profile" class="tab" data-tab="profile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4-6 8-6s7 2 8 6"></path></svg><span>Me</span></a>
 </nav>
 
 <script>
@@ -2755,8 +2773,11 @@ let openChapter = null;
 let openDay = null;
 let uiInitialized = false;
 
-function renderChapters(){
+function renderChapters(force){
   const el = document.getElementById('chapters');
+  // Do not rebuild the list while someone is typing a quote: it would wipe the box.
+  const typing = document.getElementById('receiptQuoteInput');
+  if(!force && typing && document.activeElement === typing) return;
   el.innerHTML = '';
   const ti = todayInfo();
   const todayNum = ti.state==="during" ? ti.dayNum : null;
@@ -2782,10 +2803,12 @@ function renderChapters(){
     DAYS.filter(d=>d.ch===ch.id).forEach(day=>{
       body.appendChild(renderDayRow(day, day.n===todayNum));
     });
+    body.appendChild(buildReceiptBlock(ch));
     wrap.appendChild(body);
 
     el.appendChild(wrap);
   });
+  mountReceiptPanel();
 }
 
 function buildAstroBlock(day, person){
@@ -2905,7 +2928,6 @@ function onDayEdited(dd){
   safeRender('renderChapters', renderChapters);
   safeRender('renderOverview', renderOverview);
   safeRender('renderLeaderboard', renderLeaderboard);
-  safeRender('refreshReceiptsIfLoaded', refreshReceiptsIfLoaded);
 }
 
 const PERSON_COLORS = {Nina:'#FF6FA8', Kellye:'#FFC94F', Lauren:'#4FA8FF', Carolina:'#C9A9E0'};
@@ -3562,8 +3584,8 @@ function renderCovenFeed(){
   }
 }
 
-// ---- Views: Today / Coven / Journey / Receipts / Profile ----
-const VIEWS = ['today','coven','journey','receipts','profile'];
+// ---- Views: Today / Coven / Journey / Me (the profile view) ----
+const VIEWS = ['today','coven','journey','profile'];
 let activeView = 'today';
 
 function applyView(scrollTop){
@@ -3580,8 +3602,14 @@ function applyView(scrollTop){
 
 function viewFromHash(){
   const h = (location.hash||'').replace('#','');
+  if(h === 'receipts') return 'journey'; // old links: receipts now live inside each Journey chapter
   return VIEWS.includes(h) ? h : null;
 }
+
+// The Me tab always opens your own profile, even if you were just looking at someone else's.
+document.querySelector('.tabbar .tab[data-tab="profile"]').addEventListener('click', ()=>{
+  if(myIdentity && currentPerson !== myIdentity){ currentPerson = myIdentity; renderAll(); }
+});
 
 window.addEventListener('hashchange', ()=>{
   const v = viewFromHash();
@@ -4193,31 +4221,11 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-let receiptChapterId = 1;
+// ---- What we conjured: the coven receipt at the bottom of each Journey chapter ----
+let receiptChapterId = 1;   // chapter whose receipt is open
+let openReceipt = null;     // chapter id, or null when every receipt is collapsed
 let receiptFormat = 'square';
-
-function populateReceiptChapterSelect(){
-  const sel = document.getElementById('receiptChapterSelect');
-  sel.innerHTML = CHAPTERS.map(ch=>`<option value="${ch.id}">${ch.name}</option>`).join('');
-  sel.value = receiptChapterId;
-  sel.onchange = ()=>{ receiptChapterId = parseInt(sel.value,10); loadAndRenderReceipt(); };
-}
-
-async function loadAndRenderReceipt(){
-  const quoteInput = document.getElementById('receiptQuoteInput');
-  let existingQuote = '';
-  try{
-    const res = await storage.get('recal-quote:'+receiptChapterId, true);
-    existingQuote = res ? res.value : '';
-  }catch(e){ existingQuote = ''; }
-  quoteInput.value = existingQuote;
-  renderReceiptCard(existingQuote);
-}
-
-function refreshReceiptsIfLoaded(){
-  const quoteInput = document.getElementById('receiptQuoteInput');
-  if(quoteInput) renderReceiptCard(quoteInput.value);
-}
+const receiptQuotes = {};   // chapter id -> latest saved quote
 
 function chapterAstroCallout(chapterId){
   const chDays = DAYS.filter(d=>d.ch===chapterId);
@@ -4231,14 +4239,90 @@ function chapterAstroCallout(chapterId){
     if(d===null) return;
     const aspect = aspectForDistance(d);
     if(aspect==='conjunction' || aspect==='opposition'){
-      hits.push(`${p} (Sun ${aspect})`);
+      hits.push(p);
     }
   });
   return hits;
 }
 
+function buildReceiptBlock(ch){
+  const open = openReceipt === ch.id;
+  const stats = computeChapterStats(ch.id);
+  const block = document.createElement('div');
+  block.className = 'rcpt-block';
+  block.dataset.ch = ch.id;
+  block.innerHTML = `
+    <div class="rcpt-label">What we conjured</div>
+    <h4>${escapeHtml(ch.name)}, by the numbers</h4>
+    ${open ? '' : `
+    <p class="rcpt-note">The four of us combined. It updates as the week goes.</p>
+    <div class="rcpt-strip">
+      <div><b>${stats.journalCount}</b>journals</div>
+      <div><b>${stats.workoutCount}</b>workouts</div>
+      <div><b>${stats.noSpendCount}</b>no-spend</div>
+      <div><b>${stats.articleCount}</b>reads</div>
+    </div>`}
+    ${open ? `
+    <div class="receipt-format-toggle">
+      <button id="formatCardBtn" type="button" class="gallery-toggle-btn${receiptFormat==='square'?' active':''}">Square</button>
+      <button id="formatStoryBtn" type="button" class="gallery-toggle-btn${receiptFormat==='story'?' active':''}">Story</button>
+    </div>
+    <div id="receiptPreviewWrap"></div>
+    <label class="grat-label">Quote for this chapter, submitted anonymously, anyone can add or change it</label>
+    <input type="text" id="receiptQuoteInput" class="gratitude-input" maxlength="80" placeholder="Drop a good line from the group chat">
+    <button id="downloadReceiptBtn" type="button" class="session-photo-btn" style="margin:16px 0 14px;">Download PNG</button>` : ''}
+    <button type="button" class="rcpt-btn" data-act="toggle">${open ? 'Close' : 'Open'}</button>`;
+  block.querySelector('[data-act="toggle"]').onclick = ()=>{
+    openReceipt = open ? null : ch.id;
+    if(!open) receiptChapterId = ch.id;
+    renderChapters(true);
+  };
+  return block;
+}
+
+// Wires up the one open receipt after the chapter list is built.
+function mountReceiptPanel(){
+  if(openReceipt === null) return;
+  const input = document.getElementById('receiptQuoteInput');
+  if(!input) return;
+  const id = openReceipt;
+  receiptChapterId = id;
+  input.value = receiptQuotes[id] || '';
+  renderReceiptCard(input.value);
+  const setFormat = (f)=>{
+    receiptFormat = f;
+    document.getElementById('formatCardBtn').classList.toggle('active', f==='square');
+    document.getElementById('formatStoryBtn').classList.toggle('active', f==='story');
+    renderReceiptCard(input.value);
+  };
+  document.getElementById('formatCardBtn').onclick = ()=> setFormat('square');
+  document.getElementById('formatStoryBtn').onclick = ()=> setFormat('story');
+  input.onchange = async ()=>{
+    const val = input.value.trim();
+    receiptQuotes[id] = val;
+    try{ await trackedSet('recal-quote:'+id, val, true); }catch(e){ console.error(e); }
+    renderReceiptCard(val);
+    flashSaved(input);
+  };
+  document.getElementById('downloadReceiptBtn').onclick = downloadReceipt;
+  // Anyone can edit the quote, so pull the latest, unless someone is typing right now.
+  storage.get('recal-quote:'+id, true).then(res=>{
+    const v = res && res.value ? res.value : '';
+    receiptQuotes[id] = v;
+    const el = document.getElementById('receiptQuoteInput');
+    if(el && openReceipt === id && document.activeElement !== el && el.value !== v){ el.value = v; renderReceiptCard(v); }
+  }).catch(()=>{});
+}
+
+// Stats move when anything is logged, so rebuild the list (skipped while a quote is being typed).
+function refreshReceiptsIfLoaded(){
+  if(document.getElementById('chapters')) renderChapters();
+}
+
 function renderReceiptCard(quoteText){
   const ch = CHAPTERS.find(c=>c.id===receiptChapterId);
+  const wrap = document.getElementById('receiptPreviewWrap');
+  if(!ch || !wrap) return;
   const meta = CHAPTER_META[receiptChapterId] || {eyebrow:'', subtitle:''};
   const stats = computeChapterStats(receiptChapterId);
   const ordinal = CHAPTER_ORDINALS[receiptChapterId-1];
@@ -4246,11 +4330,17 @@ function renderReceiptCard(quoteText){
   const nextLabel = nextCh ? `next up: ${nextCh.name}` : 'next up: Closing Celebration';
   const titleHtml = receiptFormat==='story' ? ch.name.replace(' ', '<br>') : ch.name;
   const astroHits = chapterAstroCallout(receiptChapterId);
+  const covenLine = stats.fullCovenCount ? escapeHtml(`\u2726 conjured ${stats.fullCovenCount} full-coven day${stats.fullCovenCount===1?'':'s'}`) : '';
+  // Names only. Square shows one name then +N, story shows two, so the line never runs off the card.
+  const maxNames = receiptFormat==='story' ? 2 : 1;
+  const litNames = astroHits.length > maxNames ? astroHits.slice(0,maxNames).join(', ') + ' +' + (astroHits.length-maxNames) : astroHits.join(', ');
+  const litLine = astroHits.length ? escapeHtml('lit up for ' + litNames) : '';
+  // The box allows 80 characters. A longer line saved earlier is trimmed here so the card still fits.
+  const q = (quoteText || '').length > 80 ? quoteText.slice(0,79).trimEnd() + '\u2026' : (quoteText || '');
 
-  const wrap = document.getElementById('receiptPreviewWrap');
   wrap.innerHTML = `
     <div class="receipt-scope">
-      <div class="card format-${receiptFormat}" id="receiptCardEl">
+      <div class="card-fit" id="receiptFit"><div class="card format-${receiptFormat}" id="receiptCardEl">
         <div class="stars"><span style="left:18%;top:10%;width:3.0px;height:3.0px;background:var(--r-gold-bright);"></span><span style="left:70%;top:6%;width:2px;height:2px;background:var(--r-lavender);"></span><span style="left:45%;top:16%;width:2px;height:2px;background:var(--r-paper);"></span><span style="left:85%;top:22%;width:3.0px;height:3.0px;background:var(--r-gold);"></span><span style="left:8%;top:30%;width:2px;height:2px;background:var(--r-lavender);"></span><span style="left:60%;top:34%;width:2px;height:2px;background:var(--r-paper);"></span><span style="left:25%;top:78%;width:3.0px;height:3.0px;background:var(--r-gold-bright);"></span><span style="left:90%;top:82%;width:2px;height:2px;background:var(--r-paper);"></span><span style="left:38%;top:88%;width:2px;height:2px;background:var(--r-lavender);"></span></div>
         <div class="top-row">
           <div class="wordmark">Spell Check</div>
@@ -4280,53 +4370,48 @@ function renderReceiptCard(quoteText){
             <div class="stat-label">reads shared to the group</div>
           </div>
         </div>
-        ${stats.fullCovenCount ? `<div class="chart-callout">\u2726 conjured ${stats.fullCovenCount} full-coven day${stats.fullCovenCount===1?'':'s'} this chapter</div>` : ''}
-        ${astroHits.length ? `<div class="chart-callout">lit up for: ${astroHits.join(', ')}</div>` : ''}
-        ${quoteText ? `
+        ${(covenLine || litLine) ? `<div class="callouts">${covenLine ? `<span>${covenLine}</span>` : ''}${litLine ? `<span>${litLine}</span>` : ''}</div>` : ''}
+        ${q ? `
         <div class="quote-block">
-          <div class="quote">&ldquo;${escapeHtml(quoteText)}&rdquo;</div>
+          <div class="quote">&ldquo;${escapeHtml(q)}&rdquo;</div>
           <div class="quote-who">&mdash; a witch</div>
         </div>` : `<div class="quote-block"><div class="quote-who">No quote added for this chapter yet.</div></div>`}
         <div class="footer-row">
           <div class="coven">the coven is <span>${stats.status}</span></div>
           <div class="moon-date">${nextLabel}</div>
         </div>
-      </div>
+      </div></div>
     </div>
   `;
+  fitReceiptPreview();
 }
 
-document.getElementById('formatCardBtn').onclick = ()=>{
-  receiptFormat = 'square';
-  document.getElementById('formatCardBtn').classList.add('active');
-  document.getElementById('formatStoryBtn').classList.remove('active');
-  refreshReceiptsIfLoaded();
-};
-document.getElementById('formatStoryBtn').onclick = ()=>{
-  receiptFormat = 'story';
-  document.getElementById('formatStoryBtn').classList.add('active');
-  document.getElementById('formatCardBtn').classList.remove('active');
-  refreshReceiptsIfLoaded();
-};
+// Scales the fixed-size card down to the phone's width for the preview.
+function fitReceiptPreview(){
+  const scope = document.querySelector('#receiptPreviewWrap .receipt-scope');
+  const fit = document.getElementById('receiptFit');
+  const card = document.getElementById('receiptCardEl');
+  if(!scope || !fit || !card) return;
+  const w = card.offsetWidth, h = card.offsetHeight;
+  const avail = scope.clientWidth - 24;
+  const k = avail > 0 ? Math.min(1, avail / w) : 1;
+  card.style.transform = k < 1 ? `scale(${k})` : '';
+  fit.style.width = Math.round(w*k) + 'px';
+  fit.style.height = Math.round(h*k) + 'px';
+}
+window.addEventListener('resize', fitReceiptPreview);
 
-document.getElementById('receiptQuoteInput').onchange = async ()=>{
-  const el = document.getElementById('receiptQuoteInput');
-  const val = el.value.trim();
-  try{ await trackedSet('recal-quote:'+receiptChapterId, val, true); }catch(e){ console.error(e); }
-  renderReceiptCard(val);
-  flashSaved(el);
-};
-
-document.getElementById('downloadReceiptBtn').onclick = async ()=>{
+async function downloadReceipt(){
   const btn = document.getElementById('downloadReceiptBtn');
   const cardEl = document.getElementById('receiptCardEl');
-  if(cardEl && typeof html2canvas==='undefined'){
+  if(!btn || !cardEl) return;
+  if(typeof html2canvas==='undefined'){
     const before = btn.textContent;
     btn.textContent = 'Loading...';
     try{ await loadScriptOnce(LAZY_SCRIPTS.html2canvas); }catch(e){ console.error(e); }
     btn.textContent = before;
   }
-  if(!cardEl || typeof html2canvas==='undefined'){
+  if(typeof html2canvas==='undefined'){
     console.error('html2canvas not available');
     return;
   }
@@ -4334,17 +4419,36 @@ document.getElementById('downloadReceiptBtn').onclick = async ()=>{
   btn.textContent = 'Rendering...';
   btn.disabled = true;
   try{
-    const canvas = await html2canvas(cardEl, {backgroundColor:null, scale:2});
+    // Draw from an unscaled copy off screen so the file is the same on every phone.
+    const stage = document.createElement('div');
+    stage.className = 'receipt-scope';
+    stage.style.cssText = 'position:fixed;left:-10000px;top:0;padding:0;background:transparent;display:block;';
+    const copy = cardEl.cloneNode(true);
+    copy.removeAttribute('id');
+    copy.style.transform = 'none';
+    copy.style.position = 'relative';
+    copy.style.boxShadow = 'none';
+    stage.appendChild(copy);
+    document.body.appendChild(stage);
+    let canvas;
+    try{
+      canvas = await html2canvas(copy, {backgroundColor:null, scale:1080/copy.offsetWidth});
+    } finally { stage.remove(); }
+    // Exact sizes: 1080x1350 (square) and 1080x1920 (story).
+    const outH = receiptFormat==='story' ? 1920 : 1350;
+    const fixed = document.createElement('canvas');
+    fixed.width = 1080; fixed.height = outH;
+    fixed.getContext('2d').drawImage(canvas, 0, 0, 1080, outH);
     const link = document.createElement('a');
     link.download = `spell-check-chapter-${receiptChapterId}-${receiptFormat}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = fixed.toDataURL('image/png');
     link.click();
   }catch(e){
     console.error('download failed', e);
   }
   btn.textContent = original;
   btn.disabled = false;
-};
+}
 
 function safeRender(name, fn){
   try{
@@ -4378,8 +4482,6 @@ async function renderAll(){
   safeRender('renderOverview', renderOverview);
   safeRender('renderLeaderboard', renderLeaderboard);
   safeRender('renderPhotoJournal', renderPhotoJournal);
-  safeRender('populateReceiptChapterSelect', populateReceiptChapterSelect);
-  safeRender('loadAndRenderReceipt', loadAndRenderReceipt);
 }
 
 // ---- Instant open: paint from this device's last snapshot, then refresh ----

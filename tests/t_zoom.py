@@ -35,8 +35,9 @@ with sync_playwright() as pw:
     post = pg.locator('#covenFeed > *', has_text='Kellye added a photo').first
     post.scroll_into_view_if_needed(); post.locator('.cmt-link').click(); pg.wait_for_timeout(300); scan('comment box')
     pg.evaluate("document.activeElement && document.activeElement.blur()"); pg.wait_for_timeout(300)
-    for t in ['journey', 'receipts']:
-        pg.click(f'.tabbar .tab[data-tab={t}]'); pg.wait_for_timeout(500); scan(t)
+    pg.click('.tabbar .tab[data-tab=journey]'); pg.wait_for_timeout(500); scan('journey')
+    # the open receipt's quote box counts too
+    pg.locator('.chapter-body.open .rcpt-btn').click(); pg.wait_for_timeout(500); scan('journey (receipt open)')
     pg.evaluate("openProfile('Nina')"); pg.wait_for_timeout(600); scan('profile')
     check('every text box is at least 16px, so iPhone never zooms in on one', not small, sorted([(k[0], k[1], v) for k, v in small.items()]))
 
@@ -46,7 +47,7 @@ with sync_playwright() as pw:
 
     # nothing slid sideways because the text got bigger
     wide = []
-    for v in ['today', 'coven', 'journey', 'receipts']:
+    for v in ['today', 'coven', 'journey']:
         pg.evaluate("document.querySelectorAll('.view').forEach(s=>{ s.hidden = s.dataset.view !== %s; })" % json.dumps(v)); pg.wait_for_timeout(200)
         if not pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"): wide.append(v)
     pg.evaluate("openProfile('Nina')"); pg.wait_for_timeout(300)

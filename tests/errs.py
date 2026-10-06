@@ -6,7 +6,7 @@ with sync_playwright() as pw:
     row = pg.locator('#sessionsList .session-row').nth(0); row.scroll_into_view_if_needed()
     row.get_by_text('Add location').click(); pg.wait_for_selector('#sessionsList .loc-item')
     row.locator('.loc-item').first.click(); pg.wait_for_timeout(500)
-    for t in ['coven','journey','receipts','today']:
+    for t in ['coven','journey','profile','today']:
         pg.click(f'.tabbar .tab[data-tab={t}]'); pg.wait_for_timeout(300)
     pg.evaluate("openProfile('Nina')"); pg.wait_for_timeout(300)
     errs=[x for x in e.errors if 'ServiceWorker' not in x]
