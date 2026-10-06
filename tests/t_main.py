@@ -165,5 +165,13 @@ with sync_playwright() as pw:
     pg.locator('[data-view=profile]').screenshot(path=os.path.join(SHOTS, 's_t6_profile.png'))
     e.close()
 
+    # ---------- T7 water scoring: 1 pt at 48 oz, 2 pts at 64 oz ----------
+    e = Env(pw, seed_nina()); e.open(); pg = e.page
+    wp = pg.evaluate("[0, 40, 47, 48, 56, 64, 80].map(waterPoints)")
+    check('T7 water points are 0,0,0,1,1,2,2', wp == [0,0,0,1,1,2,2], wp)
+    note = pg.evaluate("document.querySelector('#nav-leaderboard').nextElementSibling.textContent")
+    check('T7 leaderboard note says 1 at 48oz, 2 at 64oz', 'water (1 at 48oz, 2 at 64oz)' in note, note)
+    e.close()
+
 bad = [r for r in res if not r[1]]
 print('\n%d checks, %d failed' % (len(res), len(bad)))

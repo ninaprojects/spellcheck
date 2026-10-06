@@ -657,7 +657,7 @@
   <div id="covenFeed" class="feed"></div>
   <div id="covenFeedMore"></div>
   <div class="section-title" id="nav-leaderboard">Leaderboard</div>
-  <div class="section-subnote">Points for everything you do: a journal, a phone-free hour, water (6 at 48oz, 7 at 64oz), a movement session (+1 if there's a photo), an article sent, a no-spend day. Just for fun.</div>
+  <div class="section-subnote">Points for everything you do: a journal, a phone-free hour, water (1 at 48oz, 2 at 64oz), a movement session (+1 if there's a photo), an article sent, a no-spend day. Just for fun.</div>
   <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
   <div class="section-title" id="nav-overview">How's everyone doing</div>
   <div class="section-subnote">Journaled, no phone, and water are counted against days elapsed so far (rest days don't ask for a journal entry, so they're excluded from that count). Move / article / no-spend reflect the week shown above.</div>
@@ -3922,8 +3922,8 @@ function makePhotoRow(person, dayNum, dd){
 }
 
 function waterPoints(oz){
-  if(oz>=64) return 7;
-  if(oz>=48) return 6;
+  if(oz>=64) return 2;
+  if(oz>=48) return 1;
   return 0;
 }
 
@@ -3934,10 +3934,10 @@ function makeWaterRow(dd){
   box.className = 'water-box';
   const oz = dd.waterOz || 0;
   const pts = waterPoints(oz);
-  const meta = oz >= 48 ? `${oz} oz \u00b7 ${pts} pts` : `${oz} oz \u00b7 ${48-oz} to go`;
+  const meta = oz >= 48 ? `${oz} oz \u00b7 ${pts} ${pts===1?'pt':'pts'}` : `${oz} oz \u00b7 ${48-oz} to go`;
   let drops = '';
   for(let i=1;i<=8;i++) drops += `<div class="water-drop${oz>=i*8?' on':''}${i>6?' bonus':''}">${DROP_SVG}</div>`;
-  const doneLine = oz>=64 ? 'Bonus hydration, 7 pts. Counts toward your spell.' : (oz>=48 ? 'Goal met, 6 pts. Counts toward your spell.' : '');
+  const doneLine = oz>=64 ? 'Bonus hydration, 2 pts. Counts toward your spell.' : (oz>=48 ? 'Goal met, 1 pt. Counts toward your spell.' : '');
   box.innerHTML = `
     <div class="water-top">
       <div class="water-id">
