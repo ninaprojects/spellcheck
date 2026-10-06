@@ -134,4 +134,28 @@ with sync_playwright() as pw:
     check('no stray errors from the prompt', not errs, errs)
     e.close()
 
+    # ---------- the name picker is the first thing a fresh install sees ----------
+    IPHONE_STANDALONE_JS = "Object.defineProperty(navigator,'standalone',{get:()=>true})"
+    e = Env(pw, seed(), who='', ua=IPHONE, notif='default', height=760)
+    e.page.add_init_script(IPHONE_STANDALONE_JS)
+    e.open(); pg = e.page; pg.wait_for_timeout(600)
+    order = pg.evaluate("""() => { const v = document.querySelector('[data-view=today]'); return [...v.children].slice(0, 4).map(c => c.id || c.className); }""")
+    check('on a fresh install the name picker comes first on Today', order[0] == 'identityBanner', order)
+    top = pg.evaluate("(()=>{const b=document.getElementById('identityBanner').getBoundingClientRect(); const m=document.querySelector('[data-view=today] .masthead').getBoundingClientRect(); return {bannerTop: Math.round(b.top), mastheadTop: Math.round(m.top), screen: window.innerHeight};})()")
+    check('it is on the first screen, above the intro, with no scrolling', top['bannerTop'] < top['mastheadTop'] and top['bannerTop'] < top['screen'] * 0.6, top)
+    names = pg.locator('#identityGate button').all_inner_texts()
+    check('it offers all four names', names == ['Nina', 'Kellye', 'Lauren', 'Carolina'], names)
+    check('no notification card yet, because we do not know who she is', pg.locator('#notifPromptWrap .notif-prompt').count() == 0)
+    pg.locator('#identityGate button', has_text='Kellye').click(); pg.wait_for_timeout(900)
+    check('tapping a name hides the picker', pg.locator('#identityGate').count() == 0 and pg.evaluate("document.getElementById('identityBanner').getBoundingClientRect().height") < 2)
+    check('her avatar appears in the corner', pg.evaluate("document.getElementById('topbarAvatar').style.display") != 'none')
+    check('and the notifications card appears at the top of Today', pg.locator('#notifPromptWrap .notif-prompt').count() == 1 and 'Permission to be a little annoying?' in pg.locator('#notifPromptWrap').inner_text())
+    saved = pg.evaluate("localStorage.getItem('recal-whoami')")
+    check('the phone remembers her name', saved == 'Kellye', saved)
+    e.close()
+    # someone already set up sees no picker and no gap
+    e = Env(pw, seed(), ua=ANDROID, notif='granted', height=760); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    check('someone already set up sees no picker and no empty gap', pg.locator('#identityGate').count() == 0 and pg.evaluate("document.getElementById('identityBanner').getBoundingClientRect().height") < 2)
+    e.close()
+
 print('\n%d checks, %d failed' % (len(res), res.count(False)))
