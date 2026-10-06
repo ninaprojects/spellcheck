@@ -80,6 +80,7 @@ with sync_playwright() as pw:
 
     # ---------- T3 daily photo uses the same picker + photo GPS ----------
     e = Env(pw, seed_nina(with_photos=False)); e.open(); pg = e.page
+    log_move(pg)  # slot 2 only shows once a move is logged; then a photo is added to it
     row2 = pg.locator('#sessionsList .session-row').nth(1); row2.scroll_into_view_if_needed()
     row2.locator('input[type=file]').set_input_files({'name':'a.jpg','mimeType':'image/jpeg','buffer':jpeg((40.7580,-73.9855))})
     pg.wait_for_timeout(1200)
@@ -140,7 +141,8 @@ with sync_playwright() as pw:
     pg.wait_for_timeout(2300)
     check('T5 toast tidies itself away', 'show' not in (pg.locator('#saveToast').get_attribute('class') or ''))
     # toggles also confirm
-    pg.locator('#sessionsList .session-row').nth(1).locator('.toggle').click(); pg.wait_for_timeout(300)
+    pg.locator('.acc-head[aria-controls=accMoveBody]').scroll_into_view_if_needed()
+    pg.click('#logMoveBtn'); pg.wait_for_selector('#moveSheet'); pg.click('#moveSheetSave'); pg.wait_for_timeout(250)
     check('T5 a toggle shows Saving', 'Saving' in pg.locator('#saveToast').inner_text())
     pg.wait_for_timeout(1900)
     check('T5 a toggle ends on Saved', 'Saved' in pg.locator('#saveToast').inner_text())
@@ -157,8 +159,9 @@ with sync_playwright() as pw:
     e = Env(pw, seed_nina()); e.open(); pg = e.page
     pg.evaluate("openProfile('Nina')"); pg.wait_for_timeout(600)
     check('T6 chips are gone (no duplicate Big 3)', pg.locator('.profile-chip').count() == 0)
-    order = pg.evaluate("[...document.querySelectorAll('[data-view=profile] > *')].map(x=>x.id||x.className).slice(0,6)")
-    check('T6 Big 3 sits right under the name, before Notifications', order.index('placementsPanel') < order.index('notifSection') and order.index('profilePicSection') < order.index('nav-placements'), order)
+    order = pg.evaluate("[...document.querySelectorAll('[data-view=profile] .page[data-page=profile] > *')].map(x=>x.id||x.className).slice(0,4)")
+    check('T6 Big 3 sits right under the name on the Profile page', order.index('placementsPanel') > order.index('profilePicSection') and order.index('profilePicSection') < order.index('nav-placements'), order)
+    check('T6 Notifications live on the Settings page, not Profile', pg.evaluate("!!document.querySelector('.page[data-page=settings] #notifSection') && !document.querySelector('.page[data-page=profile] #notifSection')"))
     b3 = pg.locator('.big3-compact-line .ico-badge').count()
     check('T6 Big 3 shows 3 sign badges and the 3 labels', b3 == 3 and [x.lower() for x in pg.locator('.b3-label').all_inner_texts()] == ['sun','moon','rising'], (b3, pg.locator('.b3-label').all_inner_texts()))
     check('T6 no emoji glyphs left in Big 3', not any(ch in pg.locator('.big3-compact-line').inner_text() for ch in '\u2652\u2650\u2609\u263d'))
@@ -169,6 +172,7 @@ with sync_playwright() as pw:
     e = Env(pw, seed_nina()); e.open(); pg = e.page
     wp = pg.evaluate("[0, 40, 47, 48, 56, 64, 80].map(waterPoints)")
     check('T7 water points are 0,0,0,1,1,2,2', wp == [0,0,0,1,1,2,2], wp)
+    pg.evaluate("location.hash='coven/standings'; 0;"); pg.wait_for_timeout(300)
     note = pg.evaluate("document.querySelector('#nav-leaderboard').nextElementSibling.textContent")
     check('T7 leaderboard note says 1 at 48oz, 2 at 64oz', 'water (1 at 48oz, 2 at 64oz)' in note, note)
     e.close()

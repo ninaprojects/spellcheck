@@ -29,6 +29,7 @@ with sync_playwright() as pw:
     row.get_by_text('Add location').click(); pg.wait_for_selector('#todayCardWrap .loc-item', timeout=8000)
     check('daily: picker still uses the original photo location', 'photo was taken' in row.locator('.loc-sub').inner_text(), row.locator('.loc-sub').inner_text())
     # session photo
+    log_move(pg)
     row = pg.locator('#sessionsList .session-row').nth(1)
     row.locator('input[type=file]').set_input_files({'name':'IMG_9.jpg','mimeType':'image/jpeg','buffer':big})
     pg.wait_for_timeout(3500)
@@ -48,13 +49,14 @@ with sync_playwright() as pw:
     e.close()
     # not an image at all
     e = Env(pw, seed_nina(with_photos=False)); e.open(); pg = e.page
-    row = pg.locator('#sessionsList .session-row').nth(1)
-    row.locator('input[type=file]').set_input_files({'name':'x.jpg','mimeType':'image/jpeg','buffer':b'not really a photo'})
+    pg.click('#logMoveBtn'); pg.wait_for_selector('#moveSheet')
+    pg.set_input_files('#moveSheetFile', {'name':'x.jpg','mimeType':'image/jpeg','buffer':b'not really a photo'})
     pg.wait_for_timeout(1500)
-    msg = pg.locator('#sessionsList .session-row').nth(1).inner_text()
+    msg = pg.locator('#moveSheetStatus').inner_text()
     check('bad file: says it could not read it', 'read that photo' in msg, msg)
+    pg.click('#moveSheetSave'); pg.wait_for_timeout(600)
     s1 = nina(e)['weeks']['0']['sessions'][1]
-    check('bad file: session NOT marked done', not s1['done'], s1)
+    check('bad file: the move still logs, with no photo', s1['done'] and not s1['hasPhoto'], s1)
     e.close()
     # profile picture
     e = Env(pw, seed_nina(with_photos=False)); e.open(); pg = e.page

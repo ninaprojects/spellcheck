@@ -97,4 +97,10 @@ class Env:
     def open(self, path=APP):
         self.page.goto('file://'+path)
         self.page.wait_for_timeout(1500)
+        # The Move row under "Also this week" starts closed. Most tests work with the moves, so open it.
+        self.page.evaluate("(()=>{const h=document.querySelector('.acc-head[aria-controls=accMoveBody]'); if(h && h.getAttribute('aria-expanded')!=='true') h.click(); return 0;})()")
     def close(self): self.browser.close()
+
+def log_move(pg, wait=500):
+    """Log a move the way a person does: Log a move, then Save move (no photo, no place)."""
+    pg.click('#logMoveBtn'); pg.wait_for_selector('#moveSheet'); pg.click('#moveSheetSave'); pg.wait_for_timeout(wait)

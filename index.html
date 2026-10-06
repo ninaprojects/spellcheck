@@ -205,10 +205,11 @@
   .session-actions{display:flex;align-items:center;gap:10px;}
   .session-photo-input{display:none;}
   .session-photo-btn{
-    font-family:'Inter';font-size:11px;color:var(--text-secondary);background:none;
-    border:1px solid var(--line);padding:5px 9px;cursor:pointer;white-space:nowrap;
+    position:relative;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--text-primary);background:none;border:none;border-bottom:1.5px solid var(--pink);
+    padding:0 0 4px;cursor:pointer;white-space:nowrap;line-height:1.3;
   }
-  .session-photo-btn:hover{border-color:var(--text-primary);color:var(--text-primary);}
+  .session-photo-btn:disabled{opacity:.5;cursor:default;}
   .session-photo-preview{margin-top:8px;max-width:100%;border:1px solid var(--line);}
 
   /* chapter blocks */
@@ -328,7 +329,9 @@
   .react-chip{min-width:44px;min-height:32px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-family:'Inter';}
   .react-chip .g{font-size:14px;}
   .react-chip .c{font-size:11px;font-weight:600;}
-  .react-chip .lbl{font-size:12.5px;font-weight:500;}
+  .react-chip .lbl{font-size:12.5px;font-weight:500;display:inline-block;overflow:hidden;white-space:nowrap;max-width:0;opacity:0;margin-left:-5px;animation:lblFade 1.8s ease forwards;}
+  @keyframes lblFade{0%{max-width:0;opacity:0;margin-left:-5px}12%{max-width:140px;opacity:1;margin-left:0}72%{max-width:140px;opacity:1;margin-left:0}100%{max-width:0;opacity:0;margin-left:-5px}}
+  @media (prefers-reduced-motion: reduce){.react-chip .lbl{display:none;}}
   .cmt-note-title{font-size:12px;font-weight:500;color:var(--text-secondary);margin-top:6px;}
   .react-row .cmt-link{margin-left:2px;}
   .react-chip.mine{border:2px solid var(--pink);background:#FFE3EE;}
@@ -440,12 +443,20 @@
   .footnote{font-size:12px;color:var(--text-secondary);margin-top:48px;border-top:1px solid var(--line);padding-top:18px;font-weight:300;}
 
   /* photo journal */
-  .gallery-toggle{display:flex;gap:8px;margin-bottom:14px;}
+  .gallery-toggle{display:flex;gap:22px;margin-bottom:14px;}
+  /* A main action in the app: a soft tint pill, all caps. */
   .gallery-toggle-btn{
-    background:none;border:1px solid var(--line);color:var(--text-secondary);
-    padding:6px 14px;font-family:'Inter';font-size:12px;font-weight:500;cursor:pointer;
+    background:#FFEEF5;border:none;border-radius:999px;color:var(--text-primary);min-height:44px;
+    padding:0 22px;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;
   }
-  .gallery-toggle-btn.active{background:var(--text-primary);border-color:var(--text-primary);color:var(--bg);}
+  .gallery-toggle-btn:disabled{opacity:.5;cursor:default;}
+  /* Choosing between two views (Everyone / Just me, Square / Story): text links, the chosen one underlined. */
+  .seg-link{
+    position:relative;background:none;border:none;border-bottom:1.5px solid transparent;color:var(--text-secondary);
+    padding:0 0 4px;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;line-height:1.3;
+  }
+  .seg-link.active{color:var(--text-primary);border-bottom-color:var(--pink);}
+  .seg-link::before{content:'';position:absolute;inset:-14px -10px;}
   .photo-gallery{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;min-height:40px;
   }
@@ -568,9 +579,9 @@
   .rcpt-note{font-size:12px;color:var(--text-secondary);font-weight:300;margin:0 0 12px;line-height:1.5;}
   .rcpt-strip{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;color:var(--text-secondary);margin-bottom:14px;}
   .rcpt-strip b{display:block;font-size:18px;font-weight:600;color:var(--text-primary);}
-  .rcpt-btn{display:block;width:100%;min-height:44px;padding:11px;border:1px solid var(--text-primary);background:var(--bg);color:var(--text-primary);font-family:'Inter';font-weight:500;font-size:14px;letter-spacing:.02em;cursor:pointer;}
+  .rcpt-btn{position:relative;display:table;margin:8px auto 0;padding:0 0 4px;border:none;border-bottom:1.5px solid var(--pink);background:none;color:var(--text-primary);font-family:'Inter';font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;line-height:1.3;cursor:pointer;}
   .rcpt-block .receipt-scope{margin:0 0 14px;}
-  .receipt-format-toggle{display:flex;gap:8px;margin:16px 0;}
+  .receipt-format-toggle{display:flex;gap:22px;margin:16px 0;justify-content:center;}
   /* photo rows: anything after the label + toggle/button pair (preview, caption, location) gets its own full-width line */
   .session-row>:nth-child(n+3){flex:0 0 100%;min-width:0;}
 
@@ -607,6 +618,55 @@
   .feed-loc{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);margin-top:4px;}
   .modal-loc{display:inline-flex;align-items:center;gap:5px;margin-top:4px;}
 
+
+  /* Pages inside the tabs: a quiet row of tracked small caps under the top bar. */
+  .subnav{position:sticky;top:0;z-index:20;display:flex;gap:22px;background:var(--bg);border-bottom:1px solid var(--line);margin:-4px 0 14px;padding:0;}
+  .subnav[hidden]{display:none;}
+  .subnav-link{font-family:'Inter';font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);text-decoration:none;padding:12px 0 11px;border-bottom:2px solid transparent;margin-bottom:-1px;min-height:44px;display:inline-flex;align-items:center;}
+  .subnav-link.active{color:var(--text-primary);border-bottom-color:var(--pink);}
+  .page[hidden]{display:none !important;}
+  .standings-peek{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;padding:4px 0 8px;border-bottom:1px solid var(--line);margin-bottom:12px;font-size:13px;}
+
+  /* One pill per screen at most: the thing you most want someone to do. Everything else is a text link. */
+  .pill-btn{display:block;margin:14px auto 0;min-width:150px;min-height:44px;padding:0 28px;border:none;border-radius:999px;background:#FFEEF5;color:var(--text-primary);font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;text-align:center;cursor:pointer;}
+  .pill-btn:disabled{opacity:.5;cursor:default;}
+  .txt-link{background:none;border:none;border-bottom:1.5px solid var(--pink);padding:0 0 4px;margin:0;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-primary);text-decoration:none;cursor:pointer;display:inline-block;line-height:1.3;}
+  .txt-link.quiet{border-bottom-color:var(--line);color:var(--text-secondary);font-weight:500;}
+  .txt-link:disabled{opacity:.5;cursor:default;}
+  .txt-link, .session-photo-btn, .rcpt-btn{position:relative;}
+  .txt-link::before, .session-photo-btn::before, .rcpt-btn::before{content:'';position:absolute;inset:-14px -10px;}
+
+  /* "Also this week" on Today */
+  .acc-group{padding:0;}
+  .acc{border-top:1px solid var(--line);}
+  .acc:first-child{border-top:none;}
+  .acc-head{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:48px;padding:12px 16px;background:none;border:none;font-family:'Inter';font-size:14px;color:var(--text-primary);text-align:left;cursor:pointer;}
+  .acc-head b{font-weight:500;}
+  .acc-static{cursor:default;}
+  .acc-meta{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary);}
+  .acc-chev{font-style:normal;font-size:16px;line-height:1;color:var(--text-secondary);width:14px;text-align:center;}
+  .acc-body{padding:0 16px 16px;}
+  .acc-body[hidden]{display:none;}
+  .dots{display:inline-flex;gap:5px;}
+  .dots i{display:block;width:10px;height:10px;border-radius:50%;border:1px solid var(--pink);}
+  .dots i.on{background:var(--pink);}
+  .week-switch{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:16px 0 4px;min-height:32px;}
+  .week-switch [hidden]{display:none;}
+  #weekSwitchBtns{display:flex;gap:18px;}
+  #weekSwitchBtns[hidden]{display:none;}
+
+  /* Move sheet */
+  .sheet-dim{position:fixed;inset:0;z-index:90;background:rgba(26,26,26,.32);}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:91;max-width:560px;margin:0 auto;background:var(--bg);border-radius:20px 20px 0 0;padding:14px 20px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 24px rgba(0,0,0,.14);max-height:86vh;overflow-y:auto;}
+  .sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px;}
+  .sheet h3{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:19px;margin:0 0 2px;color:var(--text-primary);}
+  .sheet-sub{font-size:12px;color:var(--text-secondary);font-weight:300;margin-bottom:10px;}
+  .sheet-row{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);min-height:56px;}
+  .sheet-thumb{width:56px;height:56px;flex:none;object-fit:cover;background:#F5F1EA;border:1px dashed var(--line);}
+  .sheet-thumb.has{border:none;}
+  .sheet-actions{text-align:center;margin-top:14px;}
+  .sheet-actions .txt-link{margin-top:14px;}
+
   /* save status */
   #saveToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);transform:translate(-50%,8px);z-index:80;background:var(--text-primary);color:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;padding:8px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;max-width:calc(100vw - 32px);}
   #saveToast.show{opacity:1;transform:translate(-50%,0);}
@@ -625,6 +685,7 @@
     <a href="#today" class="topbar-title">Spell Check</a>
     <button type="button" id="topbarAvatar" class="topbar-avatar" aria-label="Open your profile"></button>
   </header>
+  <nav class="subnav" id="subnav" aria-label="Pages" hidden></nav>
 
   <div id="peopleWrap">
   <div class="people" id="people"></div>
@@ -646,53 +707,64 @@
   </div>
   <div class="status" id="status"></div>
   <div id="nav-today"><div id="todayCardWrap"></div></div>
-  <div class="section-title" id="nav-week">This week's commitments</div>
-  <div class="week-panel">
-    <div class="week-panel-head">
-      <div>
-        <h3 id="weekTitle">Week 1</h3>
-        <div class="week-range" id="weekRange"></div>
-      </div>
-      <div class="week-nav">
-        <button id="weekPrev">&larr;</button>
-        <button id="weekNext">&rarr;</button>
+  <div class="section-title" id="nav-week">Also this week</div>
+  <div class="section-subnote"><span id="weekTitle">Week 1</span>, <span id="weekRange"></span>. Log things on the day they happen.</div>
+  <div class="week-panel acc-group">
+    <div class="acc" data-acc="move">
+      <button type="button" class="acc-head" aria-expanded="false" aria-controls="accMoveBody">
+        <b>Move, with intent</b>
+        <span class="acc-meta"><span id="moveCount"></span><span class="dots" id="moveDots"></span><i class="acc-chev" aria-hidden="true">+</i></span>
+      </button>
+      <div class="acc-body" id="accMoveBody" hidden>
+        <div class="commit-sub" style="margin-bottom:6px;">3 times this week, a point each. Proof photo, anything counts, +1. Time is stamped automatically.</div>
+        <div id="sessionsList"></div>
+        <button type="button" id="logMoveBtn" class="pill-btn">Log a move</button>
       </div>
     </div>
-
-    <div class="commit-row">
-      <div class="commit-label">Move, with intent</div>
-      <div class="commit-sub" style="margin-bottom:6px;">3 times this week, a point each. Proof photo, anything counts, +1. Time is stamped automatically.</div>
-      <div id="sessionsList"></div>
-    </div>
-
-    <div class="commit-row">
-      <div class="commit-label">Send the group something</div>
-      <div class="commit-sub">An article, an opinion, a weird fact. Share as many as you like, the first one each week is worth a point.</div>
-      <div class="article-inputs">
-        <input class="article-input" id="articleUrlInput" placeholder="Paste the link" inputmode="url" autocapitalize="none" autocorrect="off">
-        <input class="article-label-input" id="articleLabelInput" placeholder="Short label (optional)">
+    <div class="acc" data-acc="share">
+      <button type="button" class="acc-head" aria-expanded="false" aria-controls="accShareBody">
+        <b>Send the group something</b>
+        <span class="acc-meta"><span id="shareCount"></span><i class="acc-chev" aria-hidden="true">+</i></span>
+      </button>
+      <div class="acc-body" id="accShareBody" hidden>
+        <div class="commit-sub">An article, an opinion, a weird fact. Share as many as you like, the first one each week is worth a point.</div>
+        <div class="article-inputs">
+          <input class="article-input" id="articleUrlInput" placeholder="Paste the link" inputmode="url" autocapitalize="none" autocorrect="off">
+          <input class="article-label-input" id="articleLabelInput" placeholder="Short label (optional)">
+        </div>
+        <button type="button" id="shareBtn" class="pill-btn">Share with the coven</button>
+        <div id="shareStatus" class="commit-sub" style="min-height:18px;margin-top:8px;text-align:center;"></div>
+        <div id="sharesList"></div>
       </div>
-      <button type="button" id="shareBtn" class="session-photo-btn" style="margin-top:10px;min-height:44px;">Share with the coven</button>
-      <div id="shareStatus" class="commit-sub" style="min-height:18px;margin-top:8px;"></div>
-      <div id="sharesList"></div>
     </div>
-
-    <div class="commit-row flex">
-      <div>
-        <div class="commit-label">No-spend day</div>
-        <div class="commit-sub">Pick one. Fixed bills don't count against you.</div>
+    <div class="acc acc-flat" data-acc="nospend">
+      <div class="acc-head acc-static">
+        <div>
+          <b>No-spend day</b>
+          <div class="commit-sub" style="margin:2px 0 0;">Pick one. Fixed bills don't count against you.</div>
+        </div>
+        <div class="toggle" id="noSpendToggle"></div>
       </div>
-      <div class="toggle" id="noSpendToggle"></div>
     </div>
+  </div>
+  <div class="week-switch">
+    <a href="#" id="earlierWeeks" class="txt-link">Earlier weeks</a>
+    <span id="weekSwitchBtns" hidden>
+      <button type="button" id="weekPrev" class="txt-link" aria-label="Previous week">&larr; Earlier</button>
+      <button type="button" id="weekNext" class="txt-link" aria-label="Next week">Later &rarr;</button>
+    </span>
   </div>
   </section>
 
   <section class="view" data-view="coven" hidden>
-  <div class="section-title with-sub" id="nav-coven">The coven</div>
-  <div class="section-subnote">What the four of us have been up to, newest first. Tap to react.</div>
+  <div class="page" data-page="tea">
   <div id="streakCard"></div>
+  <div id="standingsPeek"></div>
+  <div class="section-subnote">What the four of us have been up to, newest first. Tap to react.</div>
   <div id="covenFeed" class="feed"></div>
   <div id="covenFeedMore"></div>
+  </div>
+  <div class="page" data-page="standings" hidden>
   <div class="section-title" id="nav-leaderboard">Leaderboard</div>
   <div class="section-subnote">Points for everything you do: a journal, a phone-free hour, water (1 at 48oz, 2 at 64oz), a movement session (+1 if there's a photo), an article sent, a no-spend day. Just for fun.</div>
   <div class="week-panel" id="leaderboardPanel" style="padding:0;"></div>
@@ -701,9 +773,11 @@
   <div class="week-panel" style="padding:0;overflow-x:auto;">
     <table class="overview" id="overviewTable"></table>
   </div>
+  </div>
   </section>
 
   <section class="view" data-view="journey" hidden>
+  <div class="page" data-page="days">
   <div class="timeline">
     <div class="timeline-track" id="timelineTrack"></div>
     <div class="timeline-labels">
@@ -726,23 +800,24 @@
     <label class="grat-label">My toast</label>
     <input type="text" id="closingInput" class="gratitude-input" placeholder="What are you toasting to">
   </div>
+  </div>
+  <div class="page" data-page="photos" hidden>
   <div class="section-title with-sub" id="nav-photos">Photo Journal</div>
   <div class="section-subnote">Whatever anyone's added, day by day. This is the thing you'll actually want to look back at.</div>
   <div class="gallery-toggle">
-    <button id="galleryEveryone" class="gallery-toggle-btn active">Everyone</button>
-    <button id="galleryMine" class="gallery-toggle-btn">Just me</button>
+    <button id="galleryEveryone" class="seg-link active">Everyone</button>
+    <button id="galleryMine" class="seg-link">Just me</button>
   </div>
   <div id="photoGallery" class="photo-gallery"></div>
+  </div>
   <div id="photoModal" class="photo-modal"><div><img id="photoModalImg" src=""><div id="photoModalCaption" style="color:#fff;text-align:center;font-family:'Inter';font-size:13px;margin-top:10px;"></div></div></div>
   </section>
 
   <section class="view" data-view="profile" hidden>
+  <div class="page" data-page="profile">
   <div id="profilePicSection"></div>
   <div class="section-title" id="nav-placements">The big 3</div>
   <div class="placements" id="placementsPanel"></div>
-  <div class="section-title" id="nav-notifs">Notifications</div>
-  <div id="notifSection"></div>
-  <div id="notifPrefs"></div>
   <div class="section-title" id="nav-currently">Currently</div>
   <div class="placements">
     <div class="currently-row">
@@ -767,11 +842,17 @@
 
   <div class="section-title">Bookends</div>
   <div id="profileBookends"></div>
+  </div>
+  <div class="page" data-page="settings" hidden>
+  <div class="section-title" id="nav-notifs">Notifications</div>
+  <div id="notifSection"></div>
+  <div id="notifPrefs"></div>
   <div style="margin-top:32px;"><a href="round1.html" class="big3-toggle-link">See Round 1 (read only)</a></div>
   <div id="profileIdentity" style="margin-top:20px;"></div>
   <div class="footnote">Your entries, photos, and links are visible to the other three people using this. Data is shared across the group, not private.</div>
   <div id="resetProgressWrap" style="margin-top:6px;"></div>
   <div class="trademark-note">Cast &amp; Check&trade; (pending)</div>
+  </div>
   </section>
 
 </div>
@@ -2272,10 +2353,32 @@ function renderWeekPanel(){
 
   const wd = weekData(currentPerson, currentWeekIdx);
 
+  // the closed rows say how it is going at a glance
+  const movesDone = wd.sessions.filter(x=>x.done).length;
+  document.getElementById('moveCount').textContent = `${movesDone} of 3`;
+  document.getElementById('moveDots').innerHTML = [0,1,2].map(i=>`<i class="${i<movesDone?'on':''}"></i>`).join('');
+  const sharedN = sharesOfWeek(wd).length;
+  document.getElementById('shareCount').textContent = sharedN ? `${sharedN} shared` : 'Not yet';
+  const logBtn = document.getElementById('logMoveBtn');
+  logBtn.disabled = !isEditable() || movesDone >= 3;
+  logBtn.textContent = movesDone >= 3 ? 'All three logged' : 'Log a move';
+  logBtn.onclick = openMoveSheet;
+  const prevBtn = document.getElementById('weekPrev'), nextBtn = document.getElementById('weekNext');
+  prevBtn.hidden = currentWeekIdx <= 0;
+  nextBtn.hidden = currentWeekIdx >= WEEKS.length-1;
+
   // sessions
   const sessionsList = document.getElementById('sessionsList');
   sessionsList.innerHTML = '';
+  if(!wd.sessions.some(x=>x.done)){
+    const none = document.createElement('div');
+    none.className = 'commit-sub';
+    none.style.margin = '4px 0 2px';
+    none.textContent = 'Nothing logged yet this week.';
+    sessionsList.appendChild(none);
+  }
   wd.sessions.forEach((s, i)=>{
+    if(!s.done) return; // only logged moves are listed, "Log a move" is the one way to add one
     const row = document.createElement('div');
     row.className = 'session-row';
 
@@ -2283,7 +2386,7 @@ function renderWeekPanel(){
     info.className = 'session-info';
     const label = document.createElement('div');
     label.className = 'session-label';
-    label.textContent = `Session ${i+1}`;
+    label.textContent = `Move ${i+1}`;
     const meta = document.createElement('div');
     meta.className = 'session-meta';
     meta.textContent = s.done ? `Done \u00b7 ${formatTimestamp(s.timestamp)}` : 'Not logged yet';
@@ -2293,21 +2396,6 @@ function renderWeekPanel(){
     const actions = document.createElement('div');
     actions.className = 'session-actions';
 
-    const toggle = document.createElement('div');
-    toggle.className = 'toggle'+(s.done?' on':'')+(isEditable()?'':' locked');
-    if(isEditable()){
-      toggle.onclick = ()=>{
-        s.done = !s.done;
-        s.timestamp = s.done ? new Date().toISOString() : null;
-        if(!s.done){ s.hasPhoto=false; s.photoType=null; }
-        savePerson(currentPerson);
-        renderWeekPanel();
-        renderOverview();
-        renderLeaderboard();
-        refreshReceiptsIfLoaded();
-      };
-    }
-    actions.appendChild(toggle);
 
     const photoBtn = document.createElement('button');
     photoBtn.type = 'button';
@@ -2368,6 +2456,25 @@ function renderWeekPanel(){
 
     actions.appendChild(photoBtn);
     actions.appendChild(fileInput);
+    if(isEditable()){
+      const rmBtn = document.createElement('button');
+      rmBtn.type = 'button';
+      rmBtn.className = 'txt-link quiet move-remove';
+      rmBtn.textContent = 'Undo';
+      rmBtn.onclick = ()=>{
+        if(!confirm('Undo this move? It leaves your week and the feed.')) return;
+        s.done = false; s.timestamp = null;
+        s.hasPhoto = false; s.photoType = null; s.photoCaption = ''; s.photoLocation = '';
+        savePerson(currentPerson);
+        renderWeekPanel();
+        renderOverview();
+        renderLeaderboard();
+        refreshReceiptsIfLoaded();
+        safeRender('renderPhotoJournal', renderPhotoJournal);
+        safeRender('renderCovenFeed', renderCovenFeed);
+      };
+      actions.appendChild(rmBtn);
+    }
 
     row.appendChild(info);
     row.appendChild(actions);
@@ -2452,6 +2559,146 @@ function renderWeekPanel(){
 
 document.getElementById('weekPrev').onclick = ()=>{ if(currentWeekIdx>0){currentWeekIdx--; renderWeekPanel();} };
 document.getElementById('weekNext').onclick = ()=>{ if(currentWeekIdx<WEEKS.length-1){currentWeekIdx++; renderWeekPanel();} };
+document.getElementById('earlierWeeks').onclick = (e)=>{
+  e.preventDefault();
+  const box = document.getElementById('weekSwitchBtns');
+  box.hidden = !box.hidden;
+};
+
+// The rows under "Also this week": tap to open, one open at a time.
+document.querySelectorAll('.acc-head[aria-controls]').forEach(head=>{
+  head.addEventListener('click', ()=>{
+    const open = head.getAttribute('aria-expanded') !== 'true';
+    document.querySelectorAll('.acc-head[aria-controls]').forEach(h=>{
+      const on = open && h === head;
+      h.setAttribute('aria-expanded', on ? 'true' : 'false');
+      document.getElementById(h.getAttribute('aria-controls')).hidden = !on;
+      const chev = h.querySelector('.acc-chev');
+      if(chev) chev.textContent = on ? '\u2212' : '+';
+    });
+  });
+});
+
+// Log a move: one tap on Save stamps the time and takes the next free move slot.
+// The photo and the place are optional and ride along in the same sheet.
+function openMoveSheet(){
+  if(!isEditable()) return;
+  const wi = currentWeekIdx;
+  const wd = weekData(currentPerson, wi);
+  const slot = wd.sessions.findIndex(x=>!x.done);
+  if(slot < 0) return;
+  const person = currentPerson;
+  const photoKey = `recal-photo:${person}:${wi}:${slot}`;
+  const draft = {photoLocation:''};
+  let dataUrl = null, busy = false;
+  const returnFocus = document.activeElement;
+
+  const dim = document.createElement('div');
+  dim.className = 'sheet-dim';
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.id = 'moveSheet';
+  sheet.setAttribute('role','dialog');
+  sheet.setAttribute('aria-modal','true');
+  sheet.setAttribute('aria-label','Log a move');
+  sheet.innerHTML = `
+    <div class="sheet-grab"></div>
+    <h3>Log a move</h3>
+    <div class="sheet-sub">${escapeHtml(formatTimestamp(new Date().toISOString()))}. The time is stamped for you.</div>
+    <div class="sheet-row" id="moveSheetPhoto"></div>
+    <div class="sheet-row" id="moveSheetPlace" style="display:block;"></div>
+    <div class="sheet-actions">
+      <button type="button" class="pill-btn" id="moveSheetSave">Save move</button>
+      <button type="button" class="txt-link quiet" id="moveSheetCancel">Cancel</button>
+    </div>
+    <div class="commit-sub" id="moveSheetStatus" style="text-align:center;min-height:16px;margin-top:8px;"></div>`;
+  document.body.appendChild(dim);
+  document.body.appendChild(sheet);
+
+  const close = ()=>{
+    dim.remove(); sheet.remove();
+    document.removeEventListener('keydown', onKey);
+    if(returnFocus && returnFocus.focus) returnFocus.focus();
+  };
+  const onKey = (e)=>{ if(e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  dim.onclick = close;
+  sheet.querySelector('#moveSheetCancel').onclick = close;
+  const status = sheet.querySelector('#moveSheetStatus');
+
+  // photo
+  const photoBox = sheet.querySelector('#moveSheetPhoto');
+  const renderPhoto = ()=>{
+    photoBox.innerHTML = '';
+    const thumb = document.createElement('img');
+    thumb.className = 'sheet-thumb' + (dataUrl ? ' has' : '');
+    thumb.alt = dataUrl ? 'Your photo' : '';
+    if(dataUrl) thumb.src = dataUrl; else thumb.removeAttribute('src');
+    const side = document.createElement('div');
+    const pick = document.createElement('button');
+    pick.type = 'button';
+    pick.className = 'txt-link';
+    pick.id = 'moveSheetPhotoBtn';
+    pick.textContent = dataUrl ? 'Change photo' : 'Add photo';
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*'; input.id = 'moveSheetFile';
+    input.style.display = 'none';
+    pick.onclick = ()=> input.click();
+    input.onchange = async ()=>{
+      const file = input.files[0];
+      if(!file) return;
+      captureExifGps(file, photoKey);
+      status.textContent = 'Preparing photo\u2026';
+      try{ dataUrl = await prepareUploadImage(file, 1600, 0.82); status.textContent = ''; }
+      catch(e){ console.error('photo prepare failed', e); status.textContent = 'Couldn\u2019t read that photo, try another'; return; }
+      renderPhoto();
+    };
+    const note = document.createElement('div');
+    note.className = 'commit-sub';
+    note.style.margin = '6px 0 0';
+    note.textContent = 'Optional. A photo is +1.';
+    side.appendChild(pick); side.appendChild(input); side.appendChild(note);
+    photoBox.appendChild(thumb); photoBox.appendChild(side);
+  };
+  renderPhoto();
+
+  // place
+  const placeBox = sheet.querySelector('#moveSheetPlace');
+  const renderPlace = ()=>{ placeBox.replaceChildren(buildLocationRow(draft, renderPlace, photoKey)); };
+  renderPlace();
+
+  // save
+  const saveBtn = sheet.querySelector('#moveSheetSave');
+  saveBtn.onclick = async ()=>{
+    if(busy) return;
+    busy = true; saveBtn.disabled = true;
+    try{
+      const s = weekData(person, wi).sessions[slot]; // read fresh, a sync may have replaced the record
+      if(s.done){ close(); return; } // someone (you, on another device) took the slot
+      if(dataUrl){
+        await trackedSet(photoKey, dataUrl, true);
+        photoCache[photoKey] = dataUrl;
+        s.hasPhoto = true; s.photoType = 'image/jpeg';
+      }
+      s.done = true;
+      s.timestamp = new Date().toISOString();
+      if(draft.photoLocation) s.photoLocation = draft.photoLocation;
+      savePerson(person);
+      close();
+      renderWeekPanel();
+      renderOverview();
+      renderLeaderboard();
+      refreshReceiptsIfLoaded();
+      safeRender('renderPhotoJournal', renderPhotoJournal);
+      safeRender('renderCovenFeed', renderCovenFeed);
+    }catch(e){
+      console.error(e);
+      status.textContent = 'Couldn\u2019t save that, try again';
+      busy = false; saveBtn.disabled = false;
+    }
+  };
+  saveBtn.focus();
+}
 
 function placementsDefaultIsEdit(pl){
   return !(pl.sun && pl.moon && pl.rising);
@@ -3159,6 +3406,9 @@ function feedTimeLabel(e){
 function feedSafeKey(id){ return String(id).replace(/[.#$\[\]\/]/g,'_'); }
 
 // ---- Reactions: one small JSON record per person, only she writes hers ----
+// The reaction's name shows for a moment after you tap it, then only the symbol stays.
+const REACTION_LABEL_MS = 1900;
+let reactionFlash = null; // {key, glyph, at}
 const REACTION_GLYPHS = [['\u2661','Heart swelling'],['\u2726','Spellbound'],['\u263E','Calm tides']];
 const reactionsData = {}; // {person: {eventKey: [glyph,...]}}
 const reactionsSynced = {};
@@ -3184,6 +3434,13 @@ async function toggleReaction(eventId, glyph){
   const list = mine[key] || [];
   const turningOn = !list.includes(glyph);
   mine[key] = turningOn ? list.concat([glyph]) : list.filter(g=>g!==glyph);
+  if(turningOn){
+    reactionFlash = {key, glyph, at: Date.now()};
+    // Once the fade is done, drop the word so only the symbol is left. No re-render, so a note you are typing keeps focus.
+    setTimeout(()=>{ document.querySelectorAll('.react-chip .lbl').forEach(n=>n.remove()); }, REACTION_LABEL_MS + 100);
+  } else if(reactionFlash && reactionFlash.key === key && reactionFlash.glyph === glyph){
+    reactionFlash = null;
+  }
   if(!mine[key].length) delete mine[key];
   let notesChanged = false;
   if(turningOn){
@@ -3418,7 +3675,7 @@ function feedItemHtmlParts(e){
   switch(e.type){
     case 'cast': return {text:`${name}cast Day ${e.day}\u2019s spell`};
     case 'photo': return {text:`${name}added a photo for Day ${e.day}`, photo:true};
-    case 'session': return {text:`${name}logged a movement session`, photo:e.hasPhoto};
+    case 'session': return {text:`${name}logged a move`, photo:e.hasPhoto};
     case 'article': {
       const domain = domainFromUrl(e.url);
       const href = /^https?:\/\//i.test(e.url) ? e.url : 'https://'+e.url;
@@ -3537,7 +3794,9 @@ function renderCovenFeed(){
       chip.setAttribute('aria-label', `${label} reaction`);
       chip.setAttribute('aria-pressed', mineOn ? 'true' : 'false');
       chip.title = label;
-      chip.innerHTML = `<span class="g">${g}</span>${mineOn ? `<span class="lbl">${label}</span>` : ''}<span class="c">${names.length || ''}</span>`;
+      const flashing = mineOn && reactionFlash && reactionFlash.key === key && reactionFlash.glyph === g && (Date.now() - reactionFlash.at) < REACTION_LABEL_MS;
+      const elapsed = flashing ? Date.now() - reactionFlash.at : 0;
+      chip.innerHTML = `<span class="g">${g}</span>${flashing ? `<span class="lbl" style="animation-delay:-${elapsed}ms">${label}</span>` : ''}<span class="c">${names.length || ''}</span>`;
       if(canReact) chip.onclick = ()=> toggleReaction(e.id, g);
       else chip.disabled = true;
       row.appendChild(chip);
@@ -3584,26 +3843,79 @@ function renderCovenFeed(){
   }
 }
 
-// ---- Views: Today / Coven / Journey / Me (the profile view) ----
+// ---- Views: Today / Coven / Journey / Me (the profile view), with pages inside each ----
 const VIEWS = ['today','coven','journey','profile'];
+// Pages inside a view. Today is one page, so it shows no page row.
+const PAGES = {
+  today:   [],
+  coven:   [['tea','The Tea'],['standings','Standings']],
+  journey: [['days','The 31 days'],['photos','Photos']],
+  profile: [['profile','Profile'],['settings','Settings']]
+};
 let activeView = 'today';
+const activePage = {}; // the page each tab was last on
+try{
+  const saved = JSON.parse(localStorage.getItem('r2-last-pages') || '{}');
+  Object.keys(PAGES).forEach(v=>{ if(saved[v] && PAGES[v].some(x=>x[0]===saved[v])) activePage[v] = saved[v]; });
+}catch(e){}
+
+// Settings belongs to you. Someone else's profile is just their profile page.
+function pagesFor(view){
+  const list = PAGES[view] || [];
+  if(view === 'profile' && !(myIdentity && currentPerson === myIdentity)) return list.filter(x=>x[0] !== 'settings');
+  return list;
+}
+function pageOf(view){
+  const list = pagesFor(view);
+  if(!list.length) return null;
+  return list.some(x=>x[0]===activePage[view]) ? activePage[view] : list[0][0];
+}
+function rememberPages(){
+  try{ localStorage.setItem('r2-last-pages', JSON.stringify(activePage)); }catch(e){}
+}
+
+function renderSubnav(){
+  const nav = document.getElementById('subnav');
+  if(!nav) return;
+  const list = pagesFor(activeView);
+  if(list.length < 2){ nav.hidden = true; nav.innerHTML = ''; return; }
+  const cur = pageOf(activeView);
+  nav.hidden = false;
+  nav.innerHTML = list.map(([id,label])=>
+    `<a href="#${activeView}/${id}" class="subnav-link${id===cur?' active':''}" data-page="${id}"${id===cur?' aria-current="page"':''}>${label}</a>`
+  ).join('');
+}
 
 function applyView(scrollTop){
   document.querySelectorAll('.view').forEach(s=>{ s.hidden = s.dataset.view !== activeView; });
+  const cur = pageOf(activeView);
+  document.querySelectorAll('.view[data-view="'+activeView+'"] .page').forEach(pg=>{ pg.hidden = pg.dataset.page !== cur; });
   document.querySelectorAll('.tabbar .tab').forEach(t=>{
     const on = t.dataset.tab === activeView;
     t.classList.toggle('active', on);
     if(on) t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current');
   });
   const pw = document.getElementById('peopleWrap');
-  if(pw) pw.style.display = ['today','journey','profile'].includes(activeView) ? '' : 'none';
+  // Settings is about you, so the row of names has no place there.
+  if(pw) pw.style.display = (['today','journey','profile'].includes(activeView) && !(activeView === 'profile' && cur === 'settings')) ? '' : 'none';
+  renderSubnav();
   if(scrollTop) window.scrollTo(0,0);
 }
 
-function viewFromHash(){
-  const h = (location.hash||'').replace('#','');
-  if(h === 'receipts') return 'journey'; // old links: receipts now live inside each Journey chapter
-  return VIEWS.includes(h) ? h : null;
+// "#coven", "#coven/standings". Old links keep working: #receipts is the 31 days page.
+function routeFromHash(){
+  const raw = (location.hash||'').replace('#','');
+  if(raw === 'receipts') return {view:'journey', page:'days'};
+  const [v, pg] = raw.split('/');
+  if(!VIEWS.includes(v)) return null;
+  return {view:v, page: (PAGES[v]||[]).some(x=>x[0]===pg) ? pg : null};
+}
+function viewFromHash(){ const r = routeFromHash(); return r ? r.view : null; }
+
+// Open a page directly (used by links inside the app).
+function goPage(view, page){
+  activePage[view] = page; rememberPages();
+  location.hash = view + '/' + page;
 }
 
 // The Me tab always opens your own profile, even if you were just looking at someone else's.
@@ -3612,11 +3924,12 @@ document.querySelector('.tabbar .tab[data-tab="profile"]').addEventListener('cli
 });
 
 window.addEventListener('hashchange', ()=>{
-  const v = viewFromHash();
-  if(!v) return; // bare "#" links elsewhere never move you between tabs
-  activeView = v;
+  const r = routeFromHash();
+  if(!r) return; // bare "#" links elsewhere never move you between tabs
+  activeView = r.view;
+  if(r.page){ activePage[r.view] = r.page; rememberPages(); }
   // Today always opens on your own day; other tabs keep whoever you were looking at.
-  if(v === 'today' && myIdentity && currentPerson !== myIdentity){
+  if(r.view === 'today' && myIdentity && currentPerson !== myIdentity){
     currentPerson = myIdentity;
     renderAll();
   }
@@ -3625,7 +3938,7 @@ window.addEventListener('hashchange', ()=>{
 
 function openProfile(p){
   if(p && PEOPLE.includes(p)) currentPerson = p;
-  if(activeView !== 'profile'){ location.hash = 'profile'; }
+  if(activeView !== 'profile' || pageOf('profile') !== 'profile'){ goPage('profile','profile'); }
   renderAll();
 }
 
@@ -4073,6 +4386,26 @@ function renderLeaderboard(){
   });
 }
 
+// One line at the top of The Tea: where you stand, with a way into Standings.
+function renderStandingsPeek(){
+  const el = document.getElementById('standingsPeek');
+  if(!el) return;
+  const scores = PEOPLE.map(p=>({name:p, score:scoreFor(p)}));
+  const who = (myIdentity && PEOPLE.includes(myIdentity)) ? myIdentity : null;
+  let text;
+  if(who){
+    const mine = scores.find(x=>x.name===who).score;
+    const ahead = scores.filter(x=>x.score > mine).length;
+    const tied = scores.filter(x=>x.name!==who && x.score===mine).length > 0;
+    const ord = ['1st','2nd','3rd','4th'][ahead] || (ahead+1)+'th';
+    text = `You are ${tied ? 'tied for ' : ''}${ord} on the board`;
+  } else {
+    const top = scores.slice().sort((a,b)=>b.score-a.score)[0];
+    text = `${top.name} is in the lead`;
+  }
+  el.innerHTML = `<div class="standings-peek"><span>${escapeHtml(text)}</span><a href="#coven/standings" class="txt-link">Standings &rsaquo;</a></div>`;
+}
+
 let galleryMode = 'everyone';
 const photoCache = {};
 
@@ -4264,13 +4597,13 @@ function buildReceiptBlock(ch){
     </div>`}
     ${open ? `
     <div class="receipt-format-toggle">
-      <button id="formatCardBtn" type="button" class="gallery-toggle-btn${receiptFormat==='square'?' active':''}">Square</button>
-      <button id="formatStoryBtn" type="button" class="gallery-toggle-btn${receiptFormat==='story'?' active':''}">Story</button>
+      <button id="formatCardBtn" type="button" class="seg-link${receiptFormat==='square'?' active':''}">Square</button>
+      <button id="formatStoryBtn" type="button" class="seg-link${receiptFormat==='story'?' active':''}">Story</button>
     </div>
     <div id="receiptPreviewWrap"></div>
     <label class="grat-label">Quote for this chapter, submitted anonymously, anyone can add or change it</label>
     <input type="text" id="receiptQuoteInput" class="gratitude-input" maxlength="80" placeholder="Drop a good line from the group chat">
-    <button id="downloadReceiptBtn" type="button" class="session-photo-btn" style="margin:16px 0 14px;">Download PNG</button>` : ''}
+    <button id="downloadReceiptBtn" type="button" class="pill-btn" style="margin:16px auto 14px;">Download PNG</button>` : ''}
     <button type="button" class="rcpt-btn" data-act="toggle">${open ? 'Close' : 'Open'}</button>`;
   block.querySelector('[data-act="toggle"]').onclick = ()=>{
     openReceipt = open ? null : ch.id;
@@ -4482,6 +4815,8 @@ async function renderAll(){
   safeRender('renderOverview', renderOverview);
   safeRender('renderLeaderboard', renderLeaderboard);
   safeRender('renderPhotoJournal', renderPhotoJournal);
+  safeRender('renderStandingsPeek', renderStandingsPeek);
+  safeRender('applyView', ()=>applyView(false));
 }
 
 // ---- Instant open: paint from this device's last snapshot, then refresh ----
@@ -4534,7 +4869,7 @@ function applySnapshot(){
     await loadIdentity();
     if(myIdentity && PEOPLE.includes(myIdentity)){ currentPerson = myIdentity; }
   }catch(e){ console.error('identity load failed', e); }
-  activeView = viewFromHash() || 'today';
+  { const r0 = routeFromHash(); activeView = r0 ? r0.view : 'today'; if(r0 && r0.page){ activePage[r0.view] = r0.page; } }
   try{
     if(applySnapshot()){
       paintedFromSnapshot = true;

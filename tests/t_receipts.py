@@ -45,7 +45,7 @@ with sync_playwright() as pw:
 
     # ---------- open one, then another ----------
     pg.locator('.chapter-body.open .rcpt-btn').click(); pg.wait_for_timeout(500)
-    check('R4 Open shows the card, and the button becomes Close', pg.locator('#receiptCardEl').count() == 1 and pg.locator('.chapter-body.open .rcpt-btn').inner_text() == 'Close')
+    check('R4 Open shows the card, and the button becomes Close', pg.locator('#receiptCardEl').count() == 1 and pg.locator('.chapter-body.open .rcpt-btn').text_content() == 'Close')
     pg.locator('.chapter-head').nth(1).click(); pg.wait_for_timeout(300)
     pg.locator('.chapter-body.open .rcpt-btn').click(); pg.wait_for_timeout(500)
     check('R4 only one receipt is open at a time', pg.locator('#receiptCardEl').count() == 1 and pg.evaluate("receiptChapterId") == 2 and pg.locator('.rcpt-block[data-ch="1"] #receiptCardEl').count() == 0)
@@ -65,7 +65,7 @@ with sync_playwright() as pw:
     check('R6 a redraw while typing keeps the box and what was typed', pg.locator('#receiptQuoteInput').input_value().endswith('abc') and pg.evaluate("document.activeElement.id") == 'receiptQuoteInput')
     pg.evaluate("document.activeElement.blur()")
     pg.locator('.chapter-body.open .rcpt-btn').click(); pg.wait_for_timeout(300)
-    check('R4 Close collapses it again', pg.locator('#receiptCardEl').count() == 0 and pg.locator('.chapter-body.open .rcpt-btn').inner_text() == 'Open')
+    check('R4 Close collapses it again', pg.locator('#receiptCardEl').count() == 0 and pg.locator('.chapter-body.open .rcpt-btn').text_content() == 'Open')
     e.close()
 
     # ---------- the card fits, at every phone width, in both shapes ----------
