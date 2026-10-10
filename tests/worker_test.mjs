@@ -270,5 +270,155 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('brew: no question on a day without one', !pushes.some(x => x.title === 'Today\u2019s brew'), pushes);
 }
 
+// ===== letters: "you got one" ping =====
+{
+  const pingTo = (who) => sentTo(who).filter(x => / wrote (you something|all of us something) ✦$/.test(x.title));
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:0', to: 'Nina', body: 'already there', opensDay: 10, writtenAt: '2026-10-01T12:00:00Z' }]);
+  await runAt(D5);
+  check('letters: first run marks existing letters as seen, sends nothing', pingTo('Nina').length === 0, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'secret', opensDay: 25, writtenAt: plus(D5, 0) }]);
+  await runAt(plus(D5, 60));
+  check('letter ping: recipient gets pinged', pingTo('Nina').length === 1, pingTo('Nina'));
+  check('letter ping: title names the sender', pingTo('Nina')[0].title === 'Kellye wrote you something ✦', pingTo('Nina'));
+  check('letter ping: exact body with the date label', pingTo('Nina')[0].body === 'Kellye sealed a letter with your name on it. It opens Oct 25, Full Moon in Taurus. You\'re the main event, apparently.', pingTo('Nina'));
+  check('letter ping: never reveals the letter text', !pingTo('Nina')[0].body.includes('secret'));
+  check('letter ping: the sender gets nothing', pingTo('Kellye').length === 0);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Lauren', [{ id: 'Lauren:1', to: 'all', body: 'group secret', opensDay: 25, writtenAt: plus(D5, 0) }]);
+  await runAt(plus(D5, 60));
+  check('letter ping: a group letter reaches the other three, never the sender',
+    pingTo('Nina').length === 1 && pingTo('Kellye').length === 1 && pingTo('Carolina').length === 1 && pingTo('Lauren').length === 0, pushes);
+  check('letter ping: group title and exact body', pingTo('Kellye')[0].title === 'Lauren wrote all of us something ✦'
+    && pingTo('Kellye')[0].body === 'Lauren sealed a letter for the whole coven. It opens Oct 25, Full Moon in Taurus. Four of us, one envelope, no peeking.', pingTo('Kellye'));
+
+  // sealed for a date that is already open: says so instead of "making you wait"
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Carolina', [{ id: 'Carolina:1', to: 'Nina', body: 'late one', opensDay: 10, writtenAt: '2026-10-20T20:00:00Z' }]);
+  await runAt('2026-10-20T20:00:00Z'); // Day 20, well after Day 10 already opened
+  check('letter ping: already-open date replaces the wait line',
+    pingTo('Nina')[0] && pingTo('Nina')[0].body === 'Carolina sealed a letter with your name on it. It\'s open right now, so there\'s no waiting this time. Go on.', pingTo('Nina'));
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Carolina', [{ id: 'Carolina:1', to: 'Carolina', body: 'to future me', opensDay: 31, writtenAt: plus(D5, 0) }]);
+  await runAt(plus(D5, 60));
+  check('letter ping: a letter to yourself never pings anyone', pingTo('Nina').length === 0 && pingTo('Carolina').length === 0, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  put('recal-notif-prefs:Nina', { activity: false });
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'secret', opensDay: 25, writtenAt: plus(D5, 0) }]);
+  await runAt(plus(D5, 60));
+  check('letter ping: the activity switch off blocks it', pingTo('Nina').length === 0, pushes);
+
+  // a letter discovered more than 6 hours after it was written is old news, no ping
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'secret', opensDay: 25, writtenAt: plus(D5, 0) }]);
+  await runAt(plus(D5, 7 * 3600));
+  check('letter ping: a letter written more than 6 hours before it is first seen is skipped', pingTo('Nina').length === 0, pushes);
+}
+
+// ===== letters: evening nudge (every night, not just the night a letter opens) =====
+{
+  const O10 = '2026-10-11T03:30:00Z'; // 8:30pm Pacific, Oct 10 (Day 10, New Moon in Libra, inside the window)
+  const laterNight = '2026-10-13T03:30:00Z'; // 8:30pm Pacific, Oct 12 (Day 12, two nights after opening, still unopened)
+  const nudgeTo = (who) => sentTo(who).filter(x => x.title === 'Break the seal ✦');
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 25, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runAt(O10);
+  check('nudge: nothing before the letter is open', nudgeTo('Nina').length === 0, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runAt('2026-10-11T02:30:00Z'); // 7:30pm Pacific, Oct 10: open, but before the 8pm window
+  check('nudge: nothing before 8pm Pacific even once open', nudgeTo('Nina').length === 0, pushes);
+  await runAt(O10);
+  check('nudge: the recipient gets nudged the night her letter opens', nudgeTo('Nina').length === 1, nudgeTo('Nina'));
+  check('nudge: exact body, night it opens, one letter', nudgeTo('Nina')[0].body === 'Kellye\'s letter is ready and so, we suspect, are you. New Moon in Libra. Break the seal.', nudgeTo('Nina'));
+  check('nudge: only the recipient, never the sender', nudgeTo('Kellye').length === 0);
+  await runAt(plus(O10, 300));
+  check('nudge: sent once per person per day, not every run', nudgeTo('Nina').length === 0, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  put('r2:recal-letters-opened:Nina', { 'Kellye:1': '2026-10-10T20:00:00.000Z' });
+  await runAt(O10);
+  check('nudge: an already-opened letter does not nudge', nudgeTo('Nina').length === 0, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  put('r2:recal-letters:Lauren', [{ id: 'Lauren:1', to: 'all', body: 'y', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runAt(O10);
+  check('nudge: two letters opening the same night pluralize, exact body', nudgeTo('Nina').length === 1
+    && nudgeTo('Nina')[0].body === '2 letters are ready for you tonight. Go be adored, one seal at a time.', nudgeTo('Nina'));
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runAt(laterNight);
+  check('nudge: still nudges on a later night, not just the opening night', nudgeTo('Nina').length === 1, nudgeTo('Nina'));
+  check('nudge: later-night single-letter line rotates by day (today % 4)',
+    nudgeTo('Nina')[0].body === 'Kellye\'s letter isn\'t going anywhere. Neither are we. Break the seal when you\'re ready.', nudgeTo('Nina'));
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  put('r2:recal-letters:Lauren', [{ id: 'Lauren:1', to: 'Nina', body: 'y', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runAt(laterNight);
+  check('nudge: later-night several-letter line rotates too (today % 2)',
+    nudgeTo('Nina')[0].body === '2 letters are waiting for you, all from people who adore you. Take them in any order.', nudgeTo('Nina'));
+
+  // self-letters: included in the count, but the sender-named single-letter copy isn't approved for them
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Nina', [{ id: 'Nina:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runAt(O10);
+  check('nudge: a letter only to yourself is skipped, not invented copy', nudgeTo('Nina').length === 0, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Nina', [{ id: 'Nina:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'y', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runAt(O10);
+  check('nudge: a self-letter alongside another still counts toward the plural nudge', nudgeTo('Nina').length === 1
+    && nudgeTo('Nina')[0].body === '2 letters are ready for you tonight. Go be adored, one seal at a time.', nudgeTo('Nina'));
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runAt('2026-10-09T03:30:00Z'); // 8:30pm Pacific, Oct 8 (Day 8, before the Oct 10-31 window even opens)
+  check('nudge: nothing before Day 10, even if (hypothetically) something were open', nudgeTo('Nina').length === 0, pushes);
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);

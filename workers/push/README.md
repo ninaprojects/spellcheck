@@ -14,6 +14,8 @@ The file here, `spellcheck-push-worker.js`, is a copy of what is deployed. If th
 - "On a roll" pushes at personal streaks of 5, 10, 15, 20, and 25 days: one to the other three and one private one to her. If everyone hits a streak in the same moment, only the coven push and her private one go out.
 - A Sunday recap at 6pm Pacific, from day 7 on, covering the last seven days. It reads "perfect," "the week, in numbers," or "a softer week."
 - Coven activity: a spell cast, photos, workout proof, shared links, and Currently updates. Water check-ins stay silent.
+- Sealed letters, "you got one": fires when a letter lands for you (or the whole coven), named by sender in the title. Never fires for a letter you sealed to yourself. Skips a letter more than 6 hours old by the time it's first seen (stale by the time the Worker catches up). If the letter's date has already opened by the time it's sealed, the body says so instead of telling you to wait.
+- Sealed letters, "break the seal": an evening nudge, 8:00 to 9:59pm Pacific, every night from Day 10 through Day 31. Fires once per person per day for any open, unopened letter (including one she sealed to herself, once that copy is approved, see below). The wording differs the night a letter actually opens versus later nights (a 4-line rotation for one letter, 2-line for several, keyed off the day number).
 
 If the Worker was down for a whole window, that day's morning or evening push is skipped, not sent late.
 
@@ -41,7 +43,9 @@ Never put this key, or any other secret, in this repo. The repo is public.
 - Reading and writing the database uses plain REST calls with no login. That only works while the `recalData` rules allow public access.
 - If the database rules are ever tightened, this Worker has to change in the same release, or every push stops. It would need the database scope added and a token on each request.
 - It also reads `recal-comments:<Name>`. The first run after this version deploys marks existing comments as seen, so nothing old is announced.
+- It also reads `recal-letters:<Name>` and `recal-letters-opened:<Name>` for the two letter pushes. It never reads or sends a letter's body, only who sent it, who it's for, and which day it opens. Same silent-baseline rule on first deploy.
 - It keeps its own state at `recalData/r2:recal-push-state`. Do not edit that by hand unless you mean to reset what it has already seen.
+- Deploy order matters here specifically: paste this Worker into Cloudflare before pushing the letters feature to the app repo. A letter sealed before the Worker's first run with this code would never get its "you got one" ping (it would just get silently marked as seen at baseline).
 
 ## Keep in sync by hand
 
@@ -51,6 +55,7 @@ These must match `index.html`, or pushes and the app disagree:
 - The day numbers in `SPECIAL` and `AFFIRMATIONS` with the tagged days in the app's `DAYS` list. Special push messages are for days 1, 3, 10, 23, 24, 25, and 31. Day 16 is tagged "Halfway" in the app but uses a normal affirmation here.
 - `FEED_LINES`, `pickLine`, and `lineKey` with the app's feed code, so a push and its feed post read the same.
 - `QUESTIONS` here and in `index.html` (Day 6 to 31). The `brew` job sends the day's question at noon to 10pm Pacific, once per person, and skips anyone who already answered or turned the morning switch off.
+- `LETTER_DAYS` and `LETTER_NIGHT_NAMES`/`LETTER_DATE_LABELS` here with `LETTER_DAYS` and the tagged days in the app's `DAYS` list (currently Day 10, 25, 31). If a letter day ever shifts, update both.
 - Record keys use the `r2:` prefix. Device tokens (`recal-fcm-token:<Name>`) and notification switches (`recal-notif-prefs:<Name>`) are shared between rounds and have no prefix.
 
 Known gap: this Worker works out "today" in Pacific time. The app uses each phone's local time. The two can disagree near midnight for anyone outside Pacific.

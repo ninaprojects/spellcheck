@@ -43,7 +43,7 @@
   try{ if(localStorage.getItem('recal-intro-seen-r2')==='1') document.documentElement.classList.add('intro-seen'); }catch(e){}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Display:ital,wght@0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Display:ital,wght@0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;600&family=Zeyada&display=swap" rel="stylesheet">
 <!-- html2canvas and Tesseract.js load on demand (see loadScriptOnce), not on every open -->
 <!-- Firebase (free tier) holds the shared data -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -713,6 +713,89 @@
   .qa-ans-text{font-size:13.5px;line-height:1.45;margin:0 0 8px 36px;color:var(--text-primary);overflow-wrap:anywhere;}
   .qa-ans .react-row, .qa-ans .react-who, .qa-ans .cmt-list, .qa-ans .cmt-compose, .qa-ans .cmt-note-title{margin-left:36px;}
 
+  /* ---- Sealed letters: its own look (wine, parchment, Zeyada), not the app's main palette ---- */
+  .ltr-eyebrow{display:flex;align-items:center;gap:7px;font-family:'Inter';font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:#6B1E3C;margin-bottom:14px;}
+  .ltr-eyebrow .mark{font-size:12px;letter-spacing:.08em;opacity:.7;}
+  @keyframes ltrShake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+  .ltr-row.shake{animation:ltrShake .45s;}
+  .ltr-badge{width:34px;height:34px;flex-shrink:0;box-sizing:border-box;border-radius:50%;border:2px solid #6B1E3C;padding:2px;background:var(--bg);display:inline-flex;align-items:center;justify-content:center;}
+  .ltr-row{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px 14px 22px;margin-bottom:14px;box-sizing:border-box;color:inherit;text-align:left;border:none;font:inherit;cursor:pointer;
+    background:linear-gradient(175deg, #FFFCF4 0%, #FBF3DE 100%);
+    border-radius:3px;
+    box-shadow:0 8px 18px -10px rgba(60,30,10,.4);
+  }
+  .ltr-row .ltr-badge{position:absolute;left:-14px;top:50%;margin-top:-17px;box-shadow:0 2px 5px rgba(0,0,0,.22);}
+  .ltr-row.locked .ltr-badge{border-color:#B9A68C;}
+  .ltr-row.locked .ltr-badge img, .ltr-row.locked .ltr-badge span{filter:grayscale(.5) opacity(.85);}
+  .ltr-name{font-size:14px;font-weight:500;color:#1A1A1A;}
+  .ltr-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:3px;color:#767066;}
+  .ltr-dash{flex:0 0 22px;height:0;border-top:1px dashed #D8C49A;}
+  .ltr-nudge{color:#C9558A;}
+  .ltr-empty{font-size:13px;color:var(--text-secondary);font-weight:300;margin:4px 0 18px;}
+  .ltr-opened-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 0;border-top:1px solid var(--line);margin-top:10px;}
+
+  .ltr-stage{position:relative;margin:0 -20px -24px;padding:28px 20px calc(32px + env(safe-area-inset-bottom,0px));overflow:hidden;transition:background 1.1s ease;}
+  .ltr-stage::before{content:'';position:absolute;inset:-6px;z-index:0;pointer-events:none;opacity:0;transition:opacity 1.1s ease .3s;filter:blur(.9px);
+    background:radial-gradient(1.5px 1.5px at 12% 22%,#FFD9A0,transparent),radial-gradient(1px 1px at 30% 70%,#FFD9A0,transparent),radial-gradient(2px 2px at 55% 18%,#E8B86B,transparent),radial-gradient(1px 1px at 72% 55%,#FFD9A0,transparent),radial-gradient(1.5px 1.5px at 88% 30%,#FFD9A0,transparent),radial-gradient(1px 1px at 45% 88%,#FFD9A0,transparent),radial-gradient(2px 2px at 92% 82%,#E8B86B,transparent),radial-gradient(1px 1px at 6% 80%,#FFD9A0,transparent);
+  }
+  .ltr-stage.is-open{background:radial-gradient(120% 90% at 20% 0%, #6B3A22 0%, transparent 60%), radial-gradient(100% 80% at 100% 100%, #6B1E3C 0%, transparent 55%), #241410;}
+  .ltr-stage.is-open::before{opacity:.9;}
+  .ltr-stage.is-open .ltr-eyebrow{color:#E8C994;}
+  .ltr-stage.is-open .ltr-back{color:#D9C7A3;border-bottom-color:rgba(217,199,163,.45);}
+  .ltr-back{position:relative;z-index:1;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#767066;border-bottom:1.5px solid #E9E4DA;padding-bottom:4px;display:inline-block;text-decoration:none;transition:color .7s ease,border-color .7s ease;}
+  .ltr-stage-body{position:relative;z-index:1;margin-top:20px;}
+  .ltr-envelope-wrap{position:relative;transition:opacity .3s ease .4s;}
+  .ltr-envelope-wrap.gone{opacity:0;pointer-events:none;}
+  .ltr-envelope{position:relative;width:100%;height:170px;perspective:700px;}
+  .ltr-env-body{position:absolute;inset:0;background:#FBF6EC;border:1px solid #E9E4DA;border-radius:2px;}
+  .ltr-env-flap{position:absolute;top:0;left:0;right:0;height:130px;background:#F3ECDD;border:1px solid #E9E4DA;border-bottom:none;clip-path:polygon(0 0,100% 0,50% 92%);transform-origin:top center;transition:transform .55s cubic-bezier(.4,0,.2,1) .08s;transform:rotateX(0deg);}
+  .ltr-envelope.cracked .ltr-env-flap, .ltr-envelope.open .ltr-env-flap{transform:rotateX(-150deg);}
+  .ltr-seal-wrap{position:absolute;top:104px;left:50%;margin-left:-16px;width:32px;height:32px;}
+  .ltr-seal-drip{position:absolute;left:50%;bottom:-6px;margin-left:-3px;width:6px;height:10px;border-radius:0 0 50% 50% / 0 0 60% 60%;background:#5C1930;transition:opacity .35s ease;}
+  .ltr-envelope.cracked .ltr-seal-drip, .ltr-envelope.open .ltr-seal-drip{opacity:0;}
+  .ltr-seal-half{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 30%, #8B3458 0%, #6B1E3C 55%, #4A1329 100%);box-shadow:0 1px 2px rgba(0,0,0,.3), inset 0 1px 1px rgba(255,255,255,.15);transition:opacity .4s ease, transform .4s cubic-bezier(.3,0,.4,1);}
+  .ltr-seal-half.l{clip-path:polygon(50% 0%,46% 9%,51% 18%,44% 29%,52% 40%,43% 52%,51% 64%,45% 77%,52% 90%,50% 100%,0% 100%,0% 0%);}
+  .ltr-seal-half.r{clip-path:polygon(50% 0%,54% 9%,49% 18%,56% 29%,48% 40%,57% 52%,49% 64%,55% 77%,48% 90%,50% 100%,100% 100%,100% 0%);}
+  .ltr-envelope.cracked .ltr-seal-half.l, .ltr-envelope.open .ltr-seal-half.l{opacity:0;transform:translate(-10px,4px) rotate(-26deg);}
+  .ltr-envelope.cracked .ltr-seal-half.r, .ltr-envelope.open .ltr-seal-half.r{opacity:0;transform:translate(10px,-4px) rotate(26deg);}
+  .ltr-tap-hint{margin-top:20px;font-family:'Noto Serif Display',Georgia,serif;font-style:italic;font-size:19px;color:#1A1A1A;text-align:center;}
+  .ltr-tap-sub{margin-top:12px;text-align:center;}
+  .ltr-seal-btn{background:none;border:none;padding:0;margin:0 auto;display:block;width:100%;max-width:260px;font:inherit;color:inherit;cursor:pointer;}
+  @keyframes ltrFlicker{0%,100%{opacity:1}50%{opacity:.88}}
+  .ltr-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 50% at 50% 10%, rgba(255,190,130,.22), transparent 75%);animation:ltrFlicker 4.6s ease-in-out infinite;}
+  .ltr-scroll-wrap{position:relative;display:flex;flex-direction:column;transition:transform .7s cubic-bezier(.2,.8,.2,1) .3s, opacity .7s ease .3s;transform:translateY(70px) rotate(1.5deg);opacity:0;pointer-events:none;}
+  .ltr-scroll-wrap.show{transform:translateY(0) rotate(-.6deg);opacity:1;pointer-events:auto;}
+  .ltr-scroll-wrap.static{transition:none;transform:none;opacity:1;pointer-events:auto;}
+  .ltr-scroll-roll{position:relative;height:16px;flex-shrink:0;border-radius:50% / 65%;z-index:1;}
+  .ltr-scroll-roll.top{background:linear-gradient(180deg, #20100A 0%, #5A3A1E 22%, #C9A066 48%, #EAD39A 58%, #B8935C 75%, #6B4226 100%);box-shadow:0 4px 8px -3px rgba(0,0,0,.45);}
+  .ltr-scroll-roll.bottom{background:linear-gradient(0deg, #20100A 0%, #5A3A1E 22%, #C9A066 48%, #EAD39A 58%, #B8935C 75%, #6B4226 100%);box-shadow:0 -4px 8px -3px rgba(0,0,0,.45);}
+  .ltr-scroll-roll::after{content:'';position:absolute;inset:0;border-radius:inherit;mix-blend-mode:multiply;pointer-events:none;
+    background:
+      radial-gradient(9px 5px at 14% 45%, rgba(20,8,4,.5), transparent 70%),
+      radial-gradient(7px 4px at 38% 55%, rgba(20,8,4,.35), transparent 70%),
+      radial-gradient(10px 5px at 64% 40%, rgba(20,8,4,.45), transparent 70%),
+      radial-gradient(8px 4px at 85% 58%, rgba(20,8,4,.38), transparent 70%);
+  }
+  .ltr-letter-card{position:relative;flex:1;box-sizing:border-box;padding:24px 26px 22px;overflow:auto;
+    border-left:1px solid rgba(60,20,10,.1);
+    border-right:1px solid rgba(60,20,10,.1);
+    background:
+      radial-gradient(1px 1px at 20% 30%, rgba(0,0,0,.06), transparent),
+      radial-gradient(1px 1px at 76% 60%, rgba(0,0,0,.05), transparent),
+      radial-gradient(140% 160% at 50% 40%, rgba(255,205,130,.16) 0%, transparent 72%),
+      linear-gradient(180deg, #F7E6C0 0%, #F1DCA8 100%);
+    box-shadow:inset 0 10px 12px -10px rgba(40,20,10,.35), inset 0 -10px 12px -10px rgba(40,20,10,.35), 0 16px 34px -16px rgba(40,15,10,.4);
+  }
+  .ltr-to-line{position:relative;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#4A2A12;}
+  .ltr-sigil-rule{position:relative;margin-top:10px;font-size:11px;letter-spacing:.4em;color:#6B1E3C;opacity:.55;}
+  .ltr-body-text{position:relative;font-family:'Zeyada','Noto Serif Display',Georgia,serif;font-weight:400;font-size:31px;line-height:1.55;color:#33190E;margin-top:14px;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .ltr-sender-line{position:relative;font-family:'Zeyada',cursive;font-weight:400;font-size:27px;color:#33190E;margin-top:20px;}
+  .ltr-replay-row{position:relative;margin-top:24px;text-align:center;}
+  .ltr-replay-row .txt-link{color:#767066;border-bottom-color:#E9E4DA;}
+  .ltr-stage.is-open .ltr-replay-row .txt-link{color:#D9C7A3;border-bottom-color:rgba(217,199,163,.45);}
+  .ltr-char-count{font-size:11px;color:var(--text-secondary);text-align:right;margin-top:4px;}
+  .ltr-idea{font-size:12px;color:var(--text-secondary);font-weight:300;font-style:italic;margin-top:8px;line-height:1.4;}
+
   /* save status */
   #saveToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);transform:translate(-50%,8px);z-index:80;background:var(--text-primary);color:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;padding:8px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;max-width:calc(100vw - 32px);}
   #saveToast.show{opacity:1;transform:translate(-50%,0);}
@@ -890,6 +973,9 @@
   <div class="section-title">Bookends</div>
   <div id="profileBookends"></div>
   </div>
+  <div class="page" data-page="letters" hidden>
+  <div id="lettersWrap"></div>
+  </div>
   <div class="page" data-page="settings" hidden>
   <div class="section-title" id="nav-notifs">Notifications</div>
   <div id="notifSection"></div>
@@ -955,7 +1041,7 @@ function loadScriptOnce(url){
 // of this round can never overwrite Day 1 of Round 1. Profile photos, device
 // tokens and notification switches are the same people, so they stay shared.
 const ROUND_PREFIX = 'r2:';
-const ROUND_KEY_RE = /^(recal:|recal-photo:|recal-daily-photo:|recal-reactions:|recal-comments:|recal-quote:|recal-qa:)/;
+const ROUND_KEY_RE = /^(recal:|recal-photo:|recal-daily-photo:|recal-reactions:|recal-comments:|recal-quote:|recal-qa:|recal-letters:|recal-letters-opened:)/;
 function rk(key){ return ROUND_KEY_RE.test(key) ? ROUND_PREFIX+key : key; }
 
 const storage = {
@@ -3696,6 +3782,419 @@ function renderQuestionCard(){
   });
 }
 
+// ---- Sealed letters: write to self, one person, or all of us, unlocked on a chosen astro day ----
+// Sealed is UI only: Firebase rules are public, so anyone with the database
+// address could technically read an unopened letter. Say so in the handover.
+const LETTER_MAX = 500;
+const LETTER_DAYS = [10, 25, 31]; // New Moon in Libra, Full Moon in Taurus, Halloween. Keep in sync with DAYS' tags.
+// Optional idea shown under the Opens on field once To and Opens on are both picked, keyed by day then
+// recipient bucket: 'self' (To: Me), 'group' (To: All of us), 'person' (anyone else). Approved copy, Oct 2026.
+const LETTER_IDEAS = {
+  10: {
+    person: "Libra's New Moon wants things even. Tell them the one way they balance you out, the kind of thing you'd never say with a straight face in person.",
+    group: "Libra's New Moon wants fairness. Tell the whole coven the one way the four of you balance out, the kind of thing only four people this different could pull off.",
+    self: "Libra's New Moon likes a fair, fresh start. Tell future you the one thing about yourself you're finally being fair to."
+  },
+  25: {
+    person: "Full Moon in Taurus tonight, so take stock, while Venus is actually moving backward across the sky and landing in Libra, like she's double-checking something. Tell them the thing you noticed about them this month that you didn't say out loud.",
+    group: "Full Moon in Taurus tonight, and Venus is moving backward across the sky into Libra at the very same time, taking a second look at partnership. Tell the coven one thing you noticed about this group this month that you haven't said yet.",
+    self: "Full Moon in Taurus tonight, and Venus is moving backward into Libra at the same time, having a think. Tell future you the one thing you noticed about yourself this month and never said out loud."
+  },
+  31: {
+    person: "We did the thing. Tell them something worth bragging about before the round closes. Witches don't do quiet exits.",
+    group: "We did the thing, all four of us. Tell the whole coven what you want remembered about this round. Witches don't do quiet exits.",
+    self: "We did the thing. Tell future you what you want to remember about who you were this round. Witches don't do quiet exits."
+  }
+};
+function letterIdeaFor(day, to){
+  const set = LETTER_IDEAS[day];
+  if(!set) return '';
+  if(to === myIdentity) return set.self;
+  if(to === 'all') return set.group;
+  return set.person;
+}
+const lettersData = {}; // {person: [{id, to, body, opensDay, writtenAt}]}, each person writes only her own record
+const lettersOpenedData = {}; // {person: {letterId: openedAtIso}}, each person writes only her own record
+const lettersSynced = {}, lettersOpenedSynced = {};
+let lettersReadingId = null; // which letter is shown full-screen right now
+let lettersStage = 'sealed'; // 'sealed' | 'cracking' | 'open', for the letter currently being read
+
+async function loadLetters(){
+  for(const p of PEOPLE){
+    try{
+      const res = await storage.get(`recal-letters:${p}`, true);
+      lettersData[p] = res ? JSON.parse(res.value) : [];
+      lettersSynced[p] = res ? res.value : null;
+    }catch(e){ console.error('letters load failed', p, e); lettersData[p] = []; }
+  }
+  for(const p of PEOPLE){
+    try{
+      const res = await storage.get(`recal-letters-opened:${p}`, true);
+      lettersOpenedData[p] = res ? JSON.parse(res.value) : {};
+      lettersOpenedSynced[p] = res ? res.value : null;
+    }catch(e){ console.error('letters-opened load failed', p, e); lettersOpenedData[p] = {}; }
+  }
+}
+
+async function saveMyLetters(){
+  if(!myIdentity) return;
+  try{
+    const json = JSON.stringify(lettersData[myIdentity] || []);
+    lettersSynced[myIdentity] = json;
+    await trackedSet(`recal-letters:${myIdentity}`, json, true);
+  }catch(e){ console.error('letters save failed', e); }
+}
+
+async function saveMyLettersOpened(){
+  if(!myIdentity) return;
+  try{
+    const json = JSON.stringify(lettersOpenedData[myIdentity] || {});
+    lettersOpenedSynced[myIdentity] = json;
+    await trackedSet(`recal-letters-opened:${myIdentity}`, json, true);
+  }catch(e){ console.error('letters-opened save failed', e); }
+}
+
+function startLettersSync(){
+  if(!db || typeof db.ref !== 'function') return;
+  PEOPLE.forEach(p=>{
+    try{
+      db.ref('recalData/' + rk('recal-letters:' + p)).on('value', (snap)=>{
+        try{
+          const val = snap.val();
+          if(typeof val !== 'string' || val === lettersSynced[p]) return;
+          if(p === myIdentity) return; // our own record: this device is the source of truth
+          lettersSynced[p] = val;
+          lettersData[p] = JSON.parse(val);
+          safeRender('renderLettersPage', renderLettersPage);
+        }catch(e){ console.error('letters sync failed', p, e); }
+      });
+    }catch(e){ console.error('could not attach letters listener', p, e); }
+  });
+  PEOPLE.forEach(p=>{
+    try{
+      db.ref('recalData/' + rk('recal-letters-opened:' + p)).on('value', (snap)=>{
+        try{
+          const val = snap.val();
+          if(typeof val !== 'string' || val === lettersOpenedSynced[p]) return;
+          if(p === myIdentity) return;
+          lettersOpenedSynced[p] = val;
+          lettersOpenedData[p] = JSON.parse(val);
+          safeRender('renderLettersPage', renderLettersPage);
+        }catch(e){ console.error('letters-opened sync failed', p, e); }
+      });
+    }catch(e){ console.error('could not attach letters-opened listener', p, e); }
+  });
+}
+
+function letterDayMeta(n){
+  const d = DAYS.find(x=>x.n===n);
+  return d ? {n, date:d.d, tag:d.tag||''} : {n, date:'Day '+n, tag:''};
+}
+// Only days strictly after today, so a newly sealed letter always opens in the future.
+function letterOpenableDays(){
+  const ti = todayInfo();
+  const curDay = ti.state === 'during' ? ti.dayNum : (ti.state === 'before' ? 0 : 32);
+  return LETTER_DAYS.filter(n=> n > curDay);
+}
+function letterIsUnlocked(opensDay){
+  const ti = todayInfo();
+  if(ti.state === 'after') return true;
+  if(ti.state === 'before') return false;
+  return ti.dayNum >= opensDay;
+}
+function letterDaysUntil(opensDay){
+  const ti = todayInfo();
+  if(ti.state !== 'during') return 0;
+  return Math.max(0, opensDay - ti.dayNum);
+}
+function newLetterId(person){
+  return person + ':' + Date.now() + ':' + Math.random().toString(36).slice(2,7);
+}
+
+async function sealLetter(to, opensDay, body){
+  if(!myIdentity) return false;
+  const text = String(body||'').replace(/\s+/g,' ').trim().slice(0, LETTER_MAX);
+  if(!text || !opensDay) return false;
+  const list = lettersData[myIdentity] || (lettersData[myIdentity] = []);
+  list.push({id:newLetterId(myIdentity), to, body:text, opensDay, writtenAt:new Date().toISOString()});
+  saveMyLetters();
+  return true;
+}
+
+async function markLetterOpened(letterId){
+  if(!myIdentity) return;
+  const rec = lettersOpenedData[myIdentity] || (lettersOpenedData[myIdentity] = {});
+  if(rec[letterId]) return;
+  rec[letterId] = new Date().toISOString();
+  saveMyLettersOpened();
+}
+
+// Letters addressed to me, from any sender including myself (never ones I wrote to someone else).
+function myLetters(){
+  const out = [];
+  PEOPLE.forEach(sender=>{
+    (lettersData[sender]||[]).forEach(l=>{
+      if(l.to === myIdentity || l.to === 'all') out.push(Object.assign({from:sender}, l));
+    });
+  });
+  return out;
+}
+function myUnopenedLetters(){
+  const opened = lettersOpenedData[myIdentity] || {};
+  return myLetters().filter(l=> !opened[l.id]).sort((a,b)=> a.opensDay - b.opensDay);
+}
+function myOpenedLetters(){
+  const opened = lettersOpenedData[myIdentity] || {};
+  return myLetters().filter(l=> opened[l.id]).sort((a,b)=> String(b.writtenAt||'').localeCompare(String(a.writtenAt||'')));
+}
+function letterTitle(l){
+  if(l.from === myIdentity && l.to === myIdentity) return 'From you, to you';
+  if(l.to === 'all') return `From ${l.from}, to all of us`;
+  return `From ${l.from}`;
+}
+
+function openWriteLetterSheet(){
+  if(!myIdentity) return;
+  const openable = letterOpenableDays();
+  const returnFocus = document.activeElement;
+  const dim = document.createElement('div');
+  dim.className = 'sheet-dim';
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.id = 'letterSheet';
+  sheet.setAttribute('role','dialog');
+  sheet.setAttribute('aria-modal','true');
+  sheet.setAttribute('aria-label','Write a letter');
+  if(!openable.length){
+    sheet.innerHTML = `
+      <div class="sheet-grab"></div>
+      <h3>Write a letter</h3>
+      <div class="sheet-sub">There's no astro day left this round to seal one for. Check back next round.</div>
+      <div class="sheet-actions"><button type="button" class="txt-link quiet" id="letterCancelBtn">Close</button></div>`;
+    document.body.appendChild(dim); document.body.appendChild(sheet);
+    const close = ()=>{ dim.remove(); sheet.remove(); if(returnFocus && returnFocus.focus) returnFocus.focus(); };
+    dim.onclick = close;
+    sheet.querySelector('#letterCancelBtn').onclick = close;
+    return;
+  }
+  const others = PEOPLE.filter(p=> p !== myIdentity);
+  const toOptions = [`<option value="${myIdentity}">Me</option>`]
+    .concat(others.map(p=> `<option value="${p}">${p}</option>`))
+    .concat([`<option value="all">All of us</option>`])
+    .join('');
+  const dayOptions = openable.map(n=>{
+    const m = letterDayMeta(n);
+    return `<option value="${n}">${m.date}${m.tag ? ', '+m.tag : ''}</option>`;
+  }).join('');
+  sheet.innerHTML = `
+    <div class="sheet-grab"></div>
+    <h3>Write a letter</h3>
+    <div class="sheet-sub">Once it's sealed, it can't be edited or unsent.</div>
+    <label class="grat-label">To</label>
+    <select id="letterToSelect" class="gratitude-input">${toOptions}</select>
+    <label class="grat-label" style="margin-top:12px;">Opens on</label>
+    <select id="letterDaySelect" class="gratitude-input">${dayOptions}</select>
+    <div class="ltr-idea" id="letterIdea"></div>
+    <label class="grat-label" style="margin-top:12px;">Your letter</label>
+    <textarea id="letterBodyInput" class="gratitude-input" maxlength="${LETTER_MAX}" style="min-height:120px;resize:vertical;" placeholder="Say the thing" aria-label="Your letter"></textarea>
+    <div class="ltr-char-count" id="letterCharCount">${LETTER_MAX} left</div>
+    <div class="sheet-actions">
+      <button type="button" class="pill-btn" id="letterSealBtn" disabled>Seal it</button>
+      <button type="button" class="txt-link quiet" id="letterCancelBtn">Cancel</button>
+    </div>`;
+  document.body.appendChild(dim);
+  document.body.appendChild(sheet);
+  const close = ()=>{ dim.remove(); sheet.remove(); document.removeEventListener('keydown', onKey); if(returnFocus && returnFocus.focus) returnFocus.focus(); };
+  const onKey = (e)=>{ if(e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  dim.onclick = close;
+  sheet.querySelector('#letterCancelBtn').onclick = close;
+  const body = sheet.querySelector('#letterBodyInput');
+  const count = sheet.querySelector('#letterCharCount');
+  const sealBtn = sheet.querySelector('#letterSealBtn');
+  const toSelect = sheet.querySelector('#letterToSelect');
+  const daySelect = sheet.querySelector('#letterDaySelect');
+  const ideaEl = sheet.querySelector('#letterIdea');
+  const refreshIdea = ()=>{
+    ideaEl.textContent = letterIdeaFor(Number(daySelect.value), toSelect.value);
+  };
+  toSelect.onchange = refreshIdea;
+  daySelect.onchange = refreshIdea;
+  refreshIdea();
+  body.oninput = ()=>{
+    count.textContent = (LETTER_MAX - body.value.length) + ' left';
+    sealBtn.disabled = !body.value.trim();
+  };
+  sealBtn.onclick = async ()=>{
+    if(sealBtn.disabled) return;
+    sealBtn.disabled = true;
+    const to = sheet.querySelector('#letterToSelect').value;
+    const day = Number(sheet.querySelector('#letterDaySelect').value);
+    const ok = await sealLetter(to, day, body.value);
+    if(!ok){ sealBtn.disabled = false; return; }
+    close();
+    safeRender('renderLettersPage', renderLettersPage);
+  };
+  body.focus();
+}
+
+function nudgeLockedRow(btn, label){
+  const metaEl = btn.querySelector('.ltr-meta');
+  if(!metaEl) return;
+  if(!btn._metaOriginal) btn._metaOriginal = metaEl.innerHTML;
+  btn.classList.add('shake');
+  metaEl.innerHTML = `<span class="ltr-nudge">${escapeHtml(label)}</span>`;
+  clearTimeout(btn._nudgeTimer);
+  btn._nudgeTimer = setTimeout(()=>{
+    btn.classList.remove('shake');
+    metaEl.innerHTML = btn._metaOriginal;
+  }, 2200);
+}
+
+function letterRowHtml(l){
+  const meta = letterDayMeta(l.opensDay);
+  const unlocked = letterIsUnlocked(l.opensDay);
+  const dateLabel = `Opens ${meta.date}${meta.tag ? ', '+meta.tag : ''}`;
+  const daysLeft = letterDaysUntil(l.opensDay);
+  const secondLabel = unlocked ? 'Tap to break the seal' : (daysLeft <= 0 ? 'today' : daysLeft + ' day' + (daysLeft===1?'':'s'));
+  return `<button type="button" class="ltr-row${unlocked?'':' locked'}" data-id="${escapeHtml(l.id)}" data-locked="${unlocked?'0':'1'}">
+    <span class="ltr-badge">${avatarHtml(l.from, 30)}</span>
+    <span style="flex:1;min-width:0;">
+      <span class="ltr-name">${escapeHtml(letterTitle(l))}</span>
+      <span class="ltr-meta">
+        <span>${escapeHtml(dateLabel)}</span>
+        <span class="ltr-dash"></span>
+        <span>${escapeHtml(secondLabel)}</span>
+      </span>
+    </span>
+  </button>`;
+}
+
+function openLetter(id){
+  lettersReadingId = id;
+  const opened = lettersOpenedData[myIdentity] || {};
+  lettersStage = opened[id] ? 'open' : 'sealed';
+  renderLettersPage();
+}
+function closeLetterReading(){
+  lettersReadingId = null;
+  renderLettersPage();
+}
+function breakLetterSeal(){
+  if(lettersStage !== 'sealed') return;
+  lettersStage = 'cracking';
+  renderLettersPage();
+  setTimeout(()=>{
+    lettersStage = 'open';
+    renderLettersPage();
+    markLetterOpened(lettersReadingId);
+  }, 750);
+}
+function replayLetterSeal(){
+  lettersStage = 'sealed';
+  renderLettersPage();
+}
+
+function renderLetterReadingView(wrap, l){
+  const open = lettersStage === 'open';
+  const cracking = lettersStage === 'cracking';
+  const everOpened = !!(lettersOpenedData[myIdentity] || {})[l.id];
+  const meta = letterDayMeta(l.opensDay);
+  wrap.innerHTML = `
+    <div class="ltr-stage${open?' is-open':''}">
+      <a href="#" class="ltr-back" id="letterBackLink">Back to letters</a>
+      <div class="ltr-eyebrow" style="margin-top:14px;">Sealed letters<span class="mark">&#9790;&#8902;&#9789;</span></div>
+      <div class="ltr-stage-body">
+        <div class="ltr-scroll-wrap${open?' show':''}${everOpened?' static':''}">
+          <div class="ltr-scroll-roll top"></div>
+          <div class="ltr-letter-card">
+            <div class="ltr-glow"></div>
+            <div class="ltr-to-line">To ${escapeHtml(l.to==='all' ? 'all of us' : (l.to===l.from ? l.from : l.to))}, ${escapeHtml(meta.date)}${meta.tag ? ', '+escapeHtml(meta.tag) : ''}</div>
+            <div class="ltr-sigil-rule">&#9790; &#8902; &#9789;</div>
+            <div class="ltr-body-text">${escapeHtml(l.body)}</div>
+            <div class="ltr-sender-line">From ${escapeHtml(l.from)}</div>
+            ${everOpened ? `<div class="ltr-replay-row"><a href="#" class="txt-link quiet" id="letterReplayLink">Replay the seal</a></div>` : ''}
+          </div>
+          <div class="ltr-scroll-roll bottom"></div>
+        </div>
+        ${everOpened ? '' : `
+        <div class="ltr-envelope-wrap${open?' gone':''}">
+          <button type="button" class="ltr-seal-btn" id="letterSealTap">
+            <div class="ltr-envelope${cracking||open?' cracked':''}${open?' open':''}">
+              <div class="ltr-env-body"></div>
+              <div class="ltr-env-flap"></div>
+              <div class="ltr-seal-wrap">
+                <div class="ltr-seal-drip"></div>
+                <div class="ltr-seal-half l">${SEAL_EMBLEM_SVG}</div>
+                <div class="ltr-seal-half r">${SEAL_EMBLEM_SVG}</div>
+              </div>
+            </div>
+            <div class="ltr-tap-hint">From ${escapeHtml(l.from)}.</div>
+            <div class="ltr-tap-sub"><span class="txt-link">Tap to break the seal</span></div>
+          </button>
+        </div>`}
+      </div>
+    </div>`;
+  wrap.querySelector('#letterBackLink').onclick = (e)=>{ e.preventDefault(); closeLetterReading(); };
+  const tap = wrap.querySelector('#letterSealTap');
+  if(tap) tap.onclick = breakLetterSeal;
+  const replay = wrap.querySelector('#letterReplayLink');
+  if(replay) replay.onclick = (e)=>{ e.preventDefault(); replayLetterSeal(); };
+}
+const SEAL_EMBLEM_SVG = `<svg width="32" height="32" viewBox="0 0 32 32" style="position:absolute;inset:0;pointer-events:none" fill="none">
+  <path d="M19.5 9.3c-3.6 1.1-6.2 4.1-6.2 7.7s2.6 6.6 6.2 7.7c-1.2.4-2.5.6-3.8.6-5.1 0-9.3-3.7-9.3-8.3s4.2-8.3 9.3-8.3c1.3 0 2.6.2 3.8.6z" fill="#2E0C1A" opacity=".55"/>
+  <path d="M23.2 11l1 2.3 2.4.4-1.8 1.7.4 2.4-2-1.2-2.1 1.2.4-2.4-1.7-1.7 2.3-.4z" fill="#2E0C1A" opacity=".55"/>
+</svg>`;
+
+function renderLettersPage(){
+  const wrap = document.getElementById('lettersWrap');
+  if(!wrap) return;
+  const own = !!myIdentity && currentPerson === myIdentity;
+  if(!own){ wrap.innerHTML = ''; lettersReadingId = null; return; }
+
+  if(lettersReadingId){
+    const l = myLetters().find(x=> x.id === lettersReadingId);
+    if(!l){ lettersReadingId = null; } else { renderLetterReadingView(wrap, l); return; }
+  }
+
+  const unopened = myUnopenedLetters();
+  const opened = myOpenedLetters();
+  wrap.innerHTML = `
+    <div class="section-title">Sealed letters</div>
+    <div class="section-subnote">Notes from the four of us, sealed until a New Moon, a Full Moon, or Halloween. We simply love an occasion, and this is one.</div>
+    <div id="lettersList">
+      ${unopened.length ? unopened.map(letterRowHtml).join('') : '<div class="ltr-empty">Nothing sealed yet.</div>'}
+    </div>
+    <button type="button" class="pill-btn" id="writeLetterBtn">Write a letter</button>
+    ${opened.length ? `
+    <div style="margin-top:32px;">
+      <div class="section-title">Opened letters</div>
+      ${opened.map(l=> `<div class="ltr-opened-row">
+        <div>
+          <div class="ltr-name">${escapeHtml(letterTitle(l))}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Opened ${escapeHtml(formatTimestamp((lettersOpenedData[myIdentity]||{})[l.id]))}</div>
+        </div>
+        <a href="#" class="txt-link quiet" data-reread="${escapeHtml(l.id)}">Read again</a>
+      </div>`).join('')}
+    </div>` : ''}
+  `;
+  document.getElementById('writeLetterBtn').onclick = openWriteLetterSheet;
+  wrap.querySelectorAll('.ltr-row').forEach(btn=>{
+    btn.onclick = ()=>{
+      if(btn.dataset.locked === '1'){
+        const l = unopened.find(x=> x.id === btn.dataset.id);
+        const m = l ? letterDayMeta(l.opensDay) : null;
+        nudgeLockedRow(btn, m ? `Not yet, we're letting the sky hold this one until ${m.date}.` : 'Not yet.');
+        return;
+      }
+      openLetter(btn.dataset.id);
+    };
+  });
+  wrap.querySelectorAll('[data-reread]').forEach(a=>{
+    a.onclick = (e)=>{ e.preventDefault(); openLetter(a.dataset.reread); };
+  });
+}
+
 // The thread in The Tea: the question, then each answer with her own reactions and notes.
 function appendQaThread(body, e){
   const n = e.day;
@@ -4132,7 +4631,7 @@ const PAGES = {
   today:   [],
   coven:   [['tea','The Tea'],['standings','Standings']],
   journey: [['days','The 31 days'],['photos','Photos']],
-  profile: [['profile','Profile'],['settings','Settings']]
+  profile: [['profile','Profile'],['letters','Letters'],['settings','Settings']]
 };
 let activeView = 'today';
 const activePage = {}; // the page each tab was last on
@@ -4141,10 +4640,10 @@ try{
   Object.keys(PAGES).forEach(v=>{ if(saved[v] && PAGES[v].some(x=>x[0]===saved[v])) activePage[v] = saved[v]; });
 }catch(e){}
 
-// Settings belongs to you. Someone else's profile is just their profile page.
+// Settings and Letters belong to you. Someone else's profile is just their profile page.
 function pagesFor(view){
   const list = PAGES[view] || [];
-  if(view === 'profile' && !(myIdentity && currentPerson === myIdentity)) return list.filter(x=>x[0] !== 'settings');
+  if(view === 'profile' && !(myIdentity && currentPerson === myIdentity)) return list.filter(x=>x[0] !== 'settings' && x[0] !== 'letters');
   return list;
 }
 function pageOf(view){
@@ -5083,6 +5582,7 @@ async function renderAll(){
   safeRender('renderProfilePicSection', renderProfilePicSection);
   safeRender('renderTodayCard', renderTodayCard);
   safeRender('renderQuestionCard', renderQuestionCard);
+  safeRender('renderLettersPage', renderLettersPage);
   safeRender('renderStreakCard', renderStreakCard);
   safeRender('renderCovenFeed', renderCovenFeed);
   safeRender('renderResetLink', renderResetLink);
@@ -5115,7 +5615,7 @@ function saveSnapshot(){
   try{
     const people = {};
     PEOPLE.forEach(p=>{ if(allData[p]) people[p] = JSON.stringify(allData[p]); });
-    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({at: Date.now(), people, reactions: reactionsData, comments: commentsData, qa: qaData, prefs: notifPrefs}));
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({at: Date.now(), people, reactions: reactionsData, comments: commentsData, qa: qaData, prefs: notifPrefs, letters: lettersData, lettersOpened: lettersOpenedData}));
   }catch(e){ /* storage full or unavailable, fine */ }
   PEOPLE.forEach(p=>{
     const src = profilePicCache[p];
@@ -5142,6 +5642,8 @@ function applySnapshot(){
     reactionsData[p] = (snap.reactions && snap.reactions[p]) || {};
     commentsData[p] = (snap.comments && snap.comments[p]) || {};
     qaData[p] = (snap.qa && snap.qa[p]) || {};
+    lettersData[p] = (snap.letters && snap.letters[p]) || [];
+    lettersOpenedData[p] = (snap.lettersOpened && snap.lettersOpened[p]) || {};
     notifPrefs[p] = Object.assign({}, NOTIF_PREF_DEFAULTS, (snap.prefs && snap.prefs[p]) || {});
   });
   return true;
@@ -5167,6 +5669,7 @@ function applySnapshot(){
     try{ await loadReactions(); }catch(e){ console.error('reactions load failed', e); }
     try{ await loadComments(); }catch(e){ console.error('comments load failed', e); }
     try{ await loadQa(); }catch(e){ console.error('question answers load failed', e); }
+    try{ await loadLetters(); }catch(e){ console.error('letters load failed', e); }
     try{ await loadNotifPrefs(); }catch(e){ console.error('prefs load failed', e); }
     await preloadProfilePics();
   }catch(e){
@@ -5184,6 +5687,7 @@ function applySnapshot(){
   try{ startReactionsSync(); }catch(e){ console.error('reactions sync setup failed', e); }
   try{ startCommentsSync(); }catch(e){ console.error('comments sync setup failed', e); }
   try{ startQaSync(); }catch(e){ console.error('question answers sync setup failed', e); }
+  try{ startLettersSync(); }catch(e){ console.error('letters sync setup failed', e); }
 })();
 
 function setupScrollspy(){

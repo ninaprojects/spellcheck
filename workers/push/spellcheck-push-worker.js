@@ -36,6 +36,10 @@ const VERBS = { reading: 'reading', watching: 'watching', listening: 'listening 
 // Must match index.html's CHALLENGE_START (and notify.js). Only casts for
 // *today* push, so backfilling an old day doesn't ping everyone.
 const CHALLENGE_START = '2026-10-01'; // Round 2
+// Sealed letters (must match index.html's LETTER_DAYS and DAYS tags).
+const LETTER_DAYS = [10, 25, 31]; // New Moon in Libra, Full Moon in Taurus, Halloween
+const LETTER_NIGHT_NAMES = { 10: 'New Moon in Libra', 25: 'Full Moon in Taurus', 31: 'Halloween' };
+const LETTER_DATE_LABELS = { 10: 'Oct 10, New Moon in Libra', 25: 'Oct 25, Full Moon in Taurus', 31: 'Oct 31, Halloween' };
 
 function castCount(dd) {
   if (!dd) return 0;
@@ -645,6 +649,36 @@ export async function run(env, now) {
     state.commentsSeen = Array.from(cSeen).filter(u => liveComments.has(u));
   }
 
+  // ---- letters: "you got one" ping, fires when a letter is sealed to you ----
+  // Letters are append-only (never edited or unsent), so this is a plain seen-set
+  // diff like reactions, with no need to handle removal.
+  const lettersByIdNow = new Map(); // id -> {sender, to, opensDay, writtenAt}
+  for (const sender of PEOPLE) {
+    const list = (await readKey(R2 + 'recal-letters:' + sender)) || [];
+    for (const l of list) if (l && l.id) lettersByIdNow.set(l.id, { sender, to: l.to, opensDay: l.opensDay, writtenAt: l.writtenAt });
+  }
+  const pendingLetters = state.pendingLetters || {};
+  if (!state.lettersInit) {
+    state.lettersSeen = Array.from(lettersByIdNow.keys());
+    state.lettersInit = true;
+    changed = true;
+    console.log('Letters baseline: marked', lettersByIdNow.size, 'existing letters as seen.');
+  } else {
+    const lSeen = new Set(state.lettersSeen || []);
+    for (const [id, l] of lettersByIdNow) {
+      if (lSeen.has(id)) continue;
+      lSeen.add(id); changed = true;
+      if (l.writtenAt && now.getTime() - new Date(l.writtenAt).getTime() > 6 * 3600 * 1000) continue; // old news
+      if (l.to === l.sender) continue; // letter to yourself: no ping, you already know
+      const recipients = l.to === 'all' ? PEOPLE.filter(p => p !== l.sender) : (PEOPLE.includes(l.to) ? [l.to] : []);
+      for (const r of recipients) {
+        if (!(await prefsFor(r)).activity) continue;
+        (pendingLetters[r] = pendingLetters[r] || []).push({ id, sender: l.sender, to: l.to, opensDay: l.opensDay });
+      }
+    }
+    state.lettersSeen = Array.from(lSeen).filter(id => lettersByIdNow.has(id));
+  }
+
   const sent = [];
   if (!quiet && Object.keys(pendingActivity).length) {
     let accessTokenA = null;
@@ -710,6 +744,42 @@ export async function run(env, now) {
     }
   }
 
+  if (!quiet && Object.keys(pendingLetters).length) {
+    let accessTokenL = null;
+    for (const r of Object.keys(pendingLetters)) {
+      const items = pendingLetters[r].filter(i => lettersByIdNow.has(i.id)); // can't happen (letters aren't deletable), kept for symmetry
+      if (!items.length) { delete pendingLetters[r]; changed = true; continue; }
+      const token = await readRaw('recal-fcm-token:' + r);
+      if (!token) { delete pendingLetters[r]; changed = true; continue; }
+      for (const l of items) {
+        const alreadyOpen = l.opensDay <= today;
+        const dateLabel = LETTER_DATE_LABELS[l.opensDay] || ('Oct ' + l.opensDay);
+        const msg = l.to === 'all'
+          ? { title: `${l.sender} wrote all of us something ✦`,
+              body: alreadyOpen
+                ? `${l.sender} sealed a letter for the whole coven. It's open right now, so there's no waiting this time. Go on.`
+                : `${l.sender} sealed a letter for the whole coven. It opens ${dateLabel}. Four of us, one envelope, no peeking.` }
+          : { title: `${l.sender} wrote you something ✦`,
+              body: alreadyOpen
+                ? `${l.sender} sealed a letter with your name on it. It's open right now, so there's no waiting this time. Go on.`
+                : `${l.sender} sealed a letter with your name on it. It opens ${dateLabel}. You're the main event, apparently.` };
+        try {
+          if (!accessTokenL) accessTokenL = await getAccessToken(env);
+          await sendPush(env, accessTokenL, token, msg);
+          sent.push({ owner: r, ...msg });
+          console.log('Letter ping to', r, '|', msg.title, '|', msg.body);
+        } catch (e) {
+          console.error('Letter ping send failed for', r, e && e.message);
+          l.tries = (l.tries || 0) + 1;
+        }
+      }
+      // Sent items are done; a failed item (tries set, still under 5) stays queued and retries next run.
+      pendingLetters[r] = items.filter(i => (i.tries || 0) > 0 && i.tries < 5);
+      if (!pendingLetters[r].length) delete pendingLetters[r];
+      changed = true;
+    }
+  }
+
   if (!quiet && Object.keys(pending).length) {
     let accessToken = null;
     for (const owner of Object.keys(pending)) {
@@ -758,10 +828,11 @@ export async function run(env, now) {
     const castOn = (p, n) => !!(data[p] && data[p].days && isCast(data[p].days[n]));
     let streak = 0;
     for (let n = today - 1; n >= 1 && PEOPLE.every(p => castOn(p, n)); n--) streak++;
-    for (const job of ['morning', 'brew', 'nudge', 'recap']) {
+    for (const job of ['morning', 'brew', 'nudge', 'recap', 'letters']) {
       const inWindow = job === 'morning' ? (ptHour >= 8 && ptHour < 12)
         : job === 'brew' ? (ptHour >= 12 && ptHour < 22 && !!QUESTIONS[today])
         : job === 'nudge' ? (ptHour >= 19 && ptHour < 22)
+        : job === 'letters' ? (ptHour >= 20 && ptHour < 22 && today >= 10 && today <= 31) // starts at 8pm so it never collides with the 7pm nudge
         : (isSunday && today >= 7 && ptHour >= 18 && ptHour < 22); // Sunday recap, from 6pm
       if (!inWindow) continue;
       let rec = state.sched[job];
@@ -769,7 +840,8 @@ export async function run(env, now) {
       for (const person of PEOPLE) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
-        if (!(await prefsFor(person))[job === 'recap' ? 'activity' : job === 'brew' ? 'morning' : job]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
+        const prefKey = (job === 'recap' || job === 'letters') ? 'activity' : job === 'brew' ? 'morning' : job;
+        if (!(await prefsFor(person))[prefKey]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
         let msg;
         if (job === 'morning') {
           msg = { title: `\u2728 Day ${today} of Spells, Witches`, body: SPECIAL[today] || AFFIRMATIONS[today] || `Day ${today} is live. Go check in.` };
@@ -779,6 +851,50 @@ export async function run(env, now) {
           msg = { title: `Today\u2019s brew`, body: QUESTIONS[today] };
         } else if (job === 'recap') {
           msg = recapMessage(weekStats(data, reactions, today));
+        } else if (job === 'letters') {
+          // Nudges every evening (not just the night a letter opens) for any letter that's
+          // open (opensDay <= today, per the app's letterIsUnlocked) and not yet opened by
+          // this person. Unlike the landed ping, this includes letters she sealed to herself.
+          const opened = (await readKey(R2 + 'recal-letters-opened:' + person)) || {};
+          const unopened = [];
+          for (const sender of PEOPLE) {
+            const list = (await readKey(R2 + 'recal-letters:' + sender)) || [];
+            for (const l of list) {
+              if (l.opensDay > today) continue; // not open yet
+              if (l.to !== person && l.to !== 'all') continue;
+              if (opened[l.id]) continue;
+              unopened.push({ id: l.id, sender, opensDay: l.opensDay });
+            }
+          }
+          if (!unopened.length) { console.log(person, 'has nothing unopened to nudge about.'); finish(); continue; }
+          if (unopened.length === 1 && unopened[0].sender === person) {
+            // Self-letter nudge copy isn't approved yet (only derived, unconfirmed lines exist).
+            // Skip rather than invent wording; flagged to Nina separately.
+            console.log(person, 'only has an unopened letter to herself, nudge copy not approved, skipping.');
+            finish(); continue;
+          }
+          const count = unopened.length;
+          const openedToday = unopened.some(l => l.opensDay === today);
+          if (openedToday) {
+            const night = LETTER_NIGHT_NAMES[today] || `Day ${today}`;
+            msg = count === 1
+              ? { title: 'Break the seal ✦', body: `${unopened[0].sender}'s letter is ready and so, we suspect, are you. ${night}. Break the seal.` }
+              : { title: 'Break the seal ✦', body: `${count} letters are ready for you tonight. Go be adored, one seal at a time.` };
+          } else if (count === 1) {
+            const lines = [
+              `${unopened[0].sender}'s letter isn't going anywhere. Neither are we. Break the seal when you're ready.`,
+              `Still sealed, still from ${unopened[0].sender}, still very patient. Break the seal whenever you like.`,
+              `${unopened[0].sender}'s letter is still sealed and still ready. Some things are worth taking your time over. Break the seal when you do.`,
+              `${unopened[0].sender} wrote you something and it's still here, waiting for the right moment. Make your entrance whenever you like.`,
+            ];
+            msg = { title: 'Break the seal ✦', body: lines[today % lines.length] };
+          } else {
+            const lines = [
+              `${count} letters are waiting for you, all from people who adore you. Take them in any order.`,
+              `${count} letters, all yours, all waiting politely. Take them in any order.`,
+            ];
+            msg = { title: 'Break the seal ✦', body: lines[today % lines.length] };
+          }
         } else {
           const dd = data[person] && data[person].days ? data[person].days[today] : null;
           if (isCast(dd)) { console.log(person, 'already cast Day', today, ', no nudge.'); finish(); continue; }
@@ -805,7 +921,7 @@ export async function run(env, now) {
   if (changed) {
     // Keep "seen" from growing forever: only ids that still exist matter.
     const trimmed = Array.from(seen).filter(id => live.has(id));
-    await writeKey(STATE_KEY, { initialized: true, seen: trimmed, pending, activityInit: !!state.activityInit, activityV: state.activityV || 1, activitySeen: state.activitySeen || [], pendingActivity, commentsInit: !!state.commentsInit, commentsSeen: state.commentsSeen || [], pendingComments, sched: state.sched || {} });
+    await writeKey(STATE_KEY, { initialized: true, seen: trimmed, pending, activityInit: !!state.activityInit, activityV: state.activityV || 1, activitySeen: state.activitySeen || [], pendingActivity, commentsInit: !!state.commentsInit, commentsSeen: state.commentsSeen || [], pendingComments, lettersInit: !!state.lettersInit, lettersSeen: state.lettersSeen || [], pendingLetters, sched: state.sched || {} });
   }
   return { sent, quiet };
 }
