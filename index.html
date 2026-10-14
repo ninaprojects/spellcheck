@@ -197,6 +197,22 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .link-preview .lp-domain{font-size:11px;color:var(--text-secondary);}
 
+  /* Currently pickers: search results under the Reading, Watching and Listening boxes */
+  .media-pick{border:1px solid var(--line);border-top:none;background:var(--bg);}
+  .media-pick .mp-row{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:6px 12px;margin:0;
+    background:none;border:0;border-top:1px solid var(--line);font:inherit;color:inherit;text-align:left;cursor:pointer;}
+  .media-pick .mp-row:first-child{border-top:none;}
+  .media-pick .mp-row:hover,.media-pick .mp-row:focus-visible{background:#FFF3F8;outline:none;}
+  .media-pick .mp-row img,.media-pick .mp-ph{width:32px;height:44px;flex-shrink:0;border-radius:3px;object-fit:cover;background:#F2EEE6;}
+  .media-pick .mp-text{min-width:0;}
+  .media-pick .mp-title{font-family:'Inter';font-weight:500;font-size:13px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .media-pick .mp-sub{font-size:11px;color:var(--text-secondary);}
+  .media-pick .mp-note{padding:10px 12px;font-size:12px;color:var(--text-secondary);}
+  .media-pick .mp-typed{display:block;width:100%;min-height:44px;padding:12px 12px 10px;margin:0;background:none;border:0;border-top:1px solid var(--line);
+    font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-primary);text-align:left;cursor:pointer;}
+  .media-pick .mp-typed:first-child{border-top:none;}
+  .media-pick .mp-typed span{border-bottom:1.5px solid var(--pink);padding-bottom:3px;}
+
   /* session rows (movement proof) */
   .session-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);}
   .session-row:first-of-type{border-top:none;}
@@ -2995,19 +3011,6 @@ function renderPlacements(){
   }
 }
 
-async function fetchMediaMatch(kind, query){
-  if(!query || !query.trim()) return null;
-  try{
-    const res = await fetch(`${MEDIA_WORKER_BASE}/${kind}?q=${encodeURIComponent(query.trim())}`);
-    if(!res.ok) return null;
-    const data = await res.json();
-    return data.result || null;
-  }catch(e){
-    console.error('media search failed', e);
-    return null;
-  }
-}
-
 function renderMediaPreviewHtml(match){
   if(!match) return '';
   return `<a class="link-preview media" href="${match.url}" target="_blank" rel="noopener">
@@ -3019,20 +3022,32 @@ function renderMediaPreviewHtml(match){
   </a>`;
 }
 
-async function fetchAndSaveMediaLink(field, cur, query, kind){
-  if(!query || !query.trim()){
-    cur[field+'Link'] = null;
-    savePerson(currentPerson);
-    return;
+// Search results for a Currently box: up to 5 matches, or [] for none, or null if the search could not be reached.
+// Results are remembered for this visit so retyping the same thing never asks twice.
+const mediaListCache = new Map();
+async function fetchMediaList(kind, query){
+  const q = (query || '').trim();
+  if(!q) return [];
+  const key = kind + '|' + q.toLowerCase();
+  if(mediaListCache.has(key)) return mediaListCache.get(key);
+  try{
+    const res = await fetch(`${MEDIA_WORKER_BASE}/${kind}?q=${encodeURIComponent(q)}&list=1`);
+    if(!res.ok) return null;
+    const data = await res.json();
+    // An older search service ignores list=1 and answers with one match. Still usable, so the app works either way round.
+    const list = Array.isArray(data.results) ? data.results : (data.result ? [data.result] : []);
+    mediaListCache.set(key, list);
+    return list;
+  }catch(e){
+    console.error('media search failed', e);
+    return null;
   }
-  const match = await fetchMediaMatch(kind, query);
-  if(cur[field] !== query) return;
-  cur[field+'Link'] = match;
+}
+
+function recordCurrentlyUpdate(field, value, link){
   const pd = allData[currentPerson];
   if(!pd.currentlyHistory) pd.currentlyHistory = [];
-  pd.currentlyHistory.unshift({field, value:query.trim(), timestamp:new Date().toISOString(), link:match});
-  savePerson(currentPerson);
-  renderCurrentlyHistory();
+  pd.currentlyHistory.unshift({field, value, timestamp:new Date().toISOString(), link:link || null});
 }
 
 const CURRENTLY_FIELDS = {
@@ -3043,8 +3058,15 @@ const CURRENTLY_FIELDS = {
 
 let currentlyEditing = {reading:false, watching:false, listening:false};
 let currentlyEditingPerson = null;
+// A saved TV or movie title carries its year, like "Legends (2026)". Searching with the year in it finds nothing, so drop it.
+function currentlySearchText(kind, value){
+  const v = (value || '').trim();
+  return kind === 'tmdb' ? v.replace(/\s*\(\d{4}\)$/, '') : v;
+}
+const MIN_SEARCH_CHARS = 3;
+const SEARCH_PAUSE_MS = 450;
 
-function renderCurrentlyField(field, cur){
+function renderCurrentlyField(field, cur, searchNow){
   const {kind, placeholder} = CURRENTLY_FIELDS[field];
   const body = document.getElementById('currently'+field.charAt(0).toUpperCase()+field.slice(1)+'Body');
   if(!body) return;
@@ -3053,20 +3075,108 @@ function renderCurrentlyField(field, cur){
   const showInput = canEdit && (currentlyEditing[field] || !value.trim());
 
   if(showInput){
-    body.innerHTML = `<input type="text" class="gratitude-input" placeholder="${placeholder}">`;
+    body.innerHTML = `<input type="text" class="gratitude-input" placeholder="${placeholder}" autocomplete="off" enterkeyhint="done"><div class="media-pick" id="mediaPick-${field}" style="display:none;" aria-live="polite"></div>`;
     const input = body.querySelector('input');
-    input.value = value;
-    input.onchange = async ()=>{
-      const newValue = input.value;
-      cur[field] = newValue;
-      savePerson(currentPerson);
+    const list = body.querySelector('.media-pick');
+    const startText = currentlySearchText(kind, value);
+    input.value = startText;
+    let seq = 0, timer = null, pickingUntil = 0, finished = false;
+
+    const finish = async (commit)=>{
+      if(finished) return;
+      finished = true;
+      clearTimeout(timer);
+      commit();
       currentlyEditing[field] = false;
-      if(newValue.trim()){
-        body.innerHTML = `<div class="commit-sub" style="margin-top:6px;">Looking that up...</div>`;
-      }
-      await fetchAndSaveMediaLink(field, cur, newValue, kind);
       renderCurrentlyField(field, cur);
+      savePerson(currentPerson);
+      renderCurrentlyHistory();
     };
+    // Choosing a match keeps its poster and link.
+    const pick = (match)=> finish(()=>{
+      cur[field] = match.title;
+      cur[field+'Link'] = match;
+      recordCurrentlyUpdate(field, match.title, match);
+    });
+    // Using exactly what was typed keeps the words and shows no poster, so a wrong match can never hide them.
+    const useTyped = ()=> finish(()=>{
+      const typed = input.value.trim();
+      cur[field] = typed;
+      cur[field+'Link'] = null;
+      if(typed) recordCurrentlyUpdate(field, typed, null);
+    });
+
+    const typedRow = (typed)=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mp-typed';
+      const sp = document.createElement('span');
+      sp.textContent = typed ? `Use exactly what I typed` : 'Clear this';
+      b.appendChild(sp);
+      b.onclick = useTyped;
+      return b;
+    };
+    const showList = (results, typed)=>{
+      list.innerHTML = '';
+      list.style.display = 'block';
+      if(results === 'loading'){
+        const n = document.createElement('div'); n.className = 'mp-note'; n.textContent = 'Searching...';
+        list.appendChild(n); return;
+      }
+      if(results === null || !results.length){
+        const n = document.createElement('div'); n.className = 'mp-note';
+        n.textContent = results === null ? "Search isn't answering right now. You can still post what you typed." : 'No matches. You can still post what you typed.';
+        list.appendChild(n);
+      } else {
+        results.forEach(m=>{
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'mp-row';
+          row.setAttribute('role', 'option');
+          if(m.image){ const im = document.createElement('img'); im.src = m.image; im.alt = ''; im.loading = 'lazy'; row.appendChild(im); }
+          else { const ph = document.createElement('div'); ph.className = 'mp-ph'; row.appendChild(ph); }
+          const tx = document.createElement('div'); tx.className = 'mp-text';
+          const t = document.createElement('div'); t.className = 'mp-title'; t.textContent = m.title;
+          const sub = document.createElement('div'); sub.className = 'mp-sub'; sub.textContent = m.subtitle || '';
+          tx.appendChild(t); tx.appendChild(sub); row.appendChild(tx);
+          row.onclick = ()=> pick(m);
+          list.appendChild(row);
+        });
+      }
+      list.appendChild(typedRow(typed));
+    };
+    const hideList = ()=>{ list.style.display = 'none'; list.innerHTML = ''; };
+
+    const search = async ()=>{
+      const q = input.value.trim();
+      if(q.length < MIN_SEARCH_CHARS){ hideList(); return; }
+      const mine = ++seq;
+      showList('loading', q);
+      const results = await fetchMediaList(kind, q);
+      if(mine !== seq || !input.isConnected || input.value.trim() !== q) return; // she kept typing, or left
+      showList(results, q);
+    };
+
+    input.addEventListener('input', ()=>{
+      clearTimeout(timer);
+      seq++; // anything still on its way is out of date
+      if(input.value.trim().length < MIN_SEARCH_CHARS){ hideList(); return; }
+      timer = setTimeout(search, SEARCH_PAUSE_MS);
+    });
+    input.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); if(input.value.trim() !== startText.trim() || !value.trim()) useTyped(); else input.blur(); }
+      if(e.key === 'Escape'){ hideList(); }
+    });
+    // Tapping a result blurs the box first on a phone, so give the tap a moment before treating the blur as "done typing".
+    list.addEventListener('pointerdown', ()=>{ pickingUntil = Date.now() + 1200; });
+    input.addEventListener('blur', ()=>{
+      setTimeout(()=>{
+        if(finished || !input.isConnected || Date.now() < pickingUntil) return;
+        if(input.value.trim() !== startText.trim()) useTyped();
+      }, 300);
+    });
+
+    if(searchNow && input.value.trim()){ search(); input.focus(); }
   } else {
     let bodyHtml;
     if(!value.trim()){
@@ -3076,8 +3186,9 @@ function renderCurrentlyField(field, cur){
     } else {
       bodyHtml = `<div class="commit-sub" style="margin-top:2px;">${escapeHtml(value)}</div>`;
     }
+    const linkStyle = 'font-size:11px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;margin-top:8px;';
     const editLinkHtml = canEdit
-      ? `<a href="#" class="edit-currently-link" style="font-size:11px;color:var(--text-secondary);border-bottom:1px solid var(--line);text-decoration:none;display:inline-block;margin-top:8px;">Edit</a>`
+      ? `<a href="#" class="edit-currently-link" style="${linkStyle}">Edit</a>${value.trim() ? ` <a href="#" class="wrong-match-link" style="${linkStyle}margin-left:12px;">${cur[field+'Link'] ? 'Wrong match?' : 'Find a match'}</a>` : ''}`
       : '';
     body.innerHTML = bodyHtml + editLinkHtml;
     if(canEdit){
@@ -3087,6 +3198,12 @@ function renderCurrentlyField(field, cur){
         renderCurrentlyField(field, cur);
         const input = body.querySelector('input');
         if(input) input.focus();
+      };
+      const wm = body.querySelector('.wrong-match-link');
+      if(wm) wm.onclick = (e)=>{
+        e.preventDefault();
+        currentlyEditing[field] = true;
+        renderCurrentlyField(field, cur, true);
       };
     }
   }
