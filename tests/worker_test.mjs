@@ -47,6 +47,13 @@ const person = (days = {}, weeks = {}) => ({ days, weeks });
 const at = (iso) => new Date(iso);
 const sentTo = (who) => pushes.filter(x => x.to === who);
 async function runAt(iso) { pushes = []; return W.run(env, at(iso)); }
+// When several jobs are due in the same minute the Worker spreads them over a few minutes to stay under the
+// call limit. This runs the same moment and the next minutes, collecting everything that went out.
+async function runSettled(iso, minutes = 4) {
+  const all = [];
+  for (let i = 0; i < minutes; i++) { await runAt(plus(iso, i * 60)); all.push(...pushes); }
+  pushes = all;
+}
 // The Worker marks what already exists as seen over its first two runs, silently. Do both before changing the data.
 async function baseline() { await runAt(D5); await runAt(plus(D5, 5)); pushes = []; }
 
@@ -205,7 +212,7 @@ const SUN = '2026-10-12T01:30:00Z'; // Sun Oct 11, 6:30pm Pacific = Day 11
 for (const p of PEOPLE) putPerson(p, person(week));
 put('r2:recal-reactions:Kellye', { 'cast:Nina:8': ['\u2661'], 'photo:Nina:9': ['\u2726', '\u263E'] });
 await baseline();
-await runAt(SUN);
+await runSettled(SUN);
 {
   const rec = PEOPLE.map(p => sentTo(p).find(x => x.title.includes('perfect') || x.title.includes('numbers') || x.title.includes('softer')));
   check('everyone gets the recap on Sunday evening', rec.every(Boolean), pushes);
@@ -218,13 +225,13 @@ const half = {};
 for (let n = 5; n <= 11; n++) half[n] = (n % 2) ? cast() : {};
 for (const p of PEOPLE) putPerson(p, person(half));
 await baseline();
-await runAt(SUN);
+await runSettled(SUN);
 check('a regular week reports the numbers', sentTo('Lauren').some(x => x.title === 'The week, in numbers \u2726' && x.body.startsWith('We cast 16 spells')), sentTo('Lauren'));
 resetWorld();
 const few = {}; few[8] = cast();
 for (const p of PEOPLE) putPerson(p, person(few));
 await baseline();
-await runAt(SUN);
+await runSettled(SUN);
 check('a quiet week is kind about it', sentTo('Nina').some(x => x.title === 'A softer week' && x.body.includes('Even witches nap')), sentTo('Nina'));
 resetWorld();
 for (const p of PEOPLE) putPerson(p, person(week));
@@ -418,6 +425,77 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
   await runAt('2026-10-09T03:30:00Z'); // 8:30pm Pacific, Oct 8 (Day 8, before the Oct 10-31 window even opens)
   check('nudge: nothing before Day 10, even if (hypothetically) something were open', nudgeTo('Nina').length === 0, pushes);
+}
+
+// ===== Oct 11 regression: a failing job must never make earlier pushes repeat =====
+// What happened: the letters job pushed a run past Cloudflare's 50 outside calls. The run crashed before it saved
+// "already sent", so the same pushes went out again every minute. These tests pin the three guards:
+// a call budget, claim-before-send, and one job failing without taking the others down.
+{
+  const realFetch = globalThis.fetch;
+  let calls = 0, failGet = null, failStatePut = false;
+  globalThis.fetch = async (url, opts = {}) => {
+    calls++;
+    const u = String(url);
+    if (failGet && u.includes(failGet) && (opts.method || 'GET') === 'GET') return new Response('boom', { status: 500 });
+    if (failStatePut && u.includes('recal-push-state') && opts.method === 'PUT') return new Response('boom', { status: 500 });
+    return realFetch(url, opts);
+  };
+  const SUNDAY_630 = '2026-10-12T01:30:00Z'; // Sun Oct 11, 6:30pm Pacific, Day 11
+  const dupes = (list) => { const seenK = new Map(); for (const x of list) { const k = x.to + '|' + x.title; seenK.set(k, (seenK.get(k) || 0) + 1); } return [...seenK].filter(([, n]) => n > 1).map(([k]) => k); };
+  const sundayWorld = () => {
+    resetWorld();
+    const wk = {}; for (let n = 5; n <= 11; n++) wk[n] = cast();
+    for (const p of PEOPLE) putPerson(p, person(wk));
+    put('r2:recal-letters:Kellye', [{ id: 'Kellye:1', to: 'Nina', body: 'x', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+    put('r2:recal-letters:Lauren', [{ id: 'Lauren:1', to: 'all', body: 'y', opensDay: 10, writtenAt: '2026-10-05T12:00:00Z' }]);
+  };
+
+  // 1. The real evening: 6:30pm to 10pm, every minute, with letters waiting. Nothing repeats, every run stays under 50 calls.
+  sundayWorld();
+  await baseline();
+  let everything = [], maxCalls = 0;
+  for (let m = 0; m < 215; m++) {
+    calls = 0; pushes = [];
+    await W.run(env, at(plus(SUNDAY_630, m * 60)));
+    maxCalls = Math.max(maxCalls, calls);
+    everything.push(...pushes);
+  }
+  check('regression: no push ever repeats across an evening of one-minute runs', dupes(everything.filter(x => /perfect|numbers|softer|still yours|Break the seal|brew/i.test(x.title))).length === 0, dupes(everything));
+  check('regression: every run stays under the 50 outside-call limit', maxCalls <= 50, maxCalls);
+  check('regression: the letters nudge still reached Nina exactly once', everything.filter(x => x.to === 'Nina' && x.title === 'Break the seal ✦').length === 1, everything.filter(x => x.title === 'Break the seal ✦'));
+  check('regression: recap and nudge each reached all four once', ['perfect', 'still yours'].every(k => PEOPLE.every(p => everything.filter(x => x.to === p && x.title.toLowerCase().includes(k)).length <= 1)), everything.map(x => x.to + ':' + x.title));
+
+  // 2. One job's data read fails every minute: the others still send, nothing repeats.
+  sundayWorld();
+  await baseline();
+  failGet = 'recal-letters-opened';
+  everything = [];
+  for (let m = 0; m < 215; m++) { pushes = []; await W.run(env, at(plus(SUNDAY_630, m * 60))); everything.push(...pushes); }
+  failGet = null;
+  check('failing job: the letters job failing does not stop the recap and nudge', PEOPLE.every(p => everything.some(x => x.to === p && /perfect|numbers|softer/i.test(x.title))), everything.map(x => x.to + ':' + x.title));
+  check('failing job: and nothing repeats while it keeps failing', dupes(everything.filter(x => /perfect|numbers|softer|still yours|brew/i.test(x.title))).length === 0, dupes(everything));
+
+  // 3. If the "already sent" state cannot be saved, scheduled pushes are NOT sent (a missed push beats a repeating one).
+  sundayWorld();
+  await baseline();
+  failStatePut = true;
+  everything = [];
+  for (let m = 0; m < 10; m++) { pushes = []; await W.run(env, at(plus(SUNDAY_630, m * 60))).catch(() => {}); everything.push(...pushes); }
+  failStatePut = false;
+  check('state cannot be saved: nothing scheduled is sent', everything.filter(x => /perfect|numbers|softer|still yours|brew|Break the seal/i.test(x.title)).length === 0, everything.map(x => x.title));
+
+  // 4. The call counter is exposed and the cache means a key is never fetched twice in one run.
+  sundayWorld();
+  await baseline();
+  const seenGets = [];
+  const f2 = globalThis.fetch;
+  globalThis.fetch = async (url, opts = {}) => { if ((opts.method || 'GET') === 'GET') seenGets.push(String(url)); return f2(url, opts); };
+  await runAt(plus(SUNDAY_630, 90 * 60));
+  globalThis.fetch = f2;
+  check('one run never reads the same key twice', new Set(seenGets).size === seenGets.length, seenGets.filter((u, i) => seenGets.indexOf(u) !== i));
+  check('callsUsed reports a sane number after a run', typeof W.callsUsed() === 'number' && W.callsUsed() > 0 && W.callsUsed() <= 50, W.callsUsed());
+  globalThis.fetch = realFetch;
 }
 
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');

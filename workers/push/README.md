@@ -72,3 +72,7 @@ Tell Nina before deploying. This Worker sends real notifications to four people.
 ## Rollback
 
 Paste the previous version of `spellcheck-push-worker.js` from this repo's history into Edit code and click Deploy.
+
+## Call limit and repeating pushes (added Oct 11, 2026)
+
+Cloudflare's free plan allows 50 outside calls per run. Over that, the run crashes. Before this fix, a crash happened before the "already sent" state was saved, so the same pushes went out again every minute. Now: reads are cached per run, calls are counted (`CALL_LIMIT` 46, reserve up to 49 for the state save), scheduled pushes are saved as done before they are sent (if the save fails, nothing is sent), and each job runs inside `guard` so one failure does not stop the others. When several jobs are due in the same minute, the overflow simply goes out over the next minutes. Tests: the "regression" section of `tests/worker_test.mjs`.

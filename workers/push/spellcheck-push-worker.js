@@ -440,22 +440,48 @@ export default {
 };
 
 // ---------- Firebase REST (values are stored as JSON strings) ----------
+// Cloudflare's free plan allows 50 outside calls (subrequests) per run. A run that goes over
+// crashes, and a crash before the "already sent" state is saved means the same pushes go out
+// again every minute (this happened on Oct 11). Three guards keep that from recurring:
+//  1. Every read is cached for the length of one run, so the same key is never fetched twice.
+//  2. Every outside call is counted. Normal work stops at CALL_LIMIT, which leaves room to
+//     save state; only the state save may use the reserve up to CALL_HARD.
+//  3. Scheduled sends are claimed (saved as done) BEFORE they go out. See run().
+const CALL_LIMIT = 46;
+const CALL_HARD = 49;
+let _calls = 0;
+let _readCache = new Map();
+let _rawCache = new Map();
+let _tokenP = null;
+function resetRun() { _calls = 0; _readCache = new Map(); _rawCache = new Map(); _tokenP = null; }
+export function callsUsed() { return _calls; }
+function bfetch(url, opts, reserved) {
+  if (_calls >= (reserved ? CALL_HARD : CALL_LIMIT)) throw new Error('subrequest budget reached (' + _calls + ' calls)');
+  _calls++;
+  return fetch(url, opts);
+}
 async function readKey(key) {
-  const r = await fetch(DB + key + '.json');
+  if (_readCache.has(key)) return _readCache.get(key);
+  const r = await bfetch(DB + key + '.json');
   if (!r.ok) throw new Error('read ' + key + ' ' + r.status);
   const v = await r.json();
-  if (typeof v !== 'string') return null;
-  try { return JSON.parse(v); } catch (e) { return null; }
+  let out = null;
+  if (typeof v === 'string') { try { out = JSON.parse(v); } catch (e) { out = null; } }
+  _readCache.set(key, out);
+  return out;
 }
-async function writeKey(key, obj) {
-  const r = await fetch(DB + key + '.json', { method: 'PUT', body: JSON.stringify(JSON.stringify(obj)) });
+async function writeKey(key, obj, reserved) {
+  const r = await bfetch(DB + key + '.json', { method: 'PUT', body: JSON.stringify(JSON.stringify(obj)) }, reserved);
   if (!r.ok) throw new Error('write ' + key + ' ' + r.status);
+  _readCache.delete(key);
 }
 async function readRaw(key) {
-  const r = await fetch(DB + key + '.json');
-  if (!r.ok) return null;
-  const v = await r.json();
-  return typeof v === 'string' ? v : null;
+  if (_rawCache.has(key)) return _rawCache.get(key);
+  const r = await bfetch(DB + key + '.json');
+  let out = null;
+  if (r.ok) { const v = await r.json(); out = typeof v === 'string' ? v : null; }
+  _rawCache.set(key, out);
+  return out;
 }
 
 // ---------- who owns a feed item ----------
@@ -509,7 +535,14 @@ export function composeMessage(items) {
   return { title: `${joinNames(reactors)} reacted ${glyphs.join(' ')}`, body: `On ${target}. The coven sees you, and it\u2019s being weird about how good you are.` };
 }
 
+// Runs one part of the Worker so a failure in it is logged and skipped instead of taking down the
+// whole run (and with it the state save).
+async function guard(name, fn) {
+  try { await fn(); } catch (e) { console.error(name + ' failed', e && e.message); }
+}
+
 export async function run(env, now) {
+  resetRun();
   const reactions = {};
   for (const p of PEOPLE) reactions[p] = (await readKey(R2 + 'recal-reactions:' + p)) || {};
 
@@ -679,7 +712,16 @@ export async function run(env, now) {
     state.lettersSeen = Array.from(lSeen).filter(id => lettersByIdNow.has(id));
   }
 
+  // One place that saves the Worker's state. Called right after sends so a later problem can never
+  // make an earlier push go out again, and once more at the end for everything else.
+  const persist = async (reserved) => {
+    const trimmed = Array.from(seen).filter(id => live.has(id)); // only ids that still exist matter
+    await writeKey(STATE_KEY, { initialized: true, seen: trimmed, pending, activityInit: !!state.activityInit, activityV: state.activityV || 1, activitySeen: state.activitySeen || [], pendingActivity, commentsInit: !!state.commentsInit, commentsSeen: state.commentsSeen || [], pendingComments, lettersInit: !!state.lettersInit, lettersSeen: state.lettersSeen || [], pendingLetters, sched: state.sched || {} }, reserved);
+    changed = false;
+  };
+
   const sent = [];
+  await guard('activity pushes', async () => {
   if (!quiet && Object.keys(pendingActivity).length) {
     let accessTokenA = null;
     const isRoll = (i) => i.type === 'roll' || i.type === 'rollself';
@@ -716,9 +758,12 @@ export async function run(env, now) {
       const kept = left.filter(i => (i.tries || 0) < 5);
       if (kept.length) pendingActivity[r] = kept; else delete pendingActivity[r];
       changed = true;
+      await persist();
     }
   }
+  });
 
+  await guard('comment pushes', async () => {
   if (!quiet && Object.keys(pendingComments).length) {
     let accessTokenC = null;
     for (const r of Object.keys(pendingComments)) {
@@ -734,6 +779,7 @@ export async function run(env, now) {
         sent.push({ owner: r, ...msg });
         console.log('Comments to', r, '|', msg.title, '|', msg.body);
         delete pendingComments[r]; changed = true;
+        await persist();
       } catch (e) {
         console.error('Comment send failed for', r, e && e.message);
         items.forEach(i => { i.tries = (i.tries || 0) + 1; });
@@ -743,7 +789,9 @@ export async function run(env, now) {
       }
     }
   }
+  });
 
+  await guard('letter pings', async () => {
   if (!quiet && Object.keys(pendingLetters).length) {
     let accessTokenL = null;
     for (const r of Object.keys(pendingLetters)) {
@@ -777,9 +825,12 @@ export async function run(env, now) {
       pendingLetters[r] = items.filter(i => (i.tries || 0) > 0 && i.tries < 5);
       if (!pendingLetters[r].length) delete pendingLetters[r];
       changed = true;
+      await persist();
     }
   }
+  });
 
+  await guard('reaction pushes', async () => {
   if (!quiet && Object.keys(pending).length) {
     let accessToken = null;
     for (const owner of Object.keys(pending)) {
@@ -811,8 +862,10 @@ export async function run(env, now) {
       pending[owner] = items.filter(i => !ready.includes(i));
       if (!pending[owner].length) delete pending[owner];
       changed = true;
+      await persist();
     }
   }
+  });
 
   let schedToken = null;
   // ---- scheduled: morning spell (8:00am PT) and evening nudge (7:00pm PT) ----
@@ -835,8 +888,10 @@ export async function run(env, now) {
         : job === 'letters' ? (ptHour >= 20 && ptHour < 22 && today >= 10 && today <= 31) // starts at 8pm so it never collides with the 7pm nudge
         : (isSunday && today >= 7 && ptHour >= 18 && ptHour < 22); // Sunday recap, from 6pm
       if (!inWindow) continue;
+      await guard('scheduled job ' + job, async () => {
       let rec = state.sched[job];
       if (!rec || rec.day !== today) { rec = state.sched[job] = { day: today, done: [], tries: {} }; changed = true; }
+      const outbox = [];
       for (const person of PEOPLE) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
@@ -903,26 +958,36 @@ export async function run(env, now) {
         }
         const token = await readRaw('recal-fcm-token:' + person);
         if (!token) { console.log('No device token for', person, ', skipping', job); finish(); continue; }
-        try {
-          if (!schedToken) schedToken = await getAccessToken(env);
-          await sendPush(env, schedToken, token, msg);
-          sent.push({ owner: person, job, ...msg });
-          console.log(job, 'to', person, '|', msg.title);
-          finish();
-        } catch (e) {
-          rec.tries[person] = (rec.tries[person] || 0) + 1;
-          console.error(job, 'send failed for', person, '(try', rec.tries[person] + '):', e && e.message);
-          if (rec.tries[person] >= 5) finish(); else changed = true;
+        // Claim first: she is marked done and saved BEFORE any push goes out (below). Sends happen after the loop.
+        finish();
+        outbox.push({ person, msg, token });
+      }
+      if (outbox.length) {
+        try { await persist(); } catch (e) {
+          for (const o of outbox) rec.done = rec.done.filter(x => x !== o.person);
+          console.error(job, 'could not save state, not sending:', e && e.message);
+          return;
+        }
+        for (const { person, msg, token } of outbox) {
+          try {
+            if (!schedToken) schedToken = await getAccessToken(env);
+            await sendPush(env, schedToken, token, msg);
+            sent.push({ owner: person, job, ...msg });
+            console.log(job, 'to', person, '|', msg.title);
+          } catch (e) {
+            const overBudget = /subrequest budget/.test(e && e.message);
+            if (!overBudget) rec.tries[person] = (rec.tries[person] || 0) + 1; // running out of calls is not her device's fault
+            console.error(job, 'send failed for', person, '(try', (rec.tries[person] || 0) + '):', e && e.message);
+            if (overBudget || rec.tries[person] < 5) rec.done = rec.done.filter(x => x !== person); // retry next minute
+            changed = true;
+          }
         }
       }
+      });
     }
   }
 
-  if (changed) {
-    // Keep "seen" from growing forever: only ids that still exist matter.
-    const trimmed = Array.from(seen).filter(id => live.has(id));
-    await writeKey(STATE_KEY, { initialized: true, seen: trimmed, pending, activityInit: !!state.activityInit, activityV: state.activityV || 1, activitySeen: state.activitySeen || [], pendingActivity, commentsInit: !!state.commentsInit, commentsSeen: state.commentsSeen || [], pendingComments, lettersInit: !!state.lettersInit, lettersSeen: state.lettersSeen || [], pendingLetters, sched: state.sched || {} });
-  }
+  if (changed) await persist(true);
   return { sent, quiet };
 }
 
@@ -932,6 +997,10 @@ function b64url(bytes) {
   return s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 async function getAccessToken(env) {
+  if (!_tokenP) _tokenP = fetchAccessToken(env).catch(e => { _tokenP = null; throw e; });
+  return _tokenP;
+}
+async function fetchAccessToken(env) {
   const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
   const pem = sa.private_key.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
   const der = Uint8Array.from(atob(pem), c => c.charCodeAt(0));
@@ -944,7 +1013,7 @@ async function getAccessToken(env) {
   }));
   const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(header + '.' + claims));
   const jwt = header + '.' + claims + '.' + b64url(sig);
-  const r = await fetch('https://oauth2.googleapis.com/token', {
+  const r = await bfetch('https://oauth2.googleapis.com/token', {
     method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: 'grant_type=' + encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') + '&assertion=' + jwt
   });
@@ -953,7 +1022,7 @@ async function getAccessToken(env) {
 }
 async function sendPush(env, accessToken, deviceToken, msg) {
   const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
-  const r = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
+  const r = await bfetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
     method: 'POST',
     headers: { 'authorization': 'Bearer ' + accessToken, 'content-type': 'application/json' },
     body: JSON.stringify({ message: { token: deviceToken, data: { title: msg.title, body: msg.body } } })
