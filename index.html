@@ -463,7 +463,7 @@
   .gallery-toggle{display:flex;gap:22px;margin-bottom:14px;}
   /* A main action in the app: a soft tint pill, all caps. */
   .gallery-toggle-btn{
-    background:#FFEEF5;border:none;border-radius:999px;color:var(--text-primary);min-height:44px;
+    background:#FFC2DC;border:none;border-radius:999px;color:var(--text-primary);min-height:44px;
     padding:0 22px;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;
   }
   .gallery-toggle-btn:disabled{opacity:.5;cursor:default;}
@@ -645,7 +645,7 @@
   .standings-peek{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;padding:4px 0 8px;border-bottom:1px solid var(--line);margin-bottom:12px;font-size:13px;}
 
   /* One pill per screen at most: the thing you most want someone to do. Everything else is a text link. */
-  .pill-btn{display:block;margin:14px auto 0;min-width:150px;min-height:44px;padding:0 28px;border:none;border-radius:999px;background:#FFEEF5;color:var(--text-primary);font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;text-align:center;cursor:pointer;}
+  .pill-btn{display:block;margin:14px auto 0;min-width:150px;min-height:44px;padding:0 28px;border:none;border-radius:999px;background:#FFC2DC;color:var(--text-primary);font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;text-align:center;cursor:pointer;}
   .pill-btn:disabled{opacity:1;background:#F7F2F4;color:#6E6369;cursor:default;}
   .txt-link{background:none;border:none;border-bottom:1.5px solid var(--pink);padding:0 0 4px;margin:0;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-primary);text-decoration:none;cursor:pointer;display:inline-block;line-height:1.3;}
   .txt-link.quiet{border-bottom-color:var(--line);color:var(--text-secondary);font-weight:500;}
@@ -760,6 +760,10 @@
   .ltr-stage.is-open .ltr-back{color:#D9C7A3;border-bottom-color:rgba(217,199,163,.45);}
   .ltr-back{position:relative;z-index:1;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#767066;border-bottom:1.5px solid #E9E4DA;padding-bottom:4px;display:inline-block;text-decoration:none;transition:color .7s ease,border-color .7s ease;}
   .ltr-stage-body{position:relative;z-index:1;margin-top:20px;}
+  /* Keep the envelope centered and the same size whatever the letter length: the hidden scroll no longer takes up room above it, and the faded envelope no longer leaves a gap below the letter. */
+  .ltr-stage-body{display:flex;flex-direction:column;justify-content:center;min-height:min(560px, calc(100vh - 330px));}
+  .ltr-scroll-wrap:not(.show):not(.static){position:absolute;left:0;right:0;top:0;}
+  .ltr-envelope-wrap.gone{position:absolute;left:0;right:0;}
   .ltr-envelope-wrap{position:relative;transition:opacity .3s ease .4s;}
   .ltr-envelope-wrap.gone{opacity:0;pointer-events:none;}
   .ltr-envelope{position:relative;width:100%;height:170px;perspective:700px;}
@@ -774,7 +778,7 @@
   .ltr-seal-half.r{clip-path:polygon(50% 0%,54% 9%,49% 18%,56% 29%,48% 40%,57% 52%,49% 64%,55% 77%,48% 90%,50% 100%,100% 100%,100% 0%);}
   .ltr-envelope.cracked .ltr-seal-half.l, .ltr-envelope.open .ltr-seal-half.l{opacity:0;transform:translate(-10px,4px) rotate(-26deg);}
   .ltr-envelope.cracked .ltr-seal-half.r, .ltr-envelope.open .ltr-seal-half.r{opacity:0;transform:translate(10px,-4px) rotate(26deg);}
-  .ltr-tap-hint{margin-top:20px;font-family:'Noto Serif Display',Georgia,serif;font-style:italic;font-size:19px;color:#1A1A1A;text-align:center;}
+  .ltr-tap-hint{margin-top:14px;font-family:'Zeyada','Noto Serif Display',Georgia,serif;font-style:normal;font-size:40px;line-height:1.1;color:#33190E;text-align:center;}
   .ltr-tap-sub{margin-top:12px;text-align:center;}
   .ltr-seal-btn{background:none;border:none;padding:0;margin:0 auto;display:block;width:100%;max-width:260px;font:inherit;color:inherit;cursor:pointer;}
   @keyframes ltrFlicker{0%,100%{opacity:1}50%{opacity:.88}}
@@ -811,6 +815,25 @@
   .ltr-stage.is-open .ltr-replay-row .txt-link{color:#D9C7A3;border-bottom-color:rgba(217,199,163,.45);}
   .ltr-char-count{font-size:11px;color:var(--text-secondary);text-align:right;margin-top:4px;}
   .ltr-idea{font-size:12px;color:var(--text-secondary);font-weight:300;font-style:italic;margin-top:8px;line-height:1.4;}
+
+  /* ---- Letters: slower opening, bigger envelope, and the scroll unrolls ---- */
+  .ltr-stage{transition:background 1.8s ease;}
+  .ltr-stage::before{transition:opacity 1.6s ease .6s;}
+  .ltr-seal-btn{max-width:340px;}
+  .ltr-envelope{height:240px;}
+  .ltr-env-flap{height:183px;transition:transform .9s cubic-bezier(.4,0,.2,1) .1s;}
+  .ltr-seal-wrap{top:146px;width:46px;height:46px;margin-left:-23px;}
+  .ltr-seal-wrap .ltr-seal-half svg{width:100%;height:100%;}
+  .ltr-seal-drip{width:8px;height:14px;margin-left:-4px;bottom:-9px;}
+  .ltr-seal-half{transition:opacity .7s ease, transform .8s cubic-bezier(.3,.7,.3,1);}
+  .ltr-envelope-wrap{transition:opacity 1s ease .6s;}
+  .ltr-scroll-wrap{transition:transform 1s cubic-bezier(.2,.8,.2,1) .5s, opacity .8s ease .5s;}
+  .ltr-unroll{display:grid;grid-template-rows:0fr;overflow:hidden;transition:grid-template-rows 2.2s cubic-bezier(.35,.1,.25,1) .7s;}
+  .ltr-unroll.unrolled{grid-template-rows:1fr;}
+  .ltr-unroll>.ltr-letter-card{min-height:0;}
+  .ltr-scroll-wrap.static{transition:none;}
+  .ltr-scroll-wrap.static .ltr-unroll{grid-template-rows:1fr;transition:none;}
+  @media (prefers-reduced-motion: reduce){.ltr-stage,.ltr-stage::before,.ltr-env-flap,.ltr-seal-half,.ltr-envelope-wrap,.ltr-scroll-wrap,.ltr-unroll{transition:none !important;}}
 
   /* save status */
   #saveToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);transform:translate(-50%,8px);z-index:80;background:var(--text-primary);color:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;padding:8px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;max-width:calc(100vw - 32px);}
@@ -3902,7 +3925,7 @@ function renderQuestionCard(){
 // ---- Sealed letters: write to self, one person, or all of us, unlocked on a chosen astro day ----
 // Sealed is UI only: Firebase rules are public, so anyone with the database
 // address could technically read an unopened letter. Say so in the handover.
-const LETTER_MAX = 500;
+const LETTER_MAX = 600;
 const LETTER_DAYS = [10, 25, 31]; // New Moon in Libra, Full Moon in Taurus, Halloween. Keep in sync with DAYS' tags.
 // Optional idea shown under the Opens on field once To and Opens on are both picked, keyed by day then
 // recipient bucket: 'self' (To: Me), 'group' (To: All of us), 'person' (anyone else). Approved copy, Oct 2026.
@@ -3935,6 +3958,7 @@ const lettersOpenedData = {}; // {person: {letterId: openedAtIso}}, each person 
 const lettersSynced = {}, lettersOpenedSynced = {};
 let lettersReadingId = null; // which letter is shown full-screen right now
 let lettersStage = 'sealed'; // 'sealed' | 'cracking' | 'open', for the letter currently being read
+let lettersReplaying = false; // true while an already-opened letter is being replayed from the sealed envelope
 
 async function loadLetters(){
   for(const p of PEOPLE){
@@ -4013,6 +4037,13 @@ function letterOpenableDays(){
   const curDay = ti.state === 'during' ? ti.dayNum : (ti.state === 'before' ? 0 : 32);
   return LETTER_DAYS.filter(n=> n > curDay);
 }
+// One-time intro letter (Nina only). Offered under "Opens on" as "Right now (just this once)" until
+// she has sealed it, then gone for good. Friendly gate only: the database rules are public.
+function letterIntroAvailable(){
+  if(myIdentity !== 'Nina') return false;
+  if(todayInfo().state !== 'during') return false;
+  return !(lettersData['Nina'] || []).some(l=> l && l.intro === true);
+}
 function letterIsUnlocked(opensDay){
   const ti = todayInfo();
   if(ti.state === 'after') return true;
@@ -4028,12 +4059,22 @@ function newLetterId(person){
   return person + ':' + Date.now() + ':' + Math.random().toString(36).slice(2,7);
 }
 
-async function sealLetter(to, opensDay, body){
+async function sealLetter(to, opensDay, body, opts){
   if(!myIdentity) return false;
-  const text = String(body||'').replace(/\s+/g,' ').trim().slice(0, LETTER_MAX);
+  const intro = !!(opts && opts.intro);
+  if(intro){
+    // The one-time intro letter: only Nina, only once, always to All of us, always open today.
+    if(!letterIntroAvailable()) return false;
+    to = 'all';
+    opensDay = todayInfo().dayNum;
+  }
+  // Keep the line breaks you type. Runs of spaces collapse to one, and more than one blank line in a row becomes one.
+  const text = String(body||'').replace(/\r\n?/g,'\n').replace(/[ \t\f\v]+/g,' ').replace(/ ?\n ?/g,'\n').replace(/\n{3,}/g,'\n\n').trim().slice(0, LETTER_MAX);
   if(!text || !opensDay) return false;
   const list = lettersData[myIdentity] || (lettersData[myIdentity] = []);
-  list.push({id:newLetterId(myIdentity), to, body:text, opensDay, writtenAt:new Date().toISOString()});
+  const letter = {id:newLetterId(myIdentity), to, body:text, opensDay, writtenAt:new Date().toISOString()};
+  if(intro) letter.intro = true; // read by the push Worker, never shown in the app
+  list.push(letter);
   saveMyLetters();
   return true;
 }
@@ -4073,6 +4114,7 @@ function letterTitle(l){
 function openWriteLetterSheet(){
   if(!myIdentity) return;
   const openable = letterOpenableDays();
+  const introAvail = letterIntroAvailable();
   const returnFocus = document.activeElement;
   const dim = document.createElement('div');
   dim.className = 'sheet-dim';
@@ -4082,7 +4124,7 @@ function openWriteLetterSheet(){
   sheet.setAttribute('role','dialog');
   sheet.setAttribute('aria-modal','true');
   sheet.setAttribute('aria-label','Write a letter');
-  if(!openable.length){
+  if(!openable.length && !introAvail){
     sheet.innerHTML = `
       <div class="sheet-grab"></div>
       <h3>Write a letter</h3>
@@ -4102,7 +4144,7 @@ function openWriteLetterSheet(){
   const dayOptions = openable.map(n=>{
     const m = letterDayMeta(n);
     return `<option value="${n}">${m.date}${m.tag ? ', '+m.tag : ''}</option>`;
-  }).join('');
+  }).join('') + (introAvail ? '<option value="now">Right now (just this once)</option>' : '');
   sheet.innerHTML = `
     <div class="sheet-grab"></div>
     <h3>Write a letter</h3>
@@ -4133,7 +4175,10 @@ function openWriteLetterSheet(){
   const daySelect = sheet.querySelector('#letterDaySelect');
   const ideaEl = sheet.querySelector('#letterIdea');
   const refreshIdea = ()=>{
-    ideaEl.textContent = letterIdeaFor(Number(daySelect.value), toSelect.value);
+    const isNow = daySelect.value === 'now';
+    if(isNow) toSelect.value = 'all';
+    toSelect.disabled = isNow;
+    ideaEl.textContent = isNow ? '' : letterIdeaFor(Number(daySelect.value), toSelect.value);
   };
   toSelect.onchange = refreshIdea;
   daySelect.onchange = refreshIdea;
@@ -4145,9 +4190,11 @@ function openWriteLetterSheet(){
   sealBtn.onclick = async ()=>{
     if(sealBtn.disabled) return;
     sealBtn.disabled = true;
-    const to = sheet.querySelector('#letterToSelect').value;
-    const day = Number(sheet.querySelector('#letterDaySelect').value);
-    const ok = await sealLetter(to, day, body.value);
+    const dayVal = sheet.querySelector('#letterDaySelect').value;
+    const intro = dayVal === 'now';
+    const to = intro ? 'all' : sheet.querySelector('#letterToSelect').value;
+    const day = intro ? 0 : Number(dayVal);
+    const ok = await sealLetter(to, day, body.value, intro ? {intro:true} : undefined);
     if(!ok){ sealBtn.disabled = false; return; }
     close();
     safeRender('renderLettersPage', renderLettersPage);
@@ -4189,25 +4236,41 @@ function letterRowHtml(l){
 
 function openLetter(id){
   lettersReadingId = id;
+  lettersReplaying = false;
   const opened = lettersOpenedData[myIdentity] || {};
   lettersStage = opened[id] ? 'open' : 'sealed';
   renderLettersPage();
 }
 function closeLetterReading(){
   lettersReadingId = null;
+  lettersReplaying = false;
   renderLettersPage();
 }
+// The opening changes classes on the elements that are already on screen. Rebuilding the screen at each
+// step would start every piece in its final state, so nothing could animate (the old behaviour).
 function breakLetterSeal(){
   if(lettersStage !== 'sealed') return;
   lettersStage = 'cracking';
-  renderLettersPage();
+  const q = (sel)=> document.querySelector('#lettersWrap ' + sel);
+  const env = q('.ltr-envelope');
+  if(env) env.classList.add('cracked'); else renderLettersPage();
   setTimeout(()=>{
     lettersStage = 'open';
-    renderLettersPage();
+    const stage = q('.ltr-stage'), wrapEnv = q('.ltr-envelope-wrap'), scroll = q('.ltr-scroll-wrap'), unroll = q('.ltr-unroll'), env2 = q('.ltr-envelope');
+    if(stage && wrapEnv && scroll && unroll && env2){
+      stage.classList.add('is-open');
+      env2.classList.add('open');
+      wrapEnv.classList.add('gone');
+      scroll.classList.add('show');
+      unroll.classList.add('unrolled');
+    }else{
+      renderLettersPage();
+    }
     markLetterOpened(lettersReadingId);
-  }, 750);
+  }, 1100);
 }
 function replayLetterSeal(){
+  lettersReplaying = true;
   lettersStage = 'sealed';
   renderLettersPage();
 }
@@ -4216,14 +4279,17 @@ function renderLetterReadingView(wrap, l){
   const open = lettersStage === 'open';
   const cracking = lettersStage === 'cracking';
   const everOpened = !!(lettersOpenedData[myIdentity] || {})[l.id];
+  const showEnvelope = !everOpened || lettersReplaying;
+  const isStatic = everOpened && !lettersReplaying;
   const meta = letterDayMeta(l.opensDay);
   wrap.innerHTML = `
     <div class="ltr-stage${open?' is-open':''}">
       <a href="#" class="ltr-back" id="letterBackLink">Back to letters</a>
       <div class="ltr-eyebrow" style="margin-top:14px;">Sealed letters<span class="mark">&#9790;&#8902;&#9789;</span></div>
       <div class="ltr-stage-body">
-        <div class="ltr-scroll-wrap${open?' show':''}${everOpened?' static':''}">
+        <div class="ltr-scroll-wrap${open?' show':''}${isStatic?' static':''}">
           <div class="ltr-scroll-roll top"></div>
+          <div class="ltr-unroll${open?' unrolled':''}">
           <div class="ltr-letter-card">
             <div class="ltr-glow"></div>
             <div class="ltr-to-line">To ${escapeHtml(l.to==='all' ? 'all of us' : (l.to===l.from ? l.from : l.to))}, ${escapeHtml(meta.date)}${meta.tag ? ', '+escapeHtml(meta.tag) : ''}</div>
@@ -4232,9 +4298,10 @@ function renderLetterReadingView(wrap, l){
             <div class="ltr-sender-line">From ${escapeHtml(l.from)}</div>
             ${everOpened ? `<div class="ltr-replay-row"><a href="#" class="txt-link quiet" id="letterReplayLink">Replay the seal</a></div>` : ''}
           </div>
+          </div>
           <div class="ltr-scroll-roll bottom"></div>
         </div>
-        ${everOpened ? '' : `
+        ${!showEnvelope ? '' : `
         <div class="ltr-envelope-wrap${open?' gone':''}">
           <button type="button" class="ltr-seal-btn" id="letterSealTap">
             <div class="ltr-envelope${cracking||open?' cracked':''}${open?' open':''}">

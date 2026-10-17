@@ -688,7 +688,7 @@ export async function run(env, now) {
   const lettersByIdNow = new Map(); // id -> {sender, to, opensDay, writtenAt}
   for (const sender of PEOPLE) {
     const list = (await readKey(R2 + 'recal-letters:' + sender)) || [];
-    for (const l of list) if (l && l.id) lettersByIdNow.set(l.id, { sender, to: l.to, opensDay: l.opensDay, writtenAt: l.writtenAt });
+    for (const l of list) if (l && l.id) lettersByIdNow.set(l.id, { sender, to: l.to, opensDay: l.opensDay, writtenAt: l.writtenAt, intro: l.intro === true && sender === 'Nina' && l.to === 'all' });
   }
   const pendingLetters = state.pendingLetters || {};
   if (!state.lettersInit) {
@@ -706,7 +706,7 @@ export async function run(env, now) {
       const recipients = l.to === 'all' ? PEOPLE.filter(p => p !== l.sender) : (PEOPLE.includes(l.to) ? [l.to] : []);
       for (const r of recipients) {
         if (!(await prefsFor(r)).activity) continue;
-        (pendingLetters[r] = pendingLetters[r] || []).push({ id, sender: l.sender, to: l.to, opensDay: l.opensDay });
+        (pendingLetters[r] = pendingLetters[r] || []).push({ id, sender: l.sender, to: l.to, opensDay: l.opensDay, intro: l.intro === true });
       }
     }
     state.lettersSeen = Array.from(lSeen).filter(id => lettersByIdNow.has(id));
@@ -802,7 +802,10 @@ export async function run(env, now) {
       for (const l of items) {
         const alreadyOpen = l.opensDay <= today;
         const dateLabel = LETTER_DATE_LABELS[l.opensDay] || ('Oct ' + l.opensDay);
-        const msg = l.to === 'all'
+        // Nina's one-time intro letter (marked intro:true by the app) gets its own announcement.
+        const msg = l.intro
+          ? { title: "You've got mail, witches ✦", body: "Nina wrote all of us a letter and it's open. Drop everything. Okay, finish your sentence first." }
+          : l.to === 'all'
           ? { title: `${l.sender} wrote all of us something ✦`,
               body: alreadyOpen
                 ? `${l.sender} sealed a letter for the whole coven. It's open right now, so there's no waiting this time. Go on.`
@@ -815,6 +818,7 @@ export async function run(env, now) {
           if (!accessTokenL) accessTokenL = await getAccessToken(env);
           await sendPush(env, accessTokenL, token, msg);
           sent.push({ owner: r, ...msg });
+          l.sent = true; // sent: never keep it queued, even if an earlier try failed
           console.log('Letter ping to', r, '|', msg.title, '|', msg.body);
         } catch (e) {
           console.error('Letter ping send failed for', r, e && e.message);
@@ -822,7 +826,7 @@ export async function run(env, now) {
         }
       }
       // Sent items are done; a failed item (tries set, still under 5) stays queued and retries next run.
-      pendingLetters[r] = items.filter(i => (i.tries || 0) > 0 && i.tries < 5);
+      pendingLetters[r] = items.filter(i => !i.sent && (i.tries || 0) > 0 && i.tries < 5);
       if (!pendingLetters[r].length) delete pendingLetters[r];
       changed = true;
       await persist();
@@ -931,9 +935,9 @@ export async function run(env, now) {
           const count = unopened.length;
           const openedToday = unopened.some(l => l.opensDay === today);
           if (openedToday) {
-            const night = LETTER_NIGHT_NAMES[today] || `Day ${today}`;
+            const night = LETTER_NIGHT_NAMES[today]; // none on days with no sky tag
             msg = count === 1
-              ? { title: 'Break the seal ✦', body: `${unopened[0].sender}'s letter is ready and so, we suspect, are you. ${night}. Break the seal.` }
+              ? { title: 'Break the seal ✦', body: `${unopened[0].sender}'s letter is ready and so, we suspect, are you. ${night ? night + '. ' : ''}Break the seal.` }
               : { title: 'Break the seal ✦', body: `${count} letters are ready for you tonight. Go be adored, one seal at a time.` };
           } else if (count === 1) {
             const lines = [

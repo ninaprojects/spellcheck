@@ -498,5 +498,78 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   globalThis.fetch = realFetch;
 }
 
+// ===== Nina's one-time intro letter, and a letter ping that fails once must never repeat =====
+{
+  const realFetch = globalThis.fetch;
+  let failLanded = 0; // how many upcoming letter-ping sends to fail
+  globalThis.fetch = async (url, opts = {}) => {
+    if (failLanded > 0 && String(url).includes('fcm.googleapis.com')) {
+      const m = JSON.parse(opts.body).message;
+      if (/ wrote (you something|all of us something) ✦$/.test(m.data.title)) { failLanded--; return new Response('boom', { status: 500 }); }
+    }
+    return realFetch(url, opts);
+  };
+  const landed = (who) => sentTo(who).filter(x => / wrote (you something|all of us something) ✦$/.test(x.title));
+  const introPush = (who) => sentTo(who).filter(x => x.title === "You've got mail, witches ✦");
+  const INTRO_BODY = "Nina wrote all of us a letter and it's open. Drop everything. Okay, finish your sentence first.";
+  const world = async () => { resetWorld(); for (const p of PEOPLE) putPerson(p, person({})); await baseline(); };
+  const fresh = (extra) => Object.assign({ id: 'Nina:9', to: 'all', body: 'private words', opensDay: 5, writtenAt: plus(D5, 0) }, extra);
+
+  await world();
+  put('r2:recal-letters:Nina', [fresh({ intro: true })]);
+  await runAt(plus(D5, 60));
+  check('intro letter: the other three each get the special push, exact copy', ['Kellye', 'Lauren', 'Carolina'].every(p => introPush(p).length === 1 && introPush(p)[0].body === INTRO_BODY), pushes);
+  check('intro letter: Nina does not get her own announcement', introPush('Nina').length === 0 && landed('Nina').length === 0, pushes);
+  check('intro letter: it replaces the standard ping instead of adding to it', ['Kellye', 'Lauren', 'Carolina'].every(p => landed(p).length === 0), pushes);
+  check('intro letter: the push never carries the letter text', !pushes.some(x => (x.title + x.body).includes('private words')), pushes);
+  await runAt(plus(D5, 120));
+  check('intro letter: not sent twice', pushes.length === 0, pushes);
+
+  await world();
+  put('r2:recal-letters:Kellye', [fresh({ id: 'Kellye:9', intro: true })]);
+  await runAt(plus(D5, 60));
+  check('intro mark from anyone but Nina is ignored, standard ping instead', introPush('Nina').length === 0 && landed('Nina').length === 1 && landed('Nina')[0].title === 'Kellye wrote all of us something ✦', pushes);
+
+  await world();
+  put('r2:recal-letters:Nina', [fresh({ to: 'Lauren', intro: true })]);
+  await runAt(plus(D5, 60));
+  check('intro mark on a letter that is not to All of us is ignored', introPush('Lauren').length === 0 && landed('Lauren').length === 1 && landed('Lauren')[0].title === 'Nina wrote you something ✦', pushes);
+
+  await world();
+  put('r2:recal-letters:Nina', [fresh({})]);
+  await runAt(plus(D5, 60));
+  check('an ordinary letter from Nina to everyone still gets the standard open-now ping', introPush('Kellye').length === 0 && landed('Kellye').length === 1 && landed('Kellye')[0].body === 'Nina sealed a letter for the whole coven. It\'s open right now, so there\'s no waiting this time. Go on.', pushes);
+
+  // retry fix: one failed send, then success, must send exactly once in total
+  await world();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:2', to: 'Nina', body: 'x', opensDay: 25, writtenAt: plus(D5, 0) }]);
+  failLanded = 1;
+  let perRun = [];
+  for (let i = 1; i <= 5; i++) { await runAt(plus(D5, i * 60)); perRun.push(landed('Nina').length); }
+  check('retry: a ping that fails once is sent exactly once on the retry, then never again', JSON.stringify(perRun) === '[0,1,0,0,0]', perRun);
+  check('retry: nothing is left queued after it went out', !JSON.parse(store['r2:recal-push-state']).pendingLetters || Object.keys(JSON.parse(store['r2:recal-push-state']).pendingLetters).length === 0, store['r2:recal-push-state']);
+
+  // a ping that keeps failing gives up after 5 tries and stops
+  await world();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:3', to: 'Nina', body: 'x', opensDay: 25, writtenAt: plus(D5, 0) }]);
+  failLanded = 99;
+  perRun = [];
+  for (let i = 1; i <= 8; i++) { await runAt(plus(D5, i * 60)); perRun.push(landed('Nina').length); }
+  failLanded = 0;
+  check('retry: a ping that always fails sends nothing and stops after 5 tries', perRun.every(n => n === 0), perRun);
+  const stuck = JSON.parse(store['r2:recal-push-state']).pendingLetters;
+  check('retry: the failed ping is dropped from the queue, not kept forever', !stuck || Object.keys(stuck).length === 0, stuck);
+
+  // evening nudge on a day with no sky tag: no "Day N."
+  await world();
+  put('r2:recal-letters:Nina', [{ id: 'Nina:7', to: 'all', body: 'x', opensDay: 16, writtenAt: '2026-10-05T12:00:00Z' }]);
+  await runSettled('2026-10-17T03:30:00Z'); // 8:30pm Pacific, Oct 16 (Day 16, no sky tag); jobs due together spread over a few minutes
+  const n16 = sentTo('Lauren').filter(x => x.title === 'Break the seal ✦');
+  check('nudge: on a day with no sky tag the line drops the night name', n16.length === 1 && n16[0].body === 'Nina\'s letter is ready and so, we suspect, are you. Break the seal.', n16);
+  check('nudge: no stray "Day N" in it', n16.length === 1 && !/Day \d/.test(n16[0].body), n16);
+
+  globalThis.fetch = realFetch;
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);

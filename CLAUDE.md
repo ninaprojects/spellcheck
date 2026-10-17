@@ -122,3 +122,11 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 - No export or backup of journal entries and photos. Receipt PNG download is the only export. A planned "Wrapped" keepsake would cover export. A scheduled backup of `recalData` should exist before the Firebase rules are tightened.
 - Firebase rules allow public read and write on `recalData`. Journal entries and photos are readable by anyone with the database URL. Securing this needs the Worker and app changes described in hard rule 8.
 - Decisions pending, do not build until Nina decides: a streak grace day; a poke button; per-person custom daily goals; sending pushes on each person's own clock instead of Pacific. Sleep tracking is the strongest fit if health data is ever added. Do not add macro or calorie tracking.
+
+## Sealed letters (Release 3, launch bundle)
+- Data: `recal-letters:<Name>` (round key `r2:`), each letter `{id, to, body, opensDay, writtenAt}`, plus an optional `intro: true` on Nina's one-time letter to All of us. Only add fields, never rename. `LETTER_MAX` is 600. Sealing keeps the line breaks you type (spaces collapse, more than one blank line becomes one). A letter is open from the start of its date.
+- Layout rule: the hidden scroll must never take up room above the envelope, and the faded envelope must never leave a gap under the letter. The centering CSS block next to `.ltr-stage-body` does this. Do not undo it.
+- The envelope's "From" line and the sender line in the letter use the Zeyada handwriting font.
+- The letter opening animates by adding classes to the elements already on screen (`breakLetterSeal`). Never rebuild the letter screen between steps: every new element would start in its final state and nothing would animate (this was the old behaviour). `lettersReplaying` is what lets "Replay the seal" bring the envelope back for a letter that has been opened before. Slow timings and the unrolling scroll (`.ltr-unroll`) live in the "Letters: slower opening" CSS block, which also switches everything off for Reduce Motion.
+- Main action pills (`.pill-btn`, `.gallery-toggle-btn`) are `#FFC2DC`. The disabled grey `#F7F2F4` must stay clearly different. The night-sky brew button keeps its own style.
+
