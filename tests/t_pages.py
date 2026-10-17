@@ -16,6 +16,14 @@ def links(pg):
 def vis(pg, sel):
     return pg.evaluate("(s)=>{const e=document.querySelector(s); return !!e && !!(e.offsetWidth||e.offsetHeight) && !e.closest('[hidden]');}", sel)
 
+# The name people see when they install it must be Spell Check, never the private nickname.
+_here = os.path.dirname(os.path.abspath(__file__))
+_mf = json.load(open(os.path.join(_here, '..', 'manifest.json'), encoding='utf-8'))
+_html = open(os.environ.get('SPELLCHECK_APP', os.path.join(_here, '..', 'index.html')), encoding='utf-8').read()
+check('N1 the installed app name is Spell Check', _mf.get('name') == 'Spell Check' and _mf.get('short_name') == 'Spell Check', _mf)
+check('N1 the manifest never uses the private nickname', 'practical magic' not in json.dumps(_mf).lower() and 'prac.' not in json.dumps(_mf).lower())
+check('N1 the page title and iPhone home-screen name are Spell Check', '<title>Spell Check</title>' in _html and 'name="apple-mobile-web-app-title" content="Spell Check"' in _html)
+
 with sync_playwright() as pw:
     # ---------- pages inside the tabs ----------
     e = Env(pw, seed_nina()); e.open(); pg = e.page

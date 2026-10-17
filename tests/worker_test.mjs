@@ -571,5 +571,28 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   globalThis.fetch = realFetch;
 }
 
+
+// ===== casting a spell must never cost anyone a notification (only the 7pm "not cast yet" nudge stops) =====
+{
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person(p === 'Kellye' ? { 10: cast() } : {}));
+  await baseline();
+  put('r2:recal-letters:Nina', [{ id: 'Nina:cast1', to: 'all', body: 'x', opensDay: 10, writtenAt: '2026-10-10T15:20:00Z' }]);
+  put('r2:recal-reactions:Lauren', { 'cast:Kellye:10': ['\u2661'] });
+  await runSettled('2026-10-10T15:30:00Z');   // 8:30am Pacific, Day 10
+  const morning = sentTo('Kellye');
+  check('cast her spell and still gets the letter push', morning.some(x => x.title === 'Nina wrote all of us something \u2726'), morning.map(x => x.title));
+  check('cast her spell and still gets the morning spell', morning.some(x => /Day 10 of Spells/.test(x.title)), morning.map(x => x.title));
+  check('cast her spell and still gets reactions to that spell', morning.some(x => /heart is swelling/.test(x.title)), morning.map(x => x.title));
+  await runSettled('2026-10-10T20:30:00Z');   // 1:30pm Pacific
+  check('cast her spell and still gets the daily question', sentTo('Kellye').some(x => x.title === 'Today\u2019s brew'), sentTo('Kellye').map(x => x.title));
+  await runSettled('2026-10-11T02:30:00Z');   // 7:30pm Pacific
+  const NUDGE = /Still time for Day|spell isn\u2019t cast|still yours|streak/i;
+  check('the 7pm not-cast-yet nudge skips her, because she has cast', !sentTo('Kellye').some(x => NUDGE.test(x.title)), sentTo('Kellye').map(x => x.title));
+  check('and it still goes to people who have not cast', sentTo('Lauren').some(x => NUDGE.test(x.title)), sentTo('Lauren').map(x => x.title));
+  await runSettled('2026-10-11T03:30:00Z');   // 8:30pm Pacific
+  check('cast her spell and still gets the evening letters nudge', sentTo('Kellye').some(x => x.title === 'Break the seal \u2726'), sentTo('Kellye').map(x => x.title));
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);

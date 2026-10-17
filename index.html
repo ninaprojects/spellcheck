@@ -835,6 +835,67 @@
   .ltr-scroll-wrap.static .ltr-unroll{grid-template-rows:1fr;transition:none;}
   @media (prefers-reduced-motion: reduce){.ltr-stage,.ltr-stage::before,.ltr-env-flap,.ltr-seal-half,.ltr-envelope-wrap,.ltr-scroll-wrap,.ltr-unroll{transition:none !important;}}
 
+  /* ---- Letters: flash, embers, night scenes, typed letter, Plain text pill ---- */
+  .ltr-stage{overflow:clip;}
+  .ltr-embers,.ltr-scene-layer,.ltr-bat-layer{position:sticky;top:0;height:0;pointer-events:none;}
+  .ltr-scene-layer{z-index:0;}
+  .ltr-embers{z-index:2;}
+  .ltr-bat-layer{z-index:4;}
+  .ltr-em{position:absolute;top:88vh;width:3px;height:3px;border-radius:50%;background:#FFD9A0;opacity:0;}
+  .ltr-stage.is-open .ltr-em{animation:ltrEmberRise 7s ease-out infinite;}
+  @keyframes ltrEmberRise{0%{transform:translate(0,0);opacity:0}12%{opacity:.95}100%{transform:translate(18px,-70vh);opacity:0}}
+  .ltr-flash{position:absolute;left:50%;top:50%;width:440px;height:440px;margin:-220px 0 0 -220px;border-radius:50%;background:radial-gradient(circle, rgba(255,196,130,.95) 0%, rgba(255,140,80,.35) 40%, transparent 70%);opacity:0;pointer-events:none;z-index:3;}
+  .ltr-flash.go{animation:ltrFlashGo .8s ease-out both;}
+  @keyframes ltrFlashGo{0%{opacity:0;transform:scale(.4)}22%{opacity:.95}100%{opacity:0;transform:scale(1.7)}}
+  .ltr-late{opacity:0;pointer-events:none;transition:opacity .8s ease;}
+  .ltr-late.ltr-late-on{opacity:1;pointer-events:auto;}
+  .ltr-float-ctl{position:sticky;top:54px;height:0;z-index:5;text-align:right;opacity:0;pointer-events:none;transition:opacity .8s ease .9s;}
+  .ltr-float-ctl.on{opacity:1;pointer-events:auto;}
+  .ltr-float-link{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;background:rgba(36,20,16,.8);color:#E8C994;border:1px solid rgba(232,201,148,.45);box-shadow:0 4px 14px -6px rgba(0,0,0,.6);}
+  .ltr-stage.plain .ltr-body-text{font-family:'Inter',Arial,sans-serif;font-weight:400;font-size:18px;line-height:1.7;}
+  .ltr-stage.plain .ltr-sender-line{font-family:'Inter',Arial,sans-serif;font-weight:500;font-size:16px;}
+  .ltr-moon,.ltr-star,.ltr-hglow,.ltr-bat-w{display:none;}
+  .ltr-stage.scene-moon .ltr-moon,.ltr-stage.scene-moon .ltr-star{display:block;}
+  .ltr-stage.scene-hallo .ltr-hglow,.ltr-stage.scene-hallo .ltr-bat-w{display:block;}
+  .ltr-stage.scene-moon.is-open{background:radial-gradient(120% 90% at 80% 0%, #3C4A78 0%, transparent 60%), radial-gradient(100% 80% at 0% 100%, #2A2150 0%, transparent 55%), #12142B;}
+  .ltr-stage.scene-hallo.is-open{background:radial-gradient(120% 70% at 50% 100%, #8A3A0E 0%, transparent 60%), radial-gradient(100% 80% at 100% 0%, #3A1650 0%, transparent 55%), #140A12;}
+  .ltr-stage.scene-moon .ltr-em{background:#E6EBFF;}
+  .ltr-stage.scene-hallo .ltr-em{background:#FF9A3C;}
+  .ltr-stage.scene-moon.is-open .ltr-letter-card{box-shadow:inset 0 10px 12px -10px rgba(40,20,10,.35), inset 0 -10px 12px -10px rgba(40,20,10,.35), 0 0 46px rgba(214,222,255,.3), 0 16px 34px -16px rgba(0,0,0,.5);}
+  .ltr-stage.scene-hallo.is-open .ltr-letter-card{box-shadow:inset 0 10px 12px -10px rgba(40,20,10,.35), inset 0 -10px 12px -10px rgba(40,20,10,.35), 0 0 46px rgba(255,140,50,.32), 0 16px 34px -16px rgba(0,0,0,.5);}
+  .ltr-moon{position:absolute;top:76px;left:50%;margin-left:-72px;width:144px;height:144px;border-radius:50%;background:#F4E7BE;box-shadow:0 0 50px 18px rgba(244,231,190,.35), 0 0 120px 50px rgba(190,205,255,.18);opacity:0;transform:translateY(260px) scale(.92);}
+  .ltr-moon i{position:absolute;border-radius:50%;background:#E3D3A4;}
+  .ltr-moon .c1{width:30px;height:30px;left:26px;top:30px;}
+  .ltr-moon .c2{width:18px;height:18px;left:88px;top:62px;}
+  .ltr-moon .c3{width:24px;height:24px;left:52px;top:92px;}
+  .ltr-stage.scene-moon.is-open .ltr-moon{animation:ltrMoonRise 4.2s cubic-bezier(.2,.7,.2,1) .7s forwards;}
+  @keyframes ltrMoonRise{0%{opacity:0;transform:translateY(260px) scale(.92)}100%{opacity:1;transform:translateY(0) scale(1)}}
+  .ltr-star{position:absolute;width:2px;height:2px;border-radius:50%;background:#FFFDF0;opacity:0;}
+  .ltr-stage.scene-moon.is-open .ltr-star{animation:ltrTwinkle 3.4s ease-in-out infinite;}
+  @keyframes ltrTwinkle{0%,100%{opacity:.15}50%{opacity:.95}}
+  .ltr-hglow{position:absolute;left:0;right:0;top:58vh;height:42vh;background:radial-gradient(ellipse at 50% 100%, rgba(255,140,40,.6), transparent 70%);opacity:0;}
+  .ltr-stage.scene-hallo.is-open .ltr-hglow{animation:ltrCandle 3.2s ease-in-out 1s infinite;opacity:.85;}
+  @keyframes ltrCandle{0%,100%{opacity:.6}50%{opacity:.95}}
+  .ltr-bat-w{position:absolute;left:-50px;opacity:0;}
+  .ltr-stage.scene-hallo.is-open .ltr-bat-w{animation:ltrBatFly 8.5s linear var(--d) 3 both, ltrBatBob 1.3s ease-in-out infinite;}
+  @keyframes ltrBatFly{0%{opacity:1;transform:translateX(0)}100%{opacity:1;transform:translateX(520px)}}
+  @keyframes ltrBatBob{0%,100%{margin-top:0}50%{margin-top:-14px}}
+  .ltr-bat{display:block;animation:ltrFlap .24s ease-in-out infinite;transform-origin:center;}
+  @keyframes ltrFlap{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.35)}}
+  @media (prefers-reduced-motion: reduce){.ltr-flash.go,.ltr-stage.is-open .ltr-em,.ltr-stage.is-open .ltr-star,.ltr-stage.is-open .ltr-hglow,.ltr-stage.is-open .ltr-moon{animation:none !important;}.ltr-bat-w{display:none !important;}.ltr-stage.scene-moon.is-open .ltr-moon{opacity:1;transform:none;}.ltr-float-ctl,.ltr-late{transition:none !important;}}
+
+  /* ---- Letters: the hint card and the dots that say a letter is waiting ---- */
+  .lh-card{border:1px solid var(--line);background:var(--bg);padding:14px 16px;margin:0 0 18px;}
+  .lh-top{display:flex;align-items:center;gap:12px;}
+  .lh-ico{width:40px;height:40px;border-radius:50%;background:#FFE2EE;color:var(--text-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .lh-title{font-size:15px;font-weight:600;color:var(--text-primary);line-height:1.3;}
+  .lh-body{font-size:13px;font-weight:300;color:var(--text-secondary);line-height:1.5;margin-top:10px;}
+  .lh-actions{display:flex;justify-content:flex-end;margin-top:4px;}
+  .tabbar .tab .tab-ico{position:relative;display:flex;}
+  .tab-dot{position:absolute;top:-2px;right:-5px;width:10px;height:10px;border-radius:50%;background:var(--pink);border:2px solid var(--bg);box-sizing:border-box;}
+  .tab-dot[hidden]{display:none;}
+  .sub-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pink);margin-left:6px;vertical-align:middle;}
+
   /* save status */
   #saveToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);transform:translate(-50%,8px);z-index:80;background:var(--text-primary);color:var(--bg);font-family:'Inter';font-size:12px;font-weight:500;padding:8px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;white-space:nowrap;max-width:calc(100vw - 32px);}
   #saveToast.show{opacity:1;transform:translate(-50%,0);}
@@ -862,6 +923,7 @@
   <section class="view" data-view="today">
   <div id="identityBanner"></div>
   <div id="notifPromptWrap"></div>
+  <div id="lettersHintWrap"></div>
   <div class="masthead">
     <h1>Spell Check</h1>
     <div class="tagline">a month of practical magic</div>
@@ -1033,7 +1095,7 @@
   <a href="#today" class="tab" data-tab="today"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"></path></svg><span>Today</span></a>
   <a href="#coven" class="tab" data-tab="coven"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="9" cy="9" r="3"></circle><circle cx="17" cy="10" r="2.5"></circle><path d="M3 19c.8-3 3.2-4.5 6-4.5s5.2 1.5 6 4.5M15 15.2c2.6-.4 4.8.8 5.5 3.8"></path></svg><span>Coven</span></a>
   <a href="#journey" class="tab" data-tab="journey"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg><span>Journey</span></a>
-  <a href="#profile" class="tab" data-tab="profile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4-6 8-6s7 2 8 6"></path></svg><span>Me</span></a>
+  <a href="#profile" class="tab" data-tab="profile"><i class="tab-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1-4 4-6 8-6s7 2 8 6"></path></svg><i class="tab-dot" hidden></i></i><span>Me</span></a>
 </nav>
 
 <script>
@@ -4085,6 +4147,7 @@ async function markLetterOpened(letterId){
   if(rec[letterId]) return;
   rec[letterId] = new Date().toISOString();
   saveMyLettersOpened();
+  updateLettersDot();
 }
 
 // Letters addressed to me, from any sender including myself (never ones I wrote to someone else).
@@ -4235,6 +4298,7 @@ function letterRowHtml(l){
 }
 
 function openLetter(id){
+  stopLetterTyping();
   lettersReadingId = id;
   lettersReplaying = false;
   const opened = lettersOpenedData[myIdentity] || {};
@@ -4242,6 +4306,7 @@ function openLetter(id){
   renderLettersPage();
 }
 function closeLetterReading(){
+  stopLetterTyping();
   lettersReadingId = null;
   lettersReplaying = false;
   renderLettersPage();
@@ -4263,6 +4328,8 @@ function breakLetterSeal(){
       wrapEnv.classList.add('gone');
       scroll.classList.add('show');
       unroll.classList.add('unrolled');
+      const ctl = q('.ltr-float-ctl'); if(ctl) ctl.classList.add('on');
+      beginLetterReveal();
     }else{
       renderLettersPage();
     }
@@ -4275,18 +4342,81 @@ function replayLetterSeal(){
   renderLettersPage();
 }
 
+// ---- the reading screen: scenes, typed letter, Plain text pill ----
+const LETTER_SCENES = {25:'moon', 31:'hallo'}; // Full Moon in Taurus, Halloween. Any other letter keeps the standard look.
+const LETTER_EMBERS = [[8,0,7],[17,2.4,8],[26,4.1,6.5],[35,.9,7.5],[44,3.3,8.5],[52,5.6,6.8],[61,1.7,7.2],[70,4.8,8],[78,.4,6.6],[86,3.9,7.8],[92,2.1,7],[13,5.2,8.2]]
+  .map(([x,d,t])=> `<i class="ltr-em" style="left:${x}%;animation-delay:${d}s;animation-duration:${t}s"></i>`).join('');
+const LETTER_STARS = [[6,30,0],[14,90,1.2],[22,18,.6],[31,70,2.1],[40,26,1.7],[63,20,.3],[72,84,2.6],[81,34,1.1],[90,62,2.9],[95,22,.9],[10,150,2.4],[88,140,1.5],[4,220,.2],[96,210,2.2]]
+  .map(([x,y,d])=> `<i class="ltr-star" style="left:${x}%;top:${y}px;animation-delay:${d}s"></i>`).join('');
+const LETTER_BAT_SVG = '<svg class="ltr-bat" width="34" height="16" viewBox="0 0 34 16" aria-hidden="true"><path d="M17 8C14 3 8 2 1 5c4 1 5 3 6 6 2-2 5-2 7 0 1-2 2-3 3-3s2 1 3 3c2-2 5-2 7 0 1-3 2-5 6-6-7-3-13-2-16 3z" fill="#0D0907"></path></svg>';
+const LETTER_BATS = [[110,1.4],[230,3.0],[330,5.2],[170,7.0],[420,9.0]]
+  .map(([y,d])=> `<span class="ltr-bat-w" style="top:${y}px;--d:${d}s">${LETTER_BAT_SVG}</span>`).join('');
+
+let letterTypeTimer = null, letterTypeDelay = null;
+function stopLetterTyping(){
+  if(letterTypeTimer){ clearInterval(letterTypeTimer); letterTypeTimer = null; }
+  if(letterTypeDelay){ clearTimeout(letterTypeDelay); letterTypeDelay = null; }
+}
+function letterReduceMotion(){
+  try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; }
+}
+function letterPlainOn(){
+  try{ return localStorage.getItem('r2-letters-plain') === '1'; }catch(e){ return false; }
+}
+// The letter writes itself in, one character at a time, starting once the scroll has unrolled.
+// Tapping the letter finishes it. With Reduce Motion on, it simply appears.
+function beginLetterReveal(){
+  const lates = Array.from(document.querySelectorAll('#lettersWrap .ltr-late'));
+  const showLate = ()=> lates.forEach(e=> e.classList.add('ltr-late-on'));
+  const body = document.querySelector('#lettersWrap .ltr-body-text');
+  const card = document.querySelector('#lettersWrap .ltr-letter-card');
+  if(!body || letterReduceMotion()){ showLate(); return; }
+  const text = body.textContent;
+  body.innerHTML = '<span id="letterTyped"></span><span id="letterUntyped" style="color:transparent"></span>';
+  const typed = body.querySelector('#letterTyped'), rest = body.querySelector('#letterUntyped');
+  rest.textContent = text;
+  let i = 0;
+  const finish = ()=>{
+    stopLetterTyping();
+    typed.textContent = text; rest.textContent = '';
+    showLate();
+  };
+  if(card) card.onclick = finish;
+  const speed = Math.max(12, Math.min(30, Math.floor(14000 / Math.max(1, text.length))));
+  letterTypeDelay = setTimeout(()=>{
+    letterTypeTimer = setInterval(()=>{
+      if(!document.body.contains(typed)){ stopLetterTyping(); return; }
+      i++;
+      typed.textContent = text.slice(0, i);
+      rest.textContent = text.slice(i);
+      const r = rest.getBoundingClientRect(), vh = window.innerHeight;
+      if(r.top > vh * 0.72) window.scrollBy(0, r.top - vh * 0.5);
+      if(i >= text.length) finish();
+    }, speed);
+  }, 2900);
+}
+
 function renderLetterReadingView(wrap, l){
+  stopLetterTyping();
   const open = lettersStage === 'open';
   const cracking = lettersStage === 'cracking';
   const everOpened = !!(lettersOpenedData[myIdentity] || {})[l.id];
   const showEnvelope = !everOpened || lettersReplaying;
   const isStatic = everOpened && !lettersReplaying;
+  const late = (!isStatic && !open) ? ' ltr-late' : ''; // the sender line waits for the typing to finish
+  const scene = LETTER_SCENES[l.opensDay] || 'std';
+  const plain = letterPlainOn();
   const meta = letterDayMeta(l.opensDay);
   wrap.innerHTML = `
-    <div class="ltr-stage${open?' is-open':''}">
+    <div class="ltr-stage scene-${scene}${open?' is-open':''}${plain?' plain':''}">
+      <div class="ltr-embers" aria-hidden="true">${LETTER_EMBERS}</div>
+      <div class="ltr-scene-layer" aria-hidden="true"><div class="ltr-moon"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>${LETTER_STARS}<div class="ltr-hglow"></div></div>
+      <div class="ltr-bat-layer" aria-hidden="true">${LETTER_BATS}</div>
+      <div class="ltr-float-ctl${open?' on':''}"><a href="#" class="ltr-float-link" id="letterPlainLink">${plain ? 'Handwriting' : 'Plain text'}</a></div>
       <a href="#" class="ltr-back" id="letterBackLink">Back to letters</a>
       <div class="ltr-eyebrow" style="margin-top:14px;">Sealed letters<span class="mark">&#9790;&#8902;&#9789;</span></div>
       <div class="ltr-stage-body">
+        <div class="ltr-flash${cracking||open?' go':''}" aria-hidden="true"></div>
         <div class="ltr-scroll-wrap${open?' show':''}${isStatic?' static':''}">
           <div class="ltr-scroll-roll top"></div>
           <div class="ltr-unroll${open?' unrolled':''}">
@@ -4295,8 +4425,8 @@ function renderLetterReadingView(wrap, l){
             <div class="ltr-to-line">To ${escapeHtml(l.to==='all' ? 'all of us' : (l.to===l.from ? l.from : l.to))}, ${escapeHtml(meta.date)}${meta.tag ? ', '+escapeHtml(meta.tag) : ''}</div>
             <div class="ltr-sigil-rule">&#9790; &#8902; &#9789;</div>
             <div class="ltr-body-text">${escapeHtml(l.body)}</div>
-            <div class="ltr-sender-line">From ${escapeHtml(l.from)}</div>
-            ${everOpened ? `<div class="ltr-replay-row"><a href="#" class="txt-link quiet" id="letterReplayLink">Replay the seal</a></div>` : ''}
+            <div class="ltr-sender-line${late}">From ${escapeHtml(l.from)}</div>
+            ${everOpened ? `<div class="ltr-replay-row${late}"><a href="#" class="txt-link quiet" id="letterReplayLink">Replay the seal</a></div>` : ''}
           </div>
           </div>
           <div class="ltr-scroll-roll bottom"></div>
@@ -4324,13 +4454,60 @@ function renderLetterReadingView(wrap, l){
   if(tap) tap.onclick = breakLetterSeal;
   const replay = wrap.querySelector('#letterReplayLink');
   if(replay) replay.onclick = (e)=>{ e.preventDefault(); replayLetterSeal(); };
+  const plainLink = wrap.querySelector('#letterPlainLink');
+  if(plainLink) plainLink.onclick = (e)=>{
+    e.preventDefault();
+    const st = wrap.querySelector('.ltr-stage');
+    const on = st.classList.toggle('plain');
+    try{ localStorage.setItem('r2-letters-plain', on ? '1' : '0'); }catch(err){}
+    plainLink.textContent = on ? 'Handwriting' : 'Plain text';
+  };
 }
 const SEAL_EMBLEM_SVG = `<svg width="32" height="32" viewBox="0 0 32 32" style="position:absolute;inset:0;pointer-events:none" fill="none">
   <path d="M19.5 9.3c-3.6 1.1-6.2 4.1-6.2 7.7s2.6 6.6 6.2 7.7c-1.2.4-2.5.6-3.8.6-5.1 0-9.3-3.7-9.3-8.3s4.2-8.3 9.3-8.3c1.3 0 2.6.2 3.8.6z" fill="#2E0C1A" opacity=".55"/>
   <path d="M23.2 11l1 2.3 2.4.4-1.8 1.7.4 2.4-2-1.2-2.1 1.2.4-2.4-1.7-1.7 2.3-.4z" fill="#2E0C1A" opacity=".55"/>
 </svg>`;
 
+// ---- Where to find letters: a one-time hint card on Today, and a dot while a letter is waiting ----
+const LETTER_ENVELOPE_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="1.5"></rect><path d="M3.5 7l8.5 6.5L20.5 7"></path></svg>';
+function lettersHintSeen(){
+  try{ return localStorage.getItem('r2-letters-hint:' + myIdentity) === '1'; }catch(e){ return false; }
+}
+function renderLettersHint(){
+  const wrap = document.getElementById('lettersHintWrap');
+  if(!wrap) return;
+  if(!myIdentity || currentPerson !== myIdentity || lettersHintSeen()){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="lh-card" role="region" aria-label="New: sealed letters">
+    <div class="lh-top"><span class="lh-ico">${LETTER_ENVELOPE_ICON}</span><div class="lh-title">New: sealed letters &#10022;</div></div>
+    <div class="lh-body">Write one to any of us, all of us, or future you. Find it under the &ldquo;Me&rdquo; tab, then Letters.</div>
+    <div class="lh-actions"><button type="button" class="txt-link quiet" id="lettersHintGot">Got it</button></div>
+  </div>`;
+  wrap.querySelector('#lettersHintGot').onclick = ()=>{
+    try{ localStorage.setItem('r2-letters-hint:' + myIdentity, '1'); }catch(e){}
+    renderLettersHint();
+  };
+}
+function lettersWaiting(){
+  return !!myIdentity && myUnopenedLetters().some(l=> letterIsUnlocked(l.opensDay));
+}
+function updateLettersDot(){
+  const on = lettersWaiting();
+  const tab = document.querySelector('.tabbar .tab[data-tab="profile"]');
+  if(tab){
+    const d = tab.querySelector('.tab-dot');
+    if(d) d.hidden = !on;
+    if(on) tab.setAttribute('aria-label', 'Me, a letter is waiting'); else tab.removeAttribute('aria-label');
+  }
+  const sub = document.querySelector('#subnav .subnav-link[data-page="letters"]');
+  if(sub){
+    const sd = sub.querySelector('.sub-dot');
+    if(on && !sd){ const i = document.createElement('i'); i.className = 'sub-dot'; sub.appendChild(i); }
+    else if(!on && sd) sd.remove();
+  }
+}
+
 function renderLettersPage(){
+  updateLettersDot();
   const wrap = document.getElementById('lettersWrap');
   if(!wrap) return;
   const own = !!myIdentity && currentPerson === myIdentity;
@@ -4849,6 +5026,7 @@ function renderSubnav(){
   nav.innerHTML = list.map(([id,label])=>
     `<a href="#${activeView}/${id}" class="subnav-link${id===cur?' active':''}" data-page="${id}"${id===cur?' aria-current="page"':''}>${label}</a>`
   ).join('');
+  updateLettersDot();
 }
 
 function applyView(scrollTop){
@@ -5765,6 +5943,7 @@ async function renderAll(){
   safeRender('renderNotifPrompt', renderNotifPrompt);
   safeRender('renderProfilePicSection', renderProfilePicSection);
   safeRender('renderTodayCard', renderTodayCard);
+  safeRender('renderLettersHint', renderLettersHint);
   safeRender('renderQuestionCard', renderQuestionCard);
   safeRender('renderLettersPage', renderLettersPage);
   safeRender('renderStreakCard', renderStreakCard);

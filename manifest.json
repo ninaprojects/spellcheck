@@ -1,6 +1,6 @@
 {
-  "name": "Practical Magic",
-  "short_name": "Prac. Magic",
+  "name": "Spell Check",
+  "short_name": "Spell Check",
   "description": "checking in on your own spells",
   "start_url": "./index.html",
   "scope": "./",

@@ -258,6 +258,124 @@ with sync_playwright() as pw:
     e.close()
 
 
+    # ====================== Letters, part 2: typing, scenes, pill, hint card, dots ======================
+    D31 = (2026,10,31,12,0,0)
+    BODY = "Dear Witches,\nI made us a mailbox. Write as many as you like, to any of us, all of us, or future you. Seal them for the Full Moon, for Halloween, or for both.\nHugs and hexes,"
+    def letters_fb(items, opened_for=None, who_opened=None):
+        fb = seed_nina()
+        fb['recalData/r2:recal-letters:Nina'] = json.dumps(items)
+        if opened_for:
+            fb['recalData/r2:recal-letters-opened:' + opened_for] = json.dumps({i['id']: "2026-10-09T20:00:00.000Z" for i in items})
+        return fb
+    def L(id, day, body=BODY): return {"id": id, "to": "all", "body": body, "opensDay": day, "writtenAt": "2026-10-09T18:00:00.000Z"}
+
+    # --- the letter types itself in, and a tap finishes it ---
+    e = Env(pw, letters_fb([L('Nina:1', 10)]), who='Kellye', now=D10); e.open(); pg = e.page
+    go(pg, 'profile/letters'); pg.click('.ltr-row'); pg.wait_for_selector('#letterSealTap')
+    check('L40 before opening, the From and Plain text controls are not on yet', not pg.evaluate("document.querySelector('.ltr-float-ctl').classList.contains('on')"))
+    pg.click('#letterSealTap')
+    pg.wait_for_function("document.querySelector('.ltr-scroll-wrap.show')", timeout=6000)
+    check('L40 the Plain text pill appears once the letter is open', pg.evaluate("document.querySelector('.ltr-float-ctl').classList.contains('on')"))
+    pg.wait_for_timeout(1200)
+    check('L41 typing has not started while the scroll is still unrolling', pg.evaluate("document.getElementById('letterTyped').textContent") == '', pg.evaluate("document.getElementById('letterTyped').textContent"))
+    check('L41 the full text is already there, invisible, so nothing jumps', pg.evaluate("document.getElementById('letterUntyped').textContent") == BODY)
+    pg.wait_for_timeout(2600)
+    typed = pg.evaluate("document.getElementById('letterTyped').textContent")
+    check('L41 the letter is typing in, one character at a time', 0 < len(typed) < len(BODY) and BODY.startswith(typed), (len(typed), len(BODY)))
+    check('L41 the sender line waits until the typing is done', not pg.evaluate("document.querySelector('.ltr-sender-line').classList.contains('ltr-late-on')"))
+    pg.click('.ltr-letter-card')
+    check('L42 tapping the letter finishes it at once, with the line breaks', pg.evaluate("document.getElementById('letterTyped').textContent") == BODY and pg.evaluate("document.getElementById('letterUntyped').textContent") == '')
+    check('L42 then the sender line appears', pg.evaluate("document.querySelector('.ltr-sender-line').classList.contains('ltr-late-on')"))
+    e.close()
+
+    # --- Reduce Motion: no typing, the letter simply appears ---
+    e = Env(pw, letters_fb([L('Nina:2', 10)]), who='Kellye', now=D10); e.open(); pg = e.page
+    pg.emulate_media(reduced_motion='reduce')
+    go(pg, 'profile/letters'); pg.click('.ltr-row'); pg.wait_for_selector('#letterSealTap'); pg.click('#letterSealTap')
+    pg.wait_for_function("document.querySelector('.ltr-scroll-wrap.show')", timeout=6000); pg.wait_for_timeout(300)
+    check('L43 with Reduce Motion on, there is no typing', pg.locator('#letterTyped').count() == 0)
+    check('L43 the whole letter and the sender line show straight away', pg.inner_text('.ltr-body-text').strip() == BODY and pg.evaluate("document.querySelector('.ltr-sender-line').classList.contains('ltr-late-on')"))
+    e.close()
+
+    # --- the three looks: standard, Full Moon (Oct 25), Halloween (Oct 31) ---
+    e = Env(pw, letters_fb([L('Nina:10', 10), L('Nina:25', 25), L('Nina:31', 31)], opened_for='Kellye'), who='Kellye', now=D31); e.open(); pg = e.page
+    go(pg, 'profile/letters')
+    def scene_of(id):
+        pg.evaluate("openLetter(%s)" % json.dumps(id)); pg.wait_for_selector('.ltr-stage'); pg.wait_for_timeout(300)
+        r = pg.evaluate("(()=>{const d=(s)=>getComputedStyle(document.querySelector(s)).display; return {cls: document.querySelector('.ltr-stage').className, moon:d('.ltr-moon'), bats:d('.ltr-bat-w'), glow:d('.ltr-hglow'), embers: document.querySelectorAll('.ltr-em').length};})()")
+        pg.evaluate("closeLetterReading()"); pg.wait_for_timeout(150)
+        return r
+    r10, r25, r31 = scene_of('Nina:10'), scene_of('Nina:25'), scene_of('Nina:31')
+    check('L44 an ordinary letter keeps the standard look', 'scene-std' in r10['cls'] and r10['moon'] == 'none' and r10['bats'] == 'none', r10)
+    check('L44 the Oct 25 letter gets the Full Moon scene', 'scene-moon' in r25['cls'] and r25['moon'] == 'block' and r25['bats'] == 'none', r25)
+    check('L44 the Oct 31 letter gets the Halloween scene with bats', 'scene-hallo' in r31['cls'] and r31['bats'] == 'block' and r31['glow'] == 'block' and r31['moon'] == 'none', r31)
+    check('L44 every look has embers', r10['embers'] == r25['embers'] == r31['embers'] == 12, (r10['embers'], r25['embers'], r31['embers']))
+
+    # --- the Plain text pill ---
+    pg.evaluate("openLetter('Nina:31')"); pg.wait_for_selector('.ltr-stage'); pg.wait_for_timeout(1900)
+    font = lambda: pg.evaluate("getComputedStyle(document.querySelector('.ltr-body-text')).fontFamily").lower()
+    check('L45 the pill is showing on an open letter', pg.evaluate("document.querySelector('.ltr-float-ctl').classList.contains('on')") and pg.inner_text('#letterPlainLink').strip().lower() == 'plain text')
+    check('L45 the letter starts in handwriting', 'zeyada' in font(), font())
+    pg.click('#letterPlainLink'); pg.wait_for_timeout(200)
+    check('L45 tapping it switches to the regular font and says Handwriting', 'inter' in font() and 'zeyada' not in font() and pg.inner_text('#letterPlainLink').strip().lower() == 'handwriting', font())
+    check('L45 the choice is remembered', pg.evaluate("localStorage.getItem('r2-letters-plain')") == '1')
+    pg.evaluate("closeLetterReading()"); pg.evaluate("openLetter('Nina:25')"); pg.wait_for_selector('.ltr-stage'); pg.wait_for_timeout(300)
+    check('L45 and it carries over to the next letter you open', 'plain' in pg.get_attribute('.ltr-stage', 'class') and 'inter' in font())
+    pg.click('#letterPlainLink'); pg.wait_for_timeout(200)
+    check('L45 tapping again goes back to handwriting', 'zeyada' in font() and pg.evaluate("localStorage.getItem('r2-letters-plain')") == '0')
+    e.close()
+
+    # --- the Halloween bats must never make the page scroll sideways on a small phone ---
+    e = Env(pw, letters_fb([L('Nina:31', 31)], opened_for='Kellye'), who='Kellye', now=D31, width=360); e.open(); pg = e.page
+    go(pg, 'profile/letters'); pg.evaluate("openLetter('Nina:31')"); pg.wait_for_selector('.ltr-stage'); pg.wait_for_timeout(4000)
+    check('L46 no sideways scrolling at 360px with the bats flying', pg.evaluate("document.documentElement.scrollWidth") <= 360, pg.evaluate("document.documentElement.scrollWidth"))
+    e.close()
+
+    # --- the one-time "where to find letters" card on Today ---
+    e = Env(pw, seed_nina(), now=D8); e.open(); pg = e.page; pg.wait_for_timeout(400)
+    txt = pg.inner_text('#lettersHintWrap')
+    check('L47 a new person sees the letters card on Today', 'New: sealed letters' in txt and 'tab, then Letters' in txt and 'got it' in txt.lower(), txt)
+    pg.click('#lettersHintGot'); pg.wait_for_timeout(200)
+    check('L47 Got it makes it go away', pg.inner_text('#lettersHintWrap').strip() == '')
+    pg.reload(); pg.wait_for_timeout(1500)
+    check('L47 and it stays gone after a reload', pg.inner_text('#lettersHintWrap').strip() == '')
+    e.close()
+    e = Env(pw, seed_nina(), now=D8); e.open(); pg = e.page; pg.wait_for_timeout(300)
+    pg.click('#people button:has-text("Kellye")'); pg.wait_for_timeout(300)
+    check("L47 the card never shows on somebody else's page", pg.inner_text('#lettersHintWrap').strip() == '')
+    pg.click('#people button:has-text("Nina")'); pg.wait_for_timeout(300)
+    check('L47 it is back on your own page', 'New: sealed letters' in pg.inner_text('#lettersHintWrap'))
+    e.close()
+
+    # --- the dot on Me while an open letter is waiting ---
+    e = Env(pw, letters_fb([L('Nina:3', 10)]), who='Kellye', now=D10); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    check('L48 a pink dot sits on the Me tab while a letter is waiting', pg.evaluate("!document.querySelector('.tab-dot').hidden"))
+    check('L48 and the Me tab says so to screen readers', 'letter' in (pg.get_attribute('.tabbar .tab[data-tab=profile]', 'aria-label') or '').lower())
+    go(pg, 'profile/letters')
+    check('L48 the Letters sub-tab has a dot too', pg.locator('#subnav .subnav-link[data-page=letters] .sub-dot').count() == 1)
+    pg.click('.ltr-row'); pg.wait_for_selector('#letterSealTap'); pg.click('#letterSealTap')
+    pg.wait_for_function("document.querySelector('.ltr-scroll-wrap.show')", timeout=6000); pg.wait_for_timeout(300)
+    check('L48 opening the letter clears both dots', pg.evaluate("document.querySelector('.tab-dot').hidden") and pg.locator('#subnav .subnav-link[data-page=letters] .sub-dot').count() == 0)
+    e.close()
+    e = Env(pw, letters_fb([L('Nina:4', 25)]), who='Kellye', now=D10); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    check('L48 a letter that is still locked does not light the dot', pg.evaluate("document.querySelector('.tab-dot').hidden"))
+    e.close()
+
+    # --- casting a spell never changes anyone's notification settings ---
+    fb = seed_nina()
+    fb['recalData/recal-notif-prefs:Nina'] = json.dumps({"reactions": True, "activity": True, "morning": True, "nudge": True})
+    fb['recalData/recal-fcm-token:Nina'] = "token-nina-1"
+    e = Env(pw, fb, now=D8); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    before = pg.evaluate("[window.__FB['recalData/recal-notif-prefs:Nina'], window.__FB['recalData/recal-fcm-token:Nina']]")
+    pg.locator('.check-row:has-text("Journaled") .toggle').first.click(); pg.wait_for_timeout(250)
+    pg.locator('.check-row:has-text("No phone") .toggle').first.click(); pg.wait_for_timeout(600)
+    cast = json.loads(pg.evaluate("window.__FB['recalData/r2:recal:Nina']"))['days']['8']
+    after = pg.evaluate("[window.__FB['recalData/recal-notif-prefs:Nina'], window.__FB['recalData/recal-fcm-token:Nina']]")
+    check('L49 the spell really was cast (journaled and no phone)', cast.get('journaled') is True and cast.get('noPhone') is True, cast)
+    check('L49 casting left her notification switches and phone address untouched', before == after and after[1] == 'token-nina-1', (before, after))
+    e.close()
+
+
 bad = [r for r in res if not r[1]]
 print('%d checks, %d failed' % (len(res), len(bad)))
 sys.exit(1 if bad else 0)
