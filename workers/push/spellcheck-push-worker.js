@@ -40,6 +40,15 @@ const CHALLENGE_START = '2026-10-01'; // Round 2
 const LETTER_DAYS = [10, 25, 31]; // New Moon in Libra, Full Moon in Taurus, Halloween
 const LETTER_NIGHT_NAMES = { 10: 'New Moon in Libra', 25: 'Full Moon in Taurus', 31: 'Halloween' };
 const LETTER_DATE_LABELS = { 10: 'Oct 10, New Moon in Libra', 25: 'Oct 25, Full Moon in Taurus', 31: 'Oct 31, Halloween' };
+// Nina's one-time intro letter (marked intro:true by the app). This is its push, sent when she seals it
+// and resent once, at the time set just below, to everyone but Nina.
+const INTRO_PUSH = { title: "You've got mail, witches ✦", body: "Nina wrote all of us a letter and it's open. Drop everything. Okay, finish your sentence first." };
+// When the one-time resend goes out: on this Day of the challenge (Oct N), from this Pacific hour and minute,
+// with an hour of grace in case the Worker is a little late. To schedule another one, change these three numbers.
+const INTRO_RESEND = { day: 18, hour: 22, minute: 0 }; // Sunday Oct 18, from 10:00pm
+
+// Same swap the app uses for feed post ids, so a push can point at the exact post.
+const safeKey = (id) => String(id).replace(/[.#$\[\]\/]/g, '_');
 
 function castCount(dd) {
   if (!dd) return 0;
@@ -113,8 +122,8 @@ const ROLL_SELF = {
   25: 'Twenty-five days in a row. Don\u2019t look down, just keep going.'
 };
 export function rollMessage(item) {
-  if (item.type === 'rollself') return { title: 'You\u2019re on a roll \u2726', body: ROLL_SELF[item.streak] };
-  return { title: `${item.actor} is on a roll \u2726`, body: ROLL_OTHERS[item.streak] };
+  if (item.type === 'rollself') return { title: 'You\u2019re on a roll \u2726', body: ROLL_SELF[item.streak], target: 'tea' };
+  return { title: `${item.actor} is on a roll \u2726`, body: ROLL_OTHERS[item.streak], target: 'tea' };
 }
 
 // Sunday recap.
@@ -198,7 +207,12 @@ function describePost(eventKey) {
     : 'post';
   return { owner, noun };
 }
+// Every comment push says which post it is about, so a tap can open that post. Several posts means the feed.
 export function composeComments(items) {
+  const events = uniq(items.map(i => i.eventKey));
+  return { ...composeCommentsText(items), target: events.length === 1 ? 'post:' + events[0] : 'tea' };
+}
+function composeCommentsText(items) {
   const events = uniq(items.map(i => i.eventKey));
   if (items.length === 1) {
     const it = items[0];
@@ -414,7 +428,14 @@ function headline(who, type, its, castCount) {
   return { title: who, body: 'Come take a look.' };
 }
 
+// Activity pushes point at the one post they are about (the full-coven moment included), else at the feed.
 export function composeActivity(items, castTodayCount) {
+  const msg = composeActivityText(items, castTodayCount);
+  const coven = items.find(i => i.type === 'coven');
+  const target = coven ? 'post:' + safeKey(coven.id || ('coven:' + coven.day)) : (items.length === 1 && items[0].id ? 'post:' + safeKey(items[0].id) : 'tea');
+  return { ...msg, target };
+}
+function composeActivityText(items, castTodayCount) {
   const coven = items.find(i => i.type === 'coven');
   if (coven) return covenMessage(coven.day, coven.streak || 1);
   const actors = uniq(items.map(i => i.actor));
@@ -506,6 +527,9 @@ function joinNames(a) {
 }
 function uniq(a) { return Array.from(new Set(a)); }
 
+function pacificMinute(now) {
+  return Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', minute: 'numeric' }).format(now));
+}
 function pacificHour(now) {
   return Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', hourCycle: 'h23' }).format(now));
 }
@@ -514,7 +538,12 @@ function pacificHour(now) {
 const QUIET_HOURS_ON = false;
 function isQuiet(now) { if (!QUIET_HOURS_ON) return false; const h = pacificHour(now); return h >= 22 || h < 8; }
 
+// Same for reactions: a tap opens the post that was reacted to, or the feed when there are several.
 export function composeMessage(items) {
+  const events = uniq(items.map(i => i.eventKey));
+  return { ...composeMessageText(items), target: events.length === 1 ? 'post:' + events[0] : 'tea' };
+}
+function composeMessageText(items) {
   const reactors = uniq(items.map(i => i.reactor));
   const glyphs = uniq(items.map(i => i.glyph));
   const events = uniq(items.map(i => i.eventKey));
@@ -804,7 +833,7 @@ export async function run(env, now) {
         const dateLabel = LETTER_DATE_LABELS[l.opensDay] || ('Oct ' + l.opensDay);
         // Nina's one-time intro letter (marked intro:true by the app) gets its own announcement.
         const msg = l.intro
-          ? { title: "You've got mail, witches ✦", body: "Nina wrote all of us a letter and it's open. Drop everything. Okay, finish your sentence first." }
+          ? { ...INTRO_PUSH }
           : l.to === 'all'
           ? { title: `${l.sender} wrote all of us something ✦`,
               body: alreadyOpen
@@ -814,6 +843,7 @@ export async function run(env, now) {
               body: alreadyOpen
                 ? `${l.sender} sealed a letter with your name on it. It's open right now, so there's no waiting this time. Go on.`
                 : `${l.sender} sealed a letter with your name on it. It opens ${dateLabel}. You're the main event, apparently.` };
+        msg.target = 'letters';
         try {
           if (!accessTokenL) accessTokenL = await getAccessToken(env);
           await sendPush(env, accessTokenL, token, msg);
@@ -885,11 +915,12 @@ export async function run(env, now) {
     const castOn = (p, n) => !!(data[p] && data[p].days && isCast(data[p].days[n]));
     let streak = 0;
     for (let n = today - 1; n >= 1 && PEOPLE.every(p => castOn(p, n)); n--) streak++;
-    for (const job of ['morning', 'brew', 'nudge', 'recap', 'letters']) {
+    for (const job of ['morning', 'brew', 'nudge', 'recap', 'letters', 'introResend']) {
       const inWindow = job === 'morning' ? (ptHour >= 8 && ptHour < 12)
         : job === 'brew' ? (ptHour >= 12 && ptHour < 22 && !!QUESTIONS[today])
         : job === 'nudge' ? (ptHour >= 19 && ptHour < 22)
         : job === 'letters' ? (ptHour >= 20 && ptHour < 22 && today >= 10 && today <= 31) // starts at 8pm so it never collides with the 7pm nudge
+        : job === 'introResend' ? (today === INTRO_RESEND.day && ((ptHour === INTRO_RESEND.hour && pacificMinute(now) >= INTRO_RESEND.minute) || ptHour === INTRO_RESEND.hour + 1)) // once, at the time set above, with an hour of grace
         : (isSunday && today >= 7 && ptHour >= 18 && ptHour < 22); // Sunday recap, from 6pm
       if (!inWindow) continue;
       await guard('scheduled job ' + job, async () => {
@@ -899,7 +930,8 @@ export async function run(env, now) {
       for (const person of PEOPLE) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
-        const prefKey = (job === 'recap' || job === 'letters') ? 'activity' : job === 'brew' ? 'morning' : job;
+        if (job === 'introResend' && person === 'Nina') { finish(); continue; } // it is her own letter
+        const prefKey = (job === 'recap' || job === 'letters' || job === 'introResend') ? 'activity' : job === 'brew' ? 'morning' : job;
         if (!(await prefsFor(person))[prefKey]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
         let msg;
         if (job === 'morning') {
@@ -908,6 +940,12 @@ export async function run(env, now) {
           const qa = await readKey(R2 + 'recal-qa:' + person);
           if (qa && qa[today]) { console.log(person, 'already answered the Day', today, 'brew, no push.'); finish(); continue; }
           msg = { title: `Today\u2019s brew`, body: QUESTIONS[today] };
+        } else if (job === 'introResend') {
+          // The same push, once more, for everyone but Nina, whether or not they have opened the letter.
+          // A skip is only for a switched-off setting or a missing phone address, and each says why.
+          const intro = Array.from(lettersByIdNow.entries()).find(([, l]) => l.intro);
+          if (!intro) { console.log('No intro letter found, nothing to resend.'); finish(); continue; }
+          msg = { ...INTRO_PUSH };
         } else if (job === 'recap') {
           msg = recapMessage(weekStats(data, reactions, today));
         } else if (job === 'letters') {
@@ -960,6 +998,7 @@ export async function run(env, now) {
           const othersCast = PEOPLE.filter(p => p !== person && castOn(p, today)).length;
           msg = nudgeMessage(today, 2 - castCount(dd), othersCast, streak);
         }
+        if (job === 'letters' || job === 'introResend') msg.target = 'letters';
         const token = await readRaw('recal-fcm-token:' + person);
         if (!token) { console.log('No device token for', person, ', skipping', job); finish(); continue; }
         // Claim first: she is marked done and saved BEFORE any push goes out (below). Sends happen after the loop.
@@ -1029,7 +1068,7 @@ async function sendPush(env, accessToken, deviceToken, msg) {
   const r = await bfetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
     method: 'POST',
     headers: { 'authorization': 'Bearer ' + accessToken, 'content-type': 'application/json' },
-    body: JSON.stringify({ message: { token: deviceToken, data: { title: msg.title, body: msg.body } } })
+    body: JSON.stringify({ message: { token: deviceToken, data: { title: msg.title, body: msg.body, ...(msg.target ? { target: String(msg.target) } : {}) } } })
   });
   if (!r.ok) throw new Error('fcm ' + r.status + ' ' + (await r.text()).slice(0, 200));
 }

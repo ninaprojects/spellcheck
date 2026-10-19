@@ -35,7 +35,7 @@ globalThis.fetch = async (url, opts = {}) => {
   if (url.startsWith('https://oauth2.googleapis.com/token')) return new Response(JSON.stringify({ access_token: 'fake-access-token' }), { status: 200 });
   if (url.includes('fcm.googleapis.com')) {
     const m = JSON.parse(opts.body).message;
-    pushes.push({ to: m.token.replace('token-', ''), title: m.data.title, body: m.data.body });
+    pushes.push({ to: m.token.replace('token-', ''), title: m.data.title, body: m.data.body, target: m.data.target });
     return new Response('{}', { status: 200 });
   }
   return new Response('not mocked: ' + url, { status: 500 });
@@ -592,6 +592,94 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('and it still goes to people who have not cast', sentTo('Lauren').some(x => NUDGE.test(x.title)), sentTo('Lauren').map(x => x.title));
   await runSettled('2026-10-11T03:30:00Z');   // 8:30pm Pacific
   check('cast her spell and still gets the evening letters nudge', sentTo('Kellye').some(x => x.title === 'Break the seal \u2726'), sentTo('Kellye').map(x => x.title));
+}
+
+
+// ===== the one-time resend of Nina's intro push: Oct 18, 10pm Pacific, to everyone but Nina =====
+{
+  const INTRO = { id: 'Nina:intro', to: 'all', body: 'x', opensDay: 16, writtenAt: '2026-10-16T22:00:00Z', intro: true };
+  const TITLE = "You've got mail, witches \u2726";
+  const BODY = "Nina wrote all of us a letter and it's open. Drop everything. Okay, finish your sentence first.";
+  const intro = (who) => sentTo(who).filter(x => x.title === TITLE && x.body === BODY);
+  const world = async (letters, setup) => {
+    resetWorld();
+    for (const p of PEOPLE) putPerson(p, person({}));
+    if (setup) setup();
+    put('r2:recal-letters:Nina', letters);
+    await baseline();
+  };
+
+  await world([INTRO]);
+  await runSettled('2026-10-19T04:40:00Z');   // 9:40pm Pacific, too early
+  check('one-time resend: nothing goes out before 10pm', PEOPLE.every(p => intro(p).length === 0), pushes.map(x => x.to + ': ' + x.title));
+  await runSettled('2026-10-19T05:05:00Z');   // 10:05pm Pacific
+  check('one-time resend: at 10pm the other three get the original push, same words', ['Kellye', 'Lauren', 'Carolina'].every(p => intro(p).length === 1), pushes.map(x => x.to + ': ' + x.title));
+  check('one-time resend: Nina does not get her own letter push', intro('Nina').length === 0);
+  await runSettled('2026-10-19T05:20:00Z');
+  check('one-time resend: and it does not send again later that morning', PEOPLE.every(p => intro(p).length === 0), pushes.map(x => x.to + ': ' + x.title));
+  await runSettled('2026-10-19T07:05:00Z');   // 12:05am, a new day
+  check('one-time resend: nor after midnight', PEOPLE.every(p => intro(p).length === 0));
+
+  await world([INTRO]);
+  await runSettled('2026-10-20T05:05:00Z');   // the next night
+  check('one-time resend: it never fires on another day', PEOPLE.every(p => intro(p).length === 0));
+
+  await world([INTRO], () => put('r2:recal-letters-opened:Lauren', { 'Nina:intro': '2026-10-17T05:00:00Z' }));
+  await runSettled('2026-10-19T05:05:00Z');
+  check('one-time resend: everyone gets it, even someone who already opened the letter', ['Kellye', 'Lauren', 'Carolina'].every(p => intro(p).length === 1), pushes.map(x => x.to + ': ' + x.title));
+
+  await world([INTRO], () => put('recal-notif-prefs:Carolina', { activity: false }));
+  await runSettled('2026-10-19T05:05:00Z');
+  check('one-time resend: it respects the Coven activity switch', intro('Carolina').length === 0 && intro('Kellye').length === 1 && intro('Lauren').length === 1);
+
+  await world([{ id: 'Nina:plain', to: 'all', body: 'x', opensDay: 16, writtenAt: '2026-10-16T22:00:00Z' }]);
+  await runSettled('2026-10-19T05:05:00Z');
+  check('one-time resend: an ordinary letter without the intro mark is never resent', PEOPLE.every(p => intro(p).length === 0));
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:fake', to: 'all', body: 'x', opensDay: 16, writtenAt: '2026-10-16T22:00:00Z', intro: true }]);
+  await baseline();
+  await runSettled('2026-10-19T05:05:00Z');
+  check('one-time resend: the intro mark only counts on a letter from Nina', PEOPLE.every(p => intro(p).length === 0));
+}
+
+
+// ===== pushes say which post they are about, so a tap can open that post =====
+{
+  const cm = (author, eventKey, role = 'owner') => ({ author, eventKey, t: 'hi', owner: 'Nina', noun: 'Day 5 spell', role });
+  check('comment push: one post means that post', W.composeComments([cm('Kellye', 'cast:Nina:5')]).target === 'post:cast:Nina:5', W.composeComments([cm('Kellye', 'cast:Nina:5')]));
+  check('comment push: several comments on the same post still mean that post', W.composeComments([cm('Kellye', 'cast:Nina:5'), cm('Lauren', 'cast:Nina:5')]).target === 'post:cast:Nina:5');
+  check('comment push: several posts mean the feed', W.composeComments([cm('Kellye', 'cast:Nina:5'), cm('Lauren', 'photo:Nina:5')]).target === 'tea');
+  check('comment push: the wording is unchanged', W.composeComments([cm('Kellye', 'cast:Nina:5')]).title === 'Kellye has opinions about your Day 5 spell');
+  const rx = (reactor, eventKey) => ({ reactor, glyph: '\u2661', eventKey, text: 'your Day 5 spell' });
+  check('reaction push: one post means that post', W.composeMessage([rx('Kellye', 'cast:Nina:5')]).target === 'post:cast:Nina:5');
+  check('reaction push: several posts mean the feed', W.composeMessage([rx('Kellye', 'cast:Nina:5'), rx('Lauren', 'photo:Nina:5')]).target === 'tea');
+  check('reaction push: held overnight still carries it', W.composeMessage([{ ...rx('Kellye', 'cast:Nina:5'), heldOvernight: true }]).target === 'post:cast:Nina:5');
+  check('activity push: one spell means that post', W.composeActivity([{ id: 'cast:Kellye:10', type: 'cast', actor: 'Kellye', day: 10 }], 2).target === 'post:cast:Kellye:10');
+  check('activity push: the post id uses the same swap the app does', W.composeActivity([{ id: 'cur:Kellye:reading:2026-10-10T18:00:00.123Z', type: 'currently', actor: 'Kellye', field: 'reading', value: 'x', at: '2026-10-10T18:00:00.123Z' }], 2).target === 'post:cur:Kellye:reading:2026-10-10T18:00:00_123Z');
+  check('activity push: the full-coven moment means its post', W.composeActivity([{ id: 'coven:10', type: 'coven', day: 10, streak: 2 }], 4).target === 'post:coven:10');
+  check('activity push: several things at once mean the feed', W.composeActivity([{ id: 'cast:Kellye:10', type: 'cast', actor: 'Kellye' }, { id: 'photo:Kellye:10', type: 'photo', actor: 'Kellye' }], 2).target === 'tea');
+  check('streak pushes mean the feed', W.rollMessage({ type: 'roll', actor: 'Kellye', streak: 5 }).target === 'tea' && W.rollMessage({ type: 'rollself', actor: 'Kellye', streak: 5 }).target === 'tea');
+}
+{
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  put('r2:recal-letters:Nina', [{ id: 'Nina:intro', to: 'all', body: 'x', opensDay: 16, writtenAt: '2026-10-16T22:00:00Z', intro: true }]);
+  await baseline();
+  await runSettled('2026-10-19T05:05:00Z');   // 10:05pm Pacific, the resend and the morning spell
+  const resend = sentTo('Kellye').find(x => x.title === "You've got mail, witches \u2726");
+  check('the letter resend says it is about letters, in the push itself', resend && resend.target === 'letters', resend);
+  await runSettled('2026-10-18T15:35:00Z');   // the next morning, 8:35am Pacific: the morning spell
+  const morning = sentTo('Kellye').find(x => /Day 18 of Spells/.test(x.title));
+  check('the morning spell carries no target, so a tap just opens the app', morning && morning.target === undefined, morning);
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Nina', [{ id: 'Nina:x', to: 'Kellye', body: 'x', opensDay: 25, writtenAt: '2026-10-19T05:00:00Z' }]);
+  await runSettled('2026-10-19T05:05:00Z');
+  const landed = sentTo('Kellye').find(x => / wrote you something/.test(x.title));
+  check('a "letter landed" push says it is about letters', landed && landed.target === 'letters', landed);
 }
 
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');

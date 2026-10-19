@@ -36,5 +36,14 @@ for l in out:
 if r.returncode != 0:
     ok = False
 
+# 4. The service worker: what a tap on a notification does
+r = subprocess.run(['node', os.path.join(HERE, 'sw_test.mjs')], capture_output=True, text=True)
+out = [l for l in r.stdout.splitlines() if l.startswith('PASS') or l.startswith('FAIL') or 'checks,' in l]
+print('sw_test.mjs: ' + (out[-1] if out else r.stderr[-300:]))
+for l in out:
+    if l.startswith('FAIL'): print('   ' + l)
+if r.returncode != 0:
+    ok = False
+
 print('\nALL PASSED' if ok else '\nSOMETHING FAILED')
 sys.exit(0 if ok else 1)

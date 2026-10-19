@@ -376,6 +376,130 @@ with sync_playwright() as pw:
     e.close()
 
 
+    # ====================== Tapping a letter notification ======================
+    SW_STUB = "(()=>{ const sw = new EventTarget(); sw.register = ()=>Promise.resolve({}); sw.ready = Promise.resolve({}); Object.defineProperty(navigator,'serviceWorker',{value:sw,configurable:true}); window.__swStub = sw; })();"
+    def two_letters(): return [L('Nina:p2', 10), L('Nina:p3', 10)]
+    def on_letters(pg): return pg.evaluate("!!document.querySelector('#subnav .subnav-link.active[data-page=letters]')") and vis(pg, '#lettersWrap')
+
+    # --- the app was closed: the notification opens a link that carries ?push=letters ---
+    e = Env(pw, letters_fb([L('Nina:p1', 10)]), who='Kellye', now=D10); e.open(); pg = e.page
+    pg.goto('file://' + APP + '?push=letters#profile/letters'); pg.wait_for_timeout(2500)
+    check('P1 closed app: the link lands on your Letters page', on_letters(pg))
+    check('P1 closed app: with one letter waiting, its envelope is ready to break', vis(pg, '#letterSealTap'))
+    check('P1 closed app: the link is tidied up so a refresh does not repeat it', pg.evaluate("location.search") == '')
+    e.close()
+    e = Env(pw, letters_fb(two_letters()), who='Kellye', now=D10); e.open(); pg = e.page
+    pg.goto('file://' + APP + '?push=letters#profile/letters'); pg.wait_for_timeout(2500)
+    check('P2 closed app: with two letters waiting it shows the list, not one envelope', on_letters(pg) and pg.locator('.ltr-row').count() == 2 and not vis(pg, '#letterSealTap'), pg.locator('.ltr-row').count())
+    e.close()
+    e = Env(pw, letters_fb([L('Nina:p4', 25)]), who='Kellye', now=D10); e.open(); pg = e.page
+    pg.goto('file://' + APP + '?push=letters#profile/letters'); pg.wait_for_timeout(2500)
+    check('P3 closed app: a letter that is still locked is never opened for you', on_letters(pg) and not vis(pg, '#letterSealTap'))
+    e.close()
+    e = Env(pw, letters_fb([L('Nina:p5', 10)], opened_for='Kellye'), who='Kellye', now=D10); e.open(); pg = e.page
+    pg.goto('file://' + APP + '?push=letters#profile/letters'); pg.wait_for_timeout(2500)
+    check('P3 closed app: a letter you already opened is not opened again', on_letters(pg) and not vis(pg, '#letterSealTap') and not vis(pg, '.ltr-stage'))
+    e.close()
+    e = Env(pw, letters_fb([]), who='Kellye', now=D10); e.open(); pg = e.page
+    pg.goto('file://' + APP + '?push=letters#profile/letters'); pg.wait_for_timeout(2500)
+    check('P3 closed app: with no letters at all it still lands on Letters, no error', on_letters(pg))
+    e.close()
+
+    # --- the app was open: the service worker sends the page a message ---
+    e = Env(pw, letters_fb([L('Nina:p6', 10)]), who='Kellye', now=D10)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    check('P4 open app: starts on Today, not on Letters', not on_letters(pg))
+    pg.evaluate("window.__swStub.dispatchEvent(new MessageEvent('message', {data:{type:'open-letters'}}))"); pg.wait_for_timeout(700)
+    check('P4 open app: the message takes you to Letters', on_letters(pg))
+    check('P4 open app: with one letter waiting, its envelope is ready', vis(pg, '#letterSealTap'))
+    e.close()
+    e = Env(pw, letters_fb([L('Nina:p7', 10)]), who='Kellye', now=D10)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    pg.click('#people button:has-text("Nina")'); pg.wait_for_timeout(300)
+    pg.evaluate("window.__swStub.dispatchEvent(new MessageEvent('message', {data:{type:'open-letters'}}))"); pg.wait_for_timeout(700)
+    check('P5 open app, looking at someone else: it brings you back to your own letters', on_letters(pg) and vis(pg, '#letterSealTap'))
+    e.close()
+    e = Env(pw, letters_fb(two_letters()), who='Kellye', now=D10)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    pg.evaluate("window.__swStub.dispatchEvent(new MessageEvent('message', {data:{type:'open-letters'}}))"); pg.wait_for_timeout(700)
+    check('P6 open app, two letters waiting: shows the list', on_letters(pg) and pg.locator('.ltr-row').count() == 2 and not vis(pg, '#letterSealTap'))
+    e.close()
+    e = Env(pw, letters_fb([L('Nina:p8', 10)]), who='Kellye', now=D10)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    pg.evaluate("window.__swStub.dispatchEvent(new MessageEvent('message', {data:{type:'something-else'}}))"); pg.wait_for_timeout(500)
+    check('P7 open app: a message that is not about letters does nothing', not on_letters(pg))
+    e.close()
+    e = Env(pw, letters_fb([L('Nina:p9', 10)]), who='Kellye', now=D10)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    pg.evaluate("window.__swStub.dispatchEvent(new MessageEvent('message', {data:{type:'open-letters'}}))"); pg.wait_for_timeout(500)
+    pg.click('#letterSealTap')
+    pg.wait_for_function("document.querySelector('.ltr-scroll-wrap.show')", timeout=6000)
+    check('P8 the envelope you land on really opens the letter', pg.evaluate("document.querySelector('.ltr-scroll-wrap').classList.contains('show')"))
+    e.close()
+
+
+    # ====================== Tapping a notification about a post ======================
+    def on_tea(pg): return pg.evaluate("!!document.querySelector('#subnav .subnav-link.active[data-page=tea]')") and vis(pg, '#covenFeed')
+    def pulsing(pg): return pg.evaluate("(()=>{const el=document.querySelector('#covenFeed .feed-item.pulse'); return el ? el.dataset.key : null;})()")
+    def tea_message(pg, key):
+        pg.evaluate("(k)=>window.__swStub.dispatchEvent(new MessageEvent('message', {data:{type:'open-post', key:k}}))", key); pg.wait_for_timeout(700)
+
+    e = Env(pw, seed_nina(), now=D8); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    keys = pg.evaluate("Array.from(document.querySelectorAll('#covenFeed .feed-item')).map(x=>x.dataset.key)")
+    check('E1 every post in The Tea carries its own key', keys == ['cast:Nina:1', 'photo:Nina:1', 'session:Nina:0:0'], keys)
+    e.close()
+
+    # --- the app was closed: the notification opens a link with ?push=tea&post=... ---
+    e = Env(pw, seed_nina(), now=D8); e.open(); pg = e.page
+    errors = []; pg.on('pageerror', lambda x: errors.append(str(x)))
+    pg.goto('file://' + APP + '?push=tea&post=photo%3ANina%3A1#coven/tea')
+    pg.wait_for_function("document.querySelector('#covenFeed .feed-item.pulse')", timeout=8000)
+    check('E2 closed app: the link lands on The Tea', on_tea(pg))
+    check('E2 closed app: the right post is highlighted', pulsing(pg) == 'photo:Nina:1', pulsing(pg))
+    check('E2 closed app: that post is scrolled into view', pg.evaluate("(()=>{const el=document.querySelector('#covenFeed .feed-item.pulse'); const r=el.getBoundingClientRect(); return r.bottom>0 && r.top<window.innerHeight;})()"))
+    check('E2 closed app: the link is tidied so a refresh does not repeat it', pg.evaluate("location.search") == '' and pg.evaluate("location.hash") == '#coven/tea')
+    pg.wait_for_timeout(3400)
+    check('E2 closed app: the highlight fades away by itself', pulsing(pg) is None)
+    check('E2 closed app: no errors on the way', errors == [], errors)
+    e.close()
+    e = Env(pw, seed_nina(), now=D8); e.open(); pg = e.page
+    pg.goto('file://' + APP + '?push=tea#coven/tea'); pg.wait_for_timeout(2500)
+    check('E3 closed app: a link with no post just opens The Tea, nothing highlighted', on_tea(pg) and pulsing(pg) is None)
+    e.close()
+    e = Env(pw, seed_nina(), now=D8); e.open(); pg = e.page
+    errors = []; pg.on('pageerror', lambda x: errors.append(str(x)))
+    pg.goto('file://' + APP + '?push=tea&post=cast%3ANobody%3A99#coven/tea'); pg.wait_for_timeout(2500)
+    check('E4 closed app: a post that no longer exists lands on The Tea without breaking', on_tea(pg) and pulsing(pg) is None and errors == [], errors)
+    e.close()
+
+    # --- the app was open: the service worker sends the page a message ---
+    e = Env(pw, seed_nina(), now=D8)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    check('E5 open app: starts on Today, not The Tea', not on_tea(pg))
+    tea_message(pg, 'cast:Nina:1')
+    check('E5 open app: the message takes you to The Tea', on_tea(pg))
+    check('E5 open app: and highlights that post', pulsing(pg) == 'cast:Nina:1', pulsing(pg))
+    e.close()
+    e = Env(pw, seed_nina(), now=D8)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    pg.evaluate("feedShowCount = 1; renderCovenFeed();")
+    check('E6 a long feed starts short (only one post showing)', pg.locator('#covenFeed .feed-item').count() == 1)
+    tea_message(pg, 'session:Nina:0:0')
+    check('E6 open app: a post further down is brought into the list', pg.locator('#covenFeed .feed-item').count() == 3 and pulsing(pg) == 'session:Nina:0:0', (pg.locator('#covenFeed .feed-item').count(), pulsing(pg)))
+    e.close()
+    e = Env(pw, seed_nina(), now=D8)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    tea_message(pg, None)
+    check('E7 open app: a message with no post just opens The Tea', on_tea(pg) and pulsing(pg) is None)
+    e.close()
+    e = Env(pw, seed_nina(), now=D8)
+    e.page.add_init_script(SW_STUB); e.open(); pg = e.page; pg.wait_for_timeout(500)
+    errors = []; pg.on('pageerror', lambda x: errors.append(str(x)))
+    tea_message(pg, 'photo:Kellye:99')
+    check('E8 open app: an unknown post lands on The Tea without breaking', on_tea(pg) and pulsing(pg) is None and errors == [], errors)
+    e.close()
+
+
 bad = [r for r in res if not r[1]]
 print('%d checks, %d failed' % (len(res), len(bad)))
 sys.exit(1 if bad else 0)

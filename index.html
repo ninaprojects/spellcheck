@@ -330,6 +330,8 @@
   .feed-empty{padding:18px;font-size:13px;color:var(--text-secondary);}
   .feed-item{display:flex;gap:12px;padding:16px;border-top:1px solid var(--line);}
   .feed-item:first-child{border-top:none;}
+  .feed-item{transition:background 1.2s ease;}
+  .feed-item.pulse{background:#FFEAF3 !important;}
   .feed-item.system{background:rgba(26,26,26,0.035);}
   .feed-avatar{width:40px;height:40px;border-radius:50%;box-sizing:border-box;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
   .feed-avatar.system{background:var(--text-primary);border-color:var(--text-primary);color:var(--yellow);font-size:16px;}
@@ -1190,6 +1192,11 @@ const PEOPLE = ["Nina","Kellye","Lauren","Carolina"];
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW registration failed', e));
+  });
+  // A tap on a letter notification while the app is already open: the service worker asks the page to open the letter.
+  navigator.serviceWorker.addEventListener('message', (e)=>{
+    if(e.data && e.data.type === 'open-letters') openLetterFromPush();
+    if(e.data && e.data.type === 'open-post') openPostFromPush(e.data.key || null);
   });
 }
 const CHALLENGE_START = new Date(2026,9,1); // Oct 1 2026 (Round 2)
@@ -4305,6 +4312,43 @@ function openLetter(id){
   lettersStage = opened[id] ? 'open' : 'sealed';
   renderLettersPage();
 }
+// Landing from a letter notification: go to your own Letters page, and if exactly one letter is open and
+// waiting, open its envelope so the tap goes straight to the letter. With several waiting, show the list.
+function openLetterFromPush(){
+  if(!myIdentity) return;
+  currentPerson = myIdentity;
+  activeView = 'profile';
+  activePage.profile = 'letters';
+  rememberPages();
+  closeLetterReading();
+  renderAll();
+  applyView(true);
+  if(location.hash !== '#profile/letters') location.hash = '#profile/letters';
+  const waiting = myUnopenedLetters().filter(l=> letterIsUnlocked(l.opensDay));
+  if(waiting.length === 1) openLetter(waiting[0].id);
+}
+// Landing from a notification about a post: open The Tea, make sure that post is in the list, scroll to it and
+// give it a soft highlight. Its comments are already showing under it. With no post, you just land on The Tea.
+function openPostFromPush(key){
+  activeView = 'coven';
+  activePage.coven = 'tea';
+  rememberPages();
+  history.replaceState(null, '', '#coven/tea');
+  applyView(true);
+  if(key){
+    const idx = buildFeedEvents().findIndex(ev=> feedSafeKey(ev.id) === key);
+    if(idx >= feedShowCount) feedShowCount = idx + 1;
+  }
+  renderCovenFeed();
+  if(!key) return;
+  requestAnimationFrame(()=>{
+    const el = Array.from(document.querySelectorAll('#covenFeed .feed-item')).find(x=> x.dataset.key === key);
+    if(!el) return;
+    el.scrollIntoView({block:'center'});
+    el.classList.add('pulse');
+    setTimeout(()=> el.classList.remove('pulse'), 2600);
+  });
+}
 function closeLetterReading(){
   stopLetterTyping();
   lettersReadingId = null;
@@ -4885,6 +4929,7 @@ function renderCovenFeed(){
     const parts = feedItemHtmlParts(e);
     const item = document.createElement('div');
     item.className = 'feed-item' + ((e.type==='coven' || e.type==='qa') ? ' system' : '');
+    item.dataset.key = feedSafeKey(e.id); // lets a notification tap find this exact post
 
     const av = document.createElement('div');
     if(e.type==='coven' || e.type==='qa'){
@@ -6051,6 +6096,18 @@ function applySnapshot(){
   try{ startCommentsSync(); }catch(e){ console.error('comments sync setup failed', e); }
   try{ startQaSync(); }catch(e){ console.error('question answers sync setup failed', e); }
   try{ startLettersSync(); }catch(e){ console.error('letters sync setup failed', e); }
+  // Opened from a tap on a letter notification while the app was closed: the link carries ?push=letters.
+  try{
+    const pushKind = new URLSearchParams(location.search).get('push');
+    if(pushKind === 'letters'){
+      openLetterFromPush();
+      history.replaceState(null, '', location.pathname + location.hash);
+    }else if(pushKind === 'tea'){
+      const postKey = new URLSearchParams(location.search).get('post');
+      openPostFromPush(postKey || null);
+      history.replaceState(null, '', location.pathname + location.hash);
+    }
+  }catch(e){ console.error('letter link failed', e); }
 })();
 
 function setupScrollspy(){

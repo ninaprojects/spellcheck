@@ -29,6 +29,12 @@ firebase.initializeApp({
 // regardless of platform quirks.
 const messaging = firebase.messaging();
 
+// A push about a letter: a new one landed, or one is open and waiting. Tapping it should land on the letter.
+// (Matched on the wording of those pushes, so the push Worker does not have to change.)
+function isLetterPush(title) {
+  return /^you.ve got mail, witches|^break the seal|wrote (you|all of us) something/i.test(String(title || ''));
+}
+
 self.addEventListener('push', (event) => {
   let payload = {};
   try {
@@ -42,12 +48,42 @@ self.addEventListener('push', (event) => {
   const data = payload.data || payload.notification || payload || {};
   const title = data.title || 'Spell Check';
   const body = data.body || '';
+  const target = String(data.target || '');
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: 'icon-192.png'
+      icon: 'icon-192.png',
+      data: { letters: isLetterPush(title) || target === 'letters', target }
     })
   );
+});
+
+// What a tap does. Before this, nothing was set up, so a tap could not take anyone to the letter.
+// If the app is already open, bring it forward (and for a letter push tell it to open the letter).
+// If it is closed, open it with a link that lands on the letter.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const nd = event.notification.data || {};
+  const letters = !!nd.letters;
+  const tgt = String(nd.target || '');
+  const post = tgt.indexOf('post:') === 0 ? tgt.slice(5) : null; // a push about one post carries its id
+  const tea = post !== null || tgt === 'tea';
+  const path = letters ? './index.html?push=letters#profile/letters'
+    : tea ? './index.html?push=tea' + (post ? '&post=' + encodeURIComponent(post) : '') + '#coven/tea'
+    : './';
+  const target = new URL(path, self.registration.scope).href;
+  event.waitUntil((async () => {
+    const wins = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const w of wins) {
+      if (w.url && w.url.startsWith(self.registration.scope)) {
+        try { await w.focus(); } catch (e) {}
+        if (letters) { try { w.postMessage({ type: 'open-letters' }); } catch (e) {} }
+        else if (tea) { try { w.postMessage({ type: 'open-post', key: post }); } catch (e) {} }
+        return;
+      }
+    }
+    if (clients.openWindow) return clients.openWindow(target);
+  })());
 });
 
 const CACHE_NAME = 'practical-magic-v3'; // bumped for Round 2 so phones drop the old offline copy
