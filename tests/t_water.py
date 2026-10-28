@@ -29,7 +29,7 @@ with sync_playwright() as pw:
     start = oz()
     # ---- bottle ----
     check('B1 the bottle replaced the drops, marked goal 48 and bonus 64', pg.locator(W + '.bottle').count() == 1 and pg.locator(W + '.water-drop').count() == 0 and 'goal 48' in pg.inner_text(W + '.bottle') and 'bonus 64' in pg.inner_text(W + '.bottle'))
-    check('B1 +8 sits above -8', pg.evaluate("(()=>{const p=document.querySelector('#todayCardWrap .water-btn.plus').getBoundingClientRect(), m=document.querySelector('#todayCardWrap .water-btn.minus').getBoundingClientRect(); return p.bottom <= m.top + 1;})()"))
+    check('B1 -8 and +8 sit side by side, +8 on the right', pg.evaluate("(()=>{const p=document.querySelector('#todayCardWrap .water-btn.plus').getBoundingClientRect(), m=document.querySelector('#todayCardWrap .water-btn.minus').getBoundingClientRect(); return m.right <= p.left + 1 && Math.abs(p.top - m.top) < 2;})()"))
     y0 = liq()
     pg.click(W + '.water-btn.plus'); pg.wait_for_timeout(200); pg.click(W + '.water-btn.plus'); pg.wait_for_timeout(700)
     check('B2 two taps add 16 oz and it is saved', oz() == start + 16 and saved_day(e).get('waterOz') == start + 16, (oz(), saved_day(e)))
@@ -57,7 +57,7 @@ with sync_playwright() as pw:
     check('R2 one habit: 1 of 3, still not cast', ring_n() == '1' and pg.locator(W + '.cring.cast').count() == 0 and 'one more' in pg.inner_text(W + '.cring-txt').lower())
     check('R2 the journal row shows its done tag', pg.locator(W + '.check-row.isdone:has-text("Journaled") .done-tag').count() == 1 and 'done' in pg.inner_text(W + '.check-row.isdone .done-tag').lower())
     pg.locator(W + '.check-row:has-text("No phone") .toggle').first.click(); pg.wait_for_timeout(500)
-    check('R3 two habits cast the spell: star, CAST, banner still there', pg.locator(W + '.cring.cast').count() == 1 and 'CAST' in pg.inner_text(W + '.cring .c') and pg.locator(W + '.today-cast').count() == 1, pg.inner_text(W + '.cring-wrap'))
+    check('R3 two habits cast the spell: star, CAST, banner still there', pg.locator(W + '.cring.cast').count() == 1 and '\u2726' in pg.inner_text(W + '.cring .c') and pg.locator(W + '.today-cast').count() == 1, pg.inner_text(W + '.cring-wrap'))
     pg.locator(W + '.check-row:has-text("No phone") .toggle').first.click(); pg.wait_for_timeout(500)
     check('R4 undoing one habit takes the cast back off', ring_n() == '1' and pg.locator(W + '.cring.cast').count() == 0 and pg.locator(W + '.today-cast').count() == 0)
     e.close()
@@ -100,7 +100,7 @@ with sync_playwright() as pw:
     check('M1 reduced motion: no sparks, confetti or bubbles are created', pg.evaluate("window.__sparks") == 0, pg.evaluate("window.__sparks"))
     check('M1 reduced motion: the tag, the ring and the water still update', pg.locator(W + '.check-row.isdone').count() == 1 and pg.inner_text(W + '.water-read').startswith('8 '))
     check('M2 no sideways overflow at 360px', pg.evaluate("document.documentElement.scrollWidth") <= 360, pg.evaluate("document.documentElement.scrollWidth"))
-    check('M2 the readout and buttons fit beside the bottle at 360px', pg.evaluate("(()=>{const b=document.querySelector('#todayCardWrap .water-btns').getBoundingClientRect(); const c=document.querySelector('#todayCardWrap .water-box').getBoundingClientRect(); return b.right <= c.right + 1 && b.width >= 60;})()"))
+    check('M2 the readout and buttons fit beside the bottle at 360px', pg.evaluate("(()=>{const b=document.querySelector('#todayCardWrap .water-btns').getBoundingClientRect(); const c=document.querySelector('#todayCardWrap .water-box').getBoundingClientRect(); return b.right <= c.right + 1 && b.width >= 100;})()"))
     e.close()
 
     # ---- haptics: vibrate on Android, quiet no-op when nothing exists ----

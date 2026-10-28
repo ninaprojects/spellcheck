@@ -399,7 +399,7 @@
   .feed-avatar.tappable, .leaderboard-row.tappable{cursor:pointer;}
 
   /* water tracker */
-  .water-box{border:1px solid var(--line);padding:14px 16px;}
+  .water-box{border:1px solid var(--line);padding:10px 12px;}
   .water-top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
   .water-id{display:flex;align-items:center;gap:10px;}
   .water-icon{width:36px;height:36px;border-radius:50%;background:#DDEEFF;color:#1F6FC2;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -407,34 +407,34 @@
   .water-btn{width:48px;height:44px;font-family:'Inter';font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);}
   .water-btn.plus{background:var(--blue);border-color:var(--blue);color:#0C3B6E;}
   /* water bottle: fills as you add 8 oz, goal and bonus ticks, bubbles and a pop at each mark */
-  .bottle-row{display:flex;gap:16px;align-items:center;margin-top:10px;}
-  .bottle{width:92px;height:190px;position:relative;flex-shrink:0;margin-right:62px;}
+  .bottle-row{display:flex;gap:12px;align-items:center;}
+  .bottle{width:44px;height:110px;position:relative;flex-shrink:0;margin-right:58px;}
   .bottle svg{width:100%;height:100%;overflow:visible;display:block;}
   .bottle .liq{transition:transform .7s cubic-bezier(.3,1.2,.4,1);}
   .bottle.pop{animation:bottlepop .6s cubic-bezier(.2,1.6,.4,1);}
   @keyframes bottlepop{0%{transform:scale(1);}40%{transform:scale(1.12);}100%{transform:scale(1);}}
-  .bottle .mk{font-size:11px;color:#1F6FC2;font-weight:500;position:absolute;left:102px;white-space:nowrap;line-height:1;}
+  .bottle .mk{font-size:10px;color:#1F6FC2;font-weight:600;position:absolute;left:52px;white-space:nowrap;line-height:1;}
   .bub{position:absolute;border-radius:50%;background:rgba(255,255,255,.85);pointer-events:none;opacity:0;}
   .bub.go{animation:bubrise 1.3s ease-in forwards;}
-  @keyframes bubrise{0%{opacity:.9;transform:translateY(0);}100%{opacity:0;transform:translateY(-70px);}}
+  @keyframes bubrise{0%{opacity:.9;transform:translateY(0);}100%{opacity:0;transform:translateY(-38px);}}
   .water-side{flex:1;min-width:0;}
-  .water-read{font-family:'Noto Serif Display',Georgia,serif;font-size:22px;line-height:1.2;color:var(--text-primary);}
-  .water-sub{font-size:12px;color:var(--text-secondary);font-weight:300;margin:2px 0 12px;}
-  .water-btns.stack{flex-direction:column;}
-  .water-btns.stack .water-btn{width:100%;}
+  .water-read{font-family:'Noto Serif Display',Georgia,serif;font-size:20px;line-height:1.1;color:var(--text-primary);}
+  .water-sub{font-size:11px;color:var(--text-secondary);font-weight:300;margin:2px 0 8px;}
+  .water-btns.row{gap:6px;}
+  .water-btns.row .water-btn{flex:1;width:auto;height:36px;min-width:0;}
   /* casting ring on Today, one segment per habit */
-  .cring-wrap{display:flex;align-items:center;gap:16px;margin:2px 0 16px;}
-  .cring{width:84px;height:84px;position:relative;flex-shrink:0;}
+  .cring-wrap{display:flex;align-items:center;gap:12px;margin:0 0 12px;}
+  .cring{width:56px;height:56px;position:relative;flex-shrink:0;}
   .cring svg{transform:rotate(-90deg);display:block;}
-  .cring .seg{fill:none;stroke-width:7;stroke-linecap:round;stroke:#F1ECE2;transition:stroke .4s;}
+  .cring .seg{fill:none;stroke-width:9;stroke-linecap:round;stroke:#F1ECE2;transition:stroke .4s;}
   .cring .c{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Noto Serif Display',Georgia,serif;}
-  .cring .c b{font-size:24px;font-weight:400;line-height:1;}
-  .cring .c span{font-size:10px;color:var(--text-secondary);letter-spacing:.08em;margin-top:2px;}
+  .cring .c b{font-size:17px;font-weight:400;line-height:1;}
+  .cring .c span{display:none;}
   .cring.cast .c b{color:var(--pink);}
   .cring.glow{animation:cringglow 1s ease-out;}
   @keyframes cringglow{0%{filter:drop-shadow(0 0 0 rgba(255,111,168,0));}40%{filter:drop-shadow(0 0 14px rgba(255,111,168,.7));}100%{filter:drop-shadow(0 0 0 rgba(255,111,168,0));}}
-  .cring-txt{font-size:13px;color:var(--text-secondary);font-weight:300;line-height:1.5;}
-  .cring-txt strong{display:block;font-family:'Noto Serif Display',Georgia,serif;font-weight:400;font-size:17px;color:var(--text-primary);margin-bottom:2px;}
+  .cring-txt{font-size:12px;color:var(--text-secondary);font-weight:300;line-height:1.4;}
+  .cring-txt strong{display:block;font-family:'Noto Serif Display',Georgia,serif;font-weight:400;font-size:15px;color:var(--text-primary);margin-bottom:2px;}
   /* done moment on journal and no phone: tag, pop, burst, glow, confetti */
   .check-row{position:relative;border-radius:6px;}
   .check-row .done-tag{margin-left:auto;font-size:12px;font-weight:500;color:var(--pink);opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s;}
@@ -3595,7 +3595,7 @@ function buildCastRing(dd, person, dayN){
   if(cast){ title = 'Spell cast.'; sub = ''; }
   else { title = 'Today\u2019s spell'; sub = count===1 ? 'Just one more and today\u2019s spell is cast.' : 'Any two of the three and today\u2019s spell is cast.'; }
   wrap.innerHTML = `<div class="cring${cast?' cast':''}" role="img" aria-label="${count} of 3 habits done${cast?', spell cast':''}">
-      <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">${segs}</svg>
+      <svg width="56" height="56" viewBox="0 0 84 84" aria-hidden="true">${segs}</svg>
       <div class="c"><b>${cast?'\u2726':count}</b><span>${cast?'CAST':'OF 3'}</span></div>
     </div>
     <div class="cring-txt"><strong>${title}</strong>${sub}</div>`;
@@ -5668,35 +5668,28 @@ function makeWaterRow(dd){
   const oz = dd.waterOz || 0;
   const pts = waterPoints(oz);
   const prev = waterShown.has(dd) ? waterShown.get(dd) : oz;
-  const meta = '8 oz each';
   const sub = oz >= 64 ? 'bonus reached' : (oz >= 48 ? `${64-oz} to bonus` : `${48-oz} to go`);
   const doneLine = oz>=64 ? 'Bonus hydration, 2 pts. Counts toward your spell.' : (oz>=48 ? 'Goal met, 1 pt. Counts toward your spell.' : '');
   const id = 'bcp' + (++bottleSeq);
   const shape = 'M34 8h24v14c0 6 20 12 20 36v112c0 8-6 14-14 14H28c-8 0-14-6-14-14V58c0-24 20-30 20-36z';
   box.innerHTML = `
-    <div class="water-top">
-      <div class="water-id">
-        <div class="water-icon">${DROP_SVG.replace('width="16" height="16"','width="20" height="20"')}</div>
-        <div><div class="session-label">Water</div><div class="session-meta">${meta}</div></div>
-      </div>
-    </div>
     <div class="bottle-row">
       <div class="bottle" role="img" aria-label="Water bottle, ${oz} ounces">
         <svg viewBox="0 0 92 190" aria-hidden="true">
           <defs><clipPath id="${id}"><path d="${shape}"/></clipPath></defs>
-          <path d="${shape}" fill="#F4FAFF" stroke="#B9DAFF" stroke-width="2.5"/>
+          <path d="${shape}" fill="#F4FAFF" stroke="#B9DAFF" stroke-width="3"/>
           <g clip-path="url(#${id})"><rect class="liq" x="0" y="0" width="92" height="190" fill="#4FA8FF" style="transform:translateY(${waterSurfaceY(prev)}px)"/></g>
-          <line x1="76" x2="96" y1="60" y2="60" stroke="#1F6FC2" stroke-width="2" stroke-dasharray="4 3"/>
-          <line x1="76" x2="96" y1="91" y2="91" stroke="#1F6FC2" stroke-width="2"/>
+          <line x1="76" x2="100" y1="60" y2="60" stroke="#1F6FC2" stroke-width="3" stroke-dasharray="5 4"/>
+          <line x1="76" x2="100" y1="91" y2="91" stroke="#1F6FC2" stroke-width="3"/>
         </svg>
-        <span class="mk" style="top:54px;">bonus 64</span><span class="mk" style="top:85px;">goal 48</span>
+        <span class="mk" style="top:30px;">bonus 64</span><span class="mk" style="top:48px;">goal 48</span>
       </div>
       <div class="water-side">
         <div class="water-read">${oz} oz</div>
-        <div class="water-sub">${sub}</div>
-        <div class="water-btns stack">
-          <button type="button" class="water-btn plus" aria-label="Add 8 ounces">+8</button>
+        <div class="water-sub">Water \u00b7 ${sub}</div>
+        <div class="water-btns row">
           <button type="button" class="water-btn minus" aria-label="Remove 8 ounces">\u22128</button>
+          <button type="button" class="water-btn plus" aria-label="Add 8 ounces">+8</button>
         </div>
       </div>
     </div>
@@ -5719,10 +5712,10 @@ function makeWaterRow(dd){
       for(let i=0;i<6;i++){
         const bub = document.createElement('i');
         bub.className = 'bub';
-        const sz = 4 + Math.random()*5;
+        const sz = 2.5 + Math.random()*3;
         bub.style.width = bub.style.height = sz + 'px';
-        bub.style.left = (24 + Math.random()*44) + 'px';
-        bub.style.bottom = (14 + Math.random()*30) + 'px';
+        bub.style.left = (12 + Math.random()*22) + 'px';
+        bub.style.bottom = (7 + Math.random()*16) + 'px';
         bub.style.animationDelay = (i*.08) + 's';
         bottle.appendChild(bub);
         requestAnimationFrame(()=> bub.classList.add('go'));
