@@ -37,12 +37,16 @@ const VERBS = { reading: 'reading', watching: 'watching', listening: 'listening 
 // *today* push, so backfilling an old day doesn't ping everyone.
 const CHALLENGE_START = '2026-10-01'; // Round 2
 // Sealed letters (must match index.html's LETTER_DAYS and DAYS tags).
-const LETTER_DAYS = [10, 25, 31]; // New Moon in Libra, Full Moon in Taurus, Halloween
-const LETTER_NIGHT_NAMES = { 10: 'New Moon in Libra', 25: 'Full Moon in Taurus', 31: 'Halloween' };
-const LETTER_DATE_LABELS = { 10: 'Oct 10, New Moon in Libra', 25: 'Oct 25, Full Moon in Taurus', 31: 'Oct 31, Halloween' };
+const LETTER_DAYS = [10, 25, 29, 30, 31]; // New Moon in Libra, Full Moon in Taurus, Gemini Moon, Moon in Cancer, Halloween
+const LETTER_NIGHT_NAMES = { 10: 'New Moon in Libra', 25: 'Full Moon in Taurus', 29: 'Gemini Moon', 30: 'Moon in Cancer', 31: 'Halloween' };
+const LETTER_DATE_LABELS = { 10: 'Oct 10, New Moon in Libra', 25: 'Oct 25, Full Moon in Taurus', 29: 'Oct 29, Gemini Moon', 30: 'Oct 30, Moon in Cancer', 31: 'Oct 31, Halloween' };
 // Nina's one-time intro letter (marked intro:true by the app). This is its push, sent when she seals it
 // and resent once, at the time set just below, to everyone but Nina.
 const INTRO_PUSH = { title: "You've got mail, witches ✦", body: "Nina wrote all of us a letter and it's open. Drop everything. Okay, finish your sentence first." };
+// One-time push about the two new letter nights (Gemini Moon Oct 29, Moon in Cancer Oct 30). Goes to all four,
+// on this Day of the challenge, from this Pacific hour. Change these two numbers to move it.
+const LETTER_NIGHTS_PUSH = { title: 'Gemini Moon is Thursday \u2726', body: 'Two new letter nights this week, and Gemini goes first. Write yours before the Moon moves on.' };
+const LETTER_NIGHTS_SEND = { day: 28, hour: 9 }; // Wed Oct 28, from 9:00am so it never stacks on the 8am spell
 // When the one-time resend goes out: on this Day of the challenge (Oct N), from this Pacific hour and minute,
 // with an hour of grace in case the Worker is a little late. To schedule another one, change these three numbers.
 const INTRO_RESEND = { day: 18, hour: 22, minute: 0 }; // Sunday Oct 18, from 10:00pm
@@ -124,6 +128,25 @@ const ROLL_SELF = {
 export function rollMessage(item) {
   if (item.type === 'rollself') return { title: 'You\u2019re on a roll \u2726', body: ROLL_SELF[item.streak], target: 'tea' };
   return { title: `${item.actor} is on a roll \u2726`, body: ROLL_OTHERS[item.streak], target: 'tea' };
+}
+
+// Third movement session of a Mon to Sun week. One push to the other three, one private one to her.
+// Each has three approved versions. The pick is a hash of who and which week, so the same event always
+// reads the same way if it is ever composed twice.
+export const MOVES_OTHERS = [
+  { title: '{who} is making the rest of us look bad \u2726', body: 'Three moves this week. Go see for yourself and give her the applause she\u2019s earned.' },
+  { title: 'Somebody is glowing \u2726', body: 'It\u2019s {who}. Three moves this week. Open the app and tell her how loud we\u2019re allowed to be about it.' },
+  { title: '{who} just hit three moves \u2726', body: 'The receipts are in The Tea. Go look, then say something nice before it goes to her head.' }
+];
+export const MOVES_SELF = [
+  { title: 'Go off, queen \u2726', body: 'Three moves this week. The glow is showing, and we\u2019re taking full credit.' },
+  { title: 'Okay, we see you \u2726', body: 'Three moves this week. Open the app and see who has already left you applause.' },
+  { title: 'You, but make it iconic \u2726', body: 'Three moves this week and the whole coven knows it. Go see what they\u2019re saying.' }
+];
+export function movesMessage(item) {
+  const key = `${item.type}:${item.actor}:${item.week}`;
+  const v = pickLine(item.type === 'moves3self' ? MOVES_SELF : MOVES_OTHERS, key);
+  return { title: v.title.replace('{who}', item.actor), body: v.body.replace('{who}', item.actor), target: 'tea' };
 }
 
 // Sunday recap.
@@ -357,6 +380,13 @@ function activityEvents(data, today) {
       ((wd && wd.sessions) || []).forEach((s, i) => {
         if (s && s.done && s.hasPhoto) ev.set(`session:${p}:${wi}:${i}`, { type: 'workout', actor: p });
       });
+      // Third move of the week: once per person per week. `at` is the latest logged time, so an old week is never news.
+      const doneS = ((wd && wd.sessions) || []).filter(s => s && s.done);
+      if (doneS.length >= 3) {
+        const at = doneS.map(s => s.timestamp || '').sort().pop() || '';
+        ev.set(`moves3:${p}:${wi}`, { type: 'moves3', actor: p, week: wi, at });
+        ev.set(`moves3self:${p}:${wi}`, { type: 'moves3self', actor: p, week: wi, at });
+      }
     }
   }
   // shared links (many a week; the old single article counts as the first one)
@@ -641,6 +671,11 @@ export async function run(env, now) {
     }
     for (const [id, e] of liveActivity) {
       if (aSeen.has(id)) continue;
+      if (e.type === 'moves3' || e.type === 'moves3self') {
+        // Only fresh news: a third move logged in the last 6 hours. Anything older, or with no time, is marked seen silently.
+        const ageM = now.getTime() - new Date(e.at).getTime();
+        if (!(ageM >= 0 && ageM <= 6 * 3600 * 1000)) { aSeen.add(id); changed = true; continue; }
+      }
       if (e.type === 'share' || e.type === 'currently') {
         const age = now.getTime() - new Date(e.at).getTime();
         // Old news (Worker was off, clock skew): never push it.
@@ -662,7 +697,7 @@ export async function run(env, now) {
       }
       aSeen.add(id); changed = true;
       // A private streak push goes only to her. Everything else is never about your own activity.
-      const targets = e.type === 'rollself' ? [e.actor] : PEOPLE.filter(r => r !== e.actor);
+      const targets = (e.type === 'rollself' || e.type === 'moves3self') ? [e.actor] : PEOPLE.filter(r => r !== e.actor);
       for (const r of targets) {
         if (!(await prefsFor(r)).activity) continue;
         (pendingActivity[r] = pendingActivity[r] || []).push({ id, ...e });
@@ -765,8 +800,11 @@ export async function run(env, now) {
       const covenNow = items.some(i => i.type === 'coven');
       const rollItems = items.filter(i => isRoll(i) && !(covenNow && i.type === 'roll'));
       const rollActors = new Set(items.filter(isRoll).map(i => i.actor));
-      const rest = items.filter(i => !isRoll(i) && !(i.type === 'cast' && rollActors.has(i.actor)));
+      const isMoves = (i) => i.type === 'moves3' || i.type === 'moves3self';
+      const movesItems = items.filter(isMoves);
+      const rest = items.filter(i => !isRoll(i) && !isMoves(i) && !(i.type === 'cast' && rollActors.has(i.actor)));
       const batches = rollItems.slice(0, 2).map(i => ({ items: [i], msg: rollMessage(i) }));
+      movesItems.slice(0, 2).forEach(i => batches.push({ items: [i], msg: movesMessage(i) }));
       if (rest.length) batches.push({ items: rest, msg: composeActivity(rest, castTodayCount) });
       let failed = false;
       const left = [];
@@ -915,11 +953,12 @@ export async function run(env, now) {
     const castOn = (p, n) => !!(data[p] && data[p].days && isCast(data[p].days[n]));
     let streak = 0;
     for (let n = today - 1; n >= 1 && PEOPLE.every(p => castOn(p, n)); n--) streak++;
-    for (const job of ['morning', 'brew', 'nudge', 'recap', 'letters', 'introResend']) {
+    for (const job of ['morning', 'brew', 'nudge', 'recap', 'letters', 'introResend', 'letterNights']) {
       const inWindow = job === 'morning' ? (ptHour >= 8 && ptHour < 12)
         : job === 'brew' ? (ptHour >= 12 && ptHour < 22 && !!QUESTIONS[today])
         : job === 'nudge' ? (ptHour >= 19 && ptHour < 22)
         : job === 'letters' ? (ptHour >= 20 && ptHour < 22 && today >= 10 && today <= 31) // starts at 8pm so it never collides with the 7pm nudge
+        : job === 'letterNights' ? (today === LETTER_NIGHTS_SEND.day && ptHour >= LETTER_NIGHTS_SEND.hour && ptHour < 12) // once, from 9am, skipped if the Worker was down all morning
         : job === 'introResend' ? (today === INTRO_RESEND.day && ((ptHour === INTRO_RESEND.hour && pacificMinute(now) >= INTRO_RESEND.minute) || ptHour === INTRO_RESEND.hour + 1)) // once, at the time set above, with an hour of grace
         : (isSunday && today >= 7 && ptHour >= 18 && ptHour < 22); // Sunday recap, from 6pm
       if (!inWindow) continue;
@@ -931,7 +970,7 @@ export async function run(env, now) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
         if (job === 'introResend' && person === 'Nina') { finish(); continue; } // it is her own letter
-        const prefKey = (job === 'recap' || job === 'letters' || job === 'introResend') ? 'activity' : job === 'brew' ? 'morning' : job;
+        const prefKey = (job === 'recap' || job === 'letters' || job === 'introResend' || job === 'letterNights') ? 'activity' : job === 'brew' ? 'morning' : job;
         if (!(await prefsFor(person))[prefKey]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
         let msg;
         if (job === 'morning') {
@@ -946,6 +985,8 @@ export async function run(env, now) {
           const intro = Array.from(lettersByIdNow.entries()).find(([, l]) => l.intro);
           if (!intro) { console.log('No intro letter found, nothing to resend.'); finish(); continue; }
           msg = { ...INTRO_PUSH };
+        } else if (job === 'letterNights') {
+          msg = { ...LETTER_NIGHTS_PUSH };
         } else if (job === 'recap') {
           msg = recapMessage(weekStats(data, reactions, today));
         } else if (job === 'letters') {
@@ -998,7 +1039,7 @@ export async function run(env, now) {
           const othersCast = PEOPLE.filter(p => p !== person && castOn(p, today)).length;
           msg = nudgeMessage(today, 2 - castCount(dd), othersCast, streak);
         }
-        if (job === 'letters' || job === 'introResend') msg.target = 'letters';
+        if (job === 'letters' || job === 'introResend' || job === 'letterNights') msg.target = 'letters';
         const token = await readRaw('recal-fcm-token:' + person);
         if (!token) { console.log('No device token for', person, ', skipping', job); finish(); continue; }
         // Claim first: she is marked done and saved BEFORE any push goes out (below). Sends happen after the loop.

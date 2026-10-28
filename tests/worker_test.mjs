@@ -682,5 +682,125 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('a "letter landed" push says it is about letters', landed && landed.target === 'letters', landed);
 }
 
+// ===== letters: the Gemini Moon (Day 29) and Moon in Cancer (Day 30) nights =====
+{
+  const O29 = '2026-10-30T03:30:00Z'; // 8:30pm Pacific, Oct 29 (Day 29)
+  const O30 = '2026-10-31T03:30:00Z'; // 8:30pm Pacific, Oct 30 (Day 30)
+  const nudgeTo = (who) => sentTo(who).filter(x => x.title === 'Break the seal ✦');
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:29', to: 'Nina', body: 'x', opensDay: 29, writtenAt: '2026-10-28T20:00:00Z' }]);
+  await runAt(O29);
+  check('Day 29 nudge names the Gemini Moon', nudgeTo('Nina').length === 1 && nudgeTo('Nina')[0].body === 'Kellye\'s letter is ready and so, we suspect, are you. Gemini Moon. Break the seal.', nudgeTo('Nina'));
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:30', to: 'Nina', body: 'x', opensDay: 30, writtenAt: '2026-10-28T20:00:00Z' }]);
+  await runAt(O29);
+  check('Day 30 letter is not nudged the night before it opens', nudgeTo('Nina').length === 0, pushes);
+  await runAt(O30);
+  check('Day 30 nudge names the Moon in Cancer', nudgeTo('Nina').length === 1 && nudgeTo('Nina')[0].body === 'Kellye\'s letter is ready and so, we suspect, are you. Moon in Cancer. Break the seal.', nudgeTo('Nina'));
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  put('r2:recal-letters:Lauren', [{ id: 'Lauren:30', to: 'Nina', body: 'x', opensDay: 30, writtenAt: plus('2026-10-28T20:05:00Z', 0) }]);
+  await runAt('2026-10-28T20:06:00Z');
+  const ping30 = sentTo('Nina').find(x => / wrote you something/.test(x.title));
+  check('a Day 30 letter ping carries the Cancer date label', ping30 && ping30.body === 'Lauren sealed a letter with your name on it. It opens Oct 30, Moon in Cancer. You\'re the main event, apparently.', ping30);
+}
+
+// ===== three moves in a week =====
+{
+  const NOW = '2026-10-05T22:31:00Z'; // just after D5
+  const fresh = '2026-10-05T21:00:00Z'; // 2pm Pacific, same day
+  const old = '2026-10-02T21:00:00Z';
+  const wk = (...ts) => ({ 1: { sessions: [0, 1, 2].map(i => ts[i] ? { done: true, timestamp: ts[i] } : { done: false, timestamp: null }) } });
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  putPerson('Nina', person({}, wk(old, old)));
+  await runAt(NOW);
+  check('two moves send nothing', pushes.length === 0, pushes);
+  putPerson('Nina', person({}, wk(old, old, fresh)));
+  await runAt(plus(NOW, 60));
+  const OTHERS = [
+    ['Nina is making the rest of us look bad ✦', 'Three moves this week. Go see for yourself and give her the applause she’s earned.'],
+    ['Somebody is glowing ✦', 'It’s Nina. Three moves this week. Open the app and tell her how loud we’re allowed to be about it.'],
+    ['Nina just hit three moves ✦', 'The receipts are in The Tea. Go look, then say something nice before it goes to her head.']
+  ];
+  const SELF = [
+    ['Go off, queen ✦', 'Three moves this week. The glow is showing, and we’re taking full credit.'],
+    ['Okay, we see you ✦', 'Three moves this week. Open the app and see who has already left you applause.'],
+    ['You, but make it iconic ✦', 'Three moves this week and the whole coven knows it. Go see what they’re saying.']
+  ];
+  const isOne = (m, set) => set.some(([t, b]) => m.title === t && m.body === b);
+  check('third move: others each get one push, one of the three approved versions', ['Kellye', 'Lauren', 'Carolina'].every(p => sentTo(p).length === 1 && isOne(sentTo(p)[0], OTHERS)), pushes);
+  check('third move: all three others get the same version', new Set(['Kellye', 'Lauren', 'Carolina'].map(p => sentTo(p)[0].title)).size === 1, pushes);
+  check('third move: she gets her own, one of the three approved versions', sentTo('Nina').length === 1 && isOne(sentTo('Nina')[0], SELF), sentTo('Nina'));
+  check('third move: nobody gets the retired wording', !pushes.some(x => /showing off/.test(x.title)), pushes);
+  await runAt(plus(NOW, 300));
+  await runAt(plus(NOW, 600));
+  check('third move: once only, not every run', pushes.length === 0, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  putPerson('Kellye', person({}, wk(old, old, old)));
+  await runAt(NOW);
+  check('a third move logged days ago is never news', pushes.length === 0, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  put('recal-notif-prefs:Lauren', { activity: false });
+  await baseline();
+  putPerson('Carolina', person({}, wk(old, old, fresh)));
+  await runAt(NOW);
+  check('the activity switch is respected', sentTo('Lauren').length === 0 && sentTo('Nina').length === 1 && sentTo('Kellye').length === 1, pushes);
+
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  putPerson('Nina', person({}, wk(old, old, fresh)));
+  await runAt(NOW);
+  check('three moves does not replace or double any other push', pushes.length === 4, pushes);
+}
+
+
+// ---------- three moves: the wording rotates, and is stable for the same event ----------
+{
+  const movesMessage = W.movesMessage;
+  const seenO = new Set(), seenS = new Set();
+  for (const a of ['Nina', 'Kellye', 'Lauren', 'Carolina']) for (let wk = 0; wk < 6; wk++) {
+    seenO.add(movesMessage({ type: 'moves3', actor: a, week: wk }).title.replace(a, '{who}'));
+    seenS.add(movesMessage({ type: 'moves3self', actor: a, week: wk }).title);
+  }
+  check('moves wording: all three versions come up across people and weeks', seenO.size === 3 && seenS.size === 3, [...seenO, ...seenS]);
+  check('moves wording: the same event always reads the same', JSON.stringify(movesMessage({ type: 'moves3', actor: 'Lauren', week: 3 })) === JSON.stringify(movesMessage({ type: 'moves3', actor: 'Lauren', week: 3 })));
+  check('moves wording: no em dashes anywhere', ![...Array.from({ length: 12 }, (_, i) => movesMessage({ type: i % 2 ? 'moves3' : 'moves3self', actor: 'Nina', week: i }))].some(m => /\u2014/.test(m.title + m.body)));
+}
+
+// ---------- one-time letter-nights push ----------
+{
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  const D28_8AM = '2026-10-28T15:05:00Z'; // 8:05am Pacific
+  const D28_9AM = '2026-10-28T16:05:00Z'; // 9:05am Pacific
+  await runSettled(D28_8AM);
+  check('letter nights: nothing before 9am on Oct 28', !pushes.some(x => x.title === 'Gemini Moon is Thursday ✦'), pushes);
+  await runSettled(D28_9AM);
+  check('letter nights: all four get it, exact copy', PEOPLE.every(p => sentTo(p).filter(x => x.title === 'Gemini Moon is Thursday ✦' && x.body === 'Two new letter nights this week, and Gemini goes first. Write yours before the Moon moves on.').length === 1), pushes);
+  await runSettled(plus(D28_9AM, 600));
+  const again = pushes.filter(x => x.title === 'Gemini Moon is Thursday ✦').length;
+  await runSettled(plus(D28_9AM, 3600));
+  check('letter nights: once only', again === 0 && pushes.filter(x => x.title === 'Gemini Moon is Thursday ✦').length === 0, pushes);
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  await runSettled('2026-10-29T16:05:00Z');
+  check('letter nights: not sent on any other day', !pushes.some(x => x.title === 'Gemini Moon is Thursday ✦'), pushes);
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);

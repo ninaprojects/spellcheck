@@ -893,6 +893,15 @@
   .lh-title{font-size:15px;font-weight:600;color:var(--text-primary);line-height:1.3;}
   .lh-body{font-size:13px;font-weight:300;color:var(--text-secondary);line-height:1.5;margin-top:10px;}
   .lh-actions{display:flex;justify-content:flex-end;margin-top:4px;}
+  .lw-card{border:1px solid var(--line);border-top:4px solid var(--pink);background:var(--bg);padding:16px 20px 18px;margin:0 0 18px;}
+  .lw-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;}
+  .lw-title{font-family:'Noto Serif Display',serif;font-size:22px;line-height:1.25;color:var(--text-primary);margin:6px 0 8px;}
+  .lw-body{font-size:14px;font-weight:300;color:var(--text-secondary);line-height:1.5;margin:0 0 14px;}
+  .lw-card.lw-gate{background:#1C1B3A;border-color:#1C1B3A;border-top-color:var(--pink);}
+  .lw-card.lw-gate .lw-eyebrow{color:#C9C7E8;}
+  .lw-card.lw-gate .lw-title{color:#FFFEFD;}
+  .lw-card.lw-gate .lw-body{color:#E4E2F5;}
+  .lw-card.lw-gate .txt-link{color:#FFFEFD;border-bottom-color:var(--pink);}
   .tabbar .tab .tab-ico{position:relative;display:flex;}
   .tab-dot{position:absolute;top:-2px;right:-5px;width:10px;height:10px;border-radius:50%;background:var(--pink);border:2px solid var(--bg);box-sizing:border-box;}
   .tab-dot[hidden]{display:none;}
@@ -926,6 +935,7 @@
   <div id="identityBanner"></div>
   <div id="notifPromptWrap"></div>
   <div id="lettersHintWrap"></div>
+  <div id="lettersWaitingWrap"></div>
   <div class="masthead">
     <h1>Spell Check</h1>
     <div class="tagline">a month of practical magic</div>
@@ -1231,8 +1241,8 @@ const DAYS = [
   {"n": 26, "d": "Oct 26", "wd": "Mon", "ch": 5, "prompt": "The Moon is in Taurus, which wants comfort. Give yourself something real today: a proper meal, a long shower, an early night. Then write down what your body keeps asking for that you keep skipping."},
   {"n": 27, "d": "Oct 27", "wd": "Tue", "ch": 5, "prompt": "What are you proudest of from this month that nobody would think to ask about? Tell the group. Showing off is allowed, you earned it."},
   {"n": 28, "d": "Oct 28", "wd": "Wed", "ch": 5, "prompt": "The Moon is in Gemini, so let's talk. Voice-note one of the witches your favorite moment of this challenge. Real voices, not just texts."},
-  {"n": 29, "d": "Oct 29", "wd": "Thu", "ch": 5, "prompt": "Which one habit is coming with you past Halloween? Pick it, make it smaller than you think it needs to be, and tell the group so someone's watching."},
-  {"n": 30, "d": "Oct 30", "wd": "Fri", "ch": 5, "prompt": "The Moon is in Cancer, which is sentimental. Scroll back through this month's photos and pick your favorite. What was happening that day? Send it to the group."},
+  {"n": 29, "d": "Oct 29", "wd": "Thu", "ch": 5, "ltag": "Gemini Moon", "prompt": "Which one habit is coming with you past Halloween? Pick it, make it smaller than you think it needs to be, and tell the group so someone's watching."},
+  {"n": 30, "d": "Oct 30", "wd": "Fri", "ch": 5, "ltag": "Moon in Cancer", "prompt": "The Moon is in Cancer, which is sentimental. Scroll back through this month's photos and pick your favorite. What was happening that day? Send it to the group."},
   {"n": 31, "d": "Oct 31", "wd": "Sat", "ch": 5, "tag": "Halloween", "prompt": "Halloween, and the last day! Write a short letter to future you, the one who'll need this again someday. Share the part that feels right with the group, then go celebrate like the witches you are."}
 ];
 
@@ -3995,7 +4005,7 @@ function renderQuestionCard(){
 // Sealed is UI only: Firebase rules are public, so anyone with the database
 // address could technically read an unopened letter. Say so in the handover.
 const LETTER_MAX = 600;
-const LETTER_DAYS = [10, 25, 31]; // New Moon in Libra, Full Moon in Taurus, Halloween. Keep in sync with DAYS' tags.
+const LETTER_DAYS = [10, 25, 29, 30, 31]; // New Moon in Libra, Full Moon in Taurus, Gemini Moon, Moon in Cancer, Halloween. Keep in sync with DAYS' tags (days 29 and 30 use `ltag`, a letters-only label, so the Today chip is unchanged).
 // Optional idea shown under the Opens on field once To and Opens on are both picked, keyed by day then
 // recipient bucket: 'self' (To: Me), 'group' (To: All of us), 'person' (anyone else). Approved copy, Oct 2026.
 const LETTER_IDEAS = {
@@ -4009,18 +4019,60 @@ const LETTER_IDEAS = {
     group: "Full Moon in Taurus tonight, and Venus is moving backward across the sky into Libra at the very same time, taking a second look at partnership. Tell the coven one thing you noticed about this group this month that you haven't said yet.",
     self: "Full Moon in Taurus tonight, and Venus is moving backward into Libra at the same time, having a think. Tell future you the one thing you noticed about yourself this month and never said out loud."
   },
+  29: {
+    person: [
+      "Gemini Moon, the sign of talking, so let's talk. Tell them one thing you love about the way they show up for you.",
+      "Gemini Moon is chatty by nature, so use it. Tell them the nicest thing you've thought about them and never said.",
+      "Gemini Moon loves a good conversation, and this one is a love letter in disguise. Tell them what makes talking to them the best part of your day."
+    ],
+    group: [
+      "Gemini Moon, the sign of talking. Tell the coven what you love about the way the four of us talk to each other.",
+      "Gemini Moon, the sign of talking, and this group has never run out of things to say. Tell the coven what you love about us.",
+      "Gemini Moon is chatty by nature, and so are we. Tell the coven the group-chat moment that still makes you laugh."
+    ],
+    self: [
+      "Gemini Moon, the sign of talking, and your mind has been loud all month. Tell future you what it's been saying, with nothing cleaned up.",
+      "Gemini Moon wants the unfiltered version. Tell future you what you actually think, the part you leave out when you talk to everyone else.",
+      "Gemini Moon, the sign of talking, so say the quiet part. Tell future you the one thing you're finally ready to admit."
+    ]
+  },
+  30: {
+    person: [
+      "The Moon moves into Cancer, the sign it rules, right after chatty Gemini. Skip the small talk and tell them what you actually feel about them.",
+      "The Moon is home in Cancer, the sign it rules, and Cancer is all about the people who feel like family. Tell them what they mean to you.",
+      "Cancer is the Moon's home sign, known for tenderness. Tell them the moment you knew they were your person."
+    ],
+    group: [
+      "The Moon moves into Cancer, the sign it rules, right after chatty Gemini. Skip the small talk and tell the coven what this group feels like to come home to.",
+      "Cancer is the Moon's home sign, so let's talk about home. Tell the coven what this group has meant to you this month.",
+      "The Moon is home in Cancer, and so is this group. Tell the coven the moment this month you felt most held by us."
+    ],
+    self: [
+      "Cancer is the Moon's home sign, and home is where the truth gets quiet. Tell future you what you're still carrying that you wish you could set down.",
+      "The Moon is home in Cancer, so be honest about what home means to you right now. Tell future you what you need more of and what you've outgrown.",
+      "Cancer is the Moon's home sign, known for feeling everything. Tell future you what you've felt this month that you haven't said to anyone."
+    ]
+  },
   31: {
     person: "We did the thing. Tell them something worth bragging about before the round closes. Witches don't do quiet exits.",
     group: "We did the thing, all four of us. Tell the whole coven what you want remembered about this round. Witches don't do quiet exits.",
     self: "We did the thing. Tell future you what you want to remember about who you were this round. Witches don't do quiet exits."
   }
 };
-function letterIdeaFor(day, to){
+// A set can hold one line or several. With several, one is picked at random. Pass the same `picks`
+// object for as long as a sheet is open so the line doesn't change under someone's thumb.
+function letterIdeaFor(day, to, picks){
   const set = LETTER_IDEAS[day];
   if(!set) return '';
-  if(to === myIdentity) return set.self;
-  if(to === 'all') return set.group;
-  return set.person;
+  const bucket = to === myIdentity ? 'self' : (to === 'all' ? 'group' : 'person');
+  const v = set[bucket];
+  if(!Array.isArray(v)) return v || '';
+  if(!v.length) return '';
+  const key = day + ':' + bucket;
+  if(picks && picks[key] != null && picks[key] < v.length) return v[picks[key]];
+  const i = Math.floor(Math.random() * v.length);
+  if(picks) picks[key] = i;
+  return v[i];
 }
 const lettersData = {}; // {person: [{id, to, body, opensDay, writtenAt}]}, each person writes only her own record
 const lettersOpenedData = {}; // {person: {letterId: openedAtIso}}, each person writes only her own record
@@ -4098,7 +4150,7 @@ function startLettersSync(){
 
 function letterDayMeta(n){
   const d = DAYS.find(x=>x.n===n);
-  return d ? {n, date:d.d, tag:d.tag||''} : {n, date:'Day '+n, tag:''};
+  return d ? {n, date:d.d, tag:d.ltag||d.tag||''} : {n, date:'Day '+n, tag:''};
 }
 // Only days strictly after today, so a newly sealed letter always opens in the future.
 function letterOpenableDays(){
@@ -4244,11 +4296,12 @@ function openWriteLetterSheet(){
   const toSelect = sheet.querySelector('#letterToSelect');
   const daySelect = sheet.querySelector('#letterDaySelect');
   const ideaEl = sheet.querySelector('#letterIdea');
+  const ideaPicks = {};
   const refreshIdea = ()=>{
     const isNow = daySelect.value === 'now';
     if(isNow) toSelect.value = 'all';
     toSelect.disabled = isNow;
-    ideaEl.textContent = isNow ? '' : letterIdeaFor(Number(daySelect.value), toSelect.value);
+    ideaEl.textContent = isNow ? '' : letterIdeaFor(Number(daySelect.value), toSelect.value, ideaPicks);
   };
   toSelect.onchange = refreshIdea;
   daySelect.onchange = refreshIdea;
@@ -4534,6 +4587,93 @@ function renderLettersHint(){
 function lettersWaiting(){
   return !!myIdentity && myUnopenedLetters().some(l=> letterIsUnlocked(l.opensDay));
 }
+// ---- "Letters waiting" cards on Today. A: a letter is open and waiting. C: same, but Oct 29 to 31 the
+// seal only breaks after you cast today's spell (UI nudge only, the Letters page still opens).
+// B: countdown to the next letter night. Approved copy, Oct 2026. Lines rotate; the pick is stable for
+// the rest of the page load so re-renders don't make the words jump.
+const LW_WD = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
+const LW_A_BODY = [
+  "It's open and it's waiting, and we are not going to be normal about this until you've read it.",
+  "Someone sat down and got sentimental about you. Go see how sweet it is.",
+  "Feelings were put in writing and the seal is ready. Open it before we do."
+];
+const LW_B_BODY = [
+  "Everyone is writing something. Don't be the one who shows up empty-handed.",
+  "Three people could be sealing a letter to you right now. Write yours and find out who's feeling brave.",
+  "Write yours today, because a letter you didn't send can't make anyone cry."
+];
+// Card C: [title, body]. Singular and plural handled by count.
+const LW_C = [
+  { title: n=> `${n <= 4 ? COUNT_WORDS[n] : n} letter${n===1?'':'s'}. One condition.`,
+    body: ()=> "Cast today's spell and the seal breaks itself. We don't make the rules, we just enforce them." },
+  { title: ()=> "Not so fast.",
+    body: n=> `The ${n===1?'letter is':'letters are'} right there. Cast today's spell first, then we'll let you in.` },
+  { title: ()=> "Pay to play.",
+    body: ()=> "The price is one spell. Cast today's, then read what they wrote." },
+  { title: n=> `Your ${n===1?'letter is':'letters are'} being held hostage.`,
+    body: n=> `The ransom is today's spell. Cast it and we'll release ${n===1?'it':'them'}.` }
+];
+const lwPicks = {};
+function lwPick(key, len){
+  if(lwPicks[key] == null) lwPicks[key] = Math.floor(Math.random() * len);
+  return lwPicks[key];
+}
+function renderLettersWaiting(){
+  const wrap = document.getElementById('lettersWaitingWrap');
+  if(!wrap) return;
+  const ti = todayInfo();
+  if(!myIdentity || currentPerson !== myIdentity || ti.state !== 'during'){ wrap.innerHTML = ''; return; }
+  const day = ti.dayNum;
+  const ready = myUnopenedLetters().filter(l=> letterIsUnlocked(l.opensDay));
+  const n = ready.length;
+  let html = '';
+  if(n > 0){
+    const gated = day >= 29 && day <= 31 && !isCast(dayData(myIdentity, day));
+    if(gated){
+      const v = LW_C[lwPick('c:' + day, LW_C.length)];
+      html += `<div class="lw-card lw-gate" role="region" aria-label="Letters waiting">
+        <div class="lw-eyebrow">Sealed for you</div>
+        <div class="lw-title">${v.title(n)}</div>
+        <p class="lw-body">${v.body(n)}</p>
+        <button type="button" class="txt-link" id="lwCastBtn">Cast today&rsquo;s spell</button>
+      </div>`;
+    } else {
+      let title;
+      if(n === 1) title = ready[0].from === myIdentity ? 'You wrote yourself something.' : `${ready[0].from} wrote you something.`;
+      else title = `${n <= 4 ? COUNT_WORDS[n] : n} letters are waiting for you.`;
+      const body = LW_A_BODY[lwPick('a:' + day, LW_A_BODY.length)];
+      html += `<div class="lw-card" role="region" aria-label="Letters waiting">
+        <div class="lw-eyebrow">Sealed for you</div>
+        <div class="lw-title">${title}</div>
+        <p class="lw-body">${body}</p>
+        <button type="button" class="txt-link" id="lwOpenBtn">Break the seal</button>
+      </div>`;
+    }
+  }
+  const nextDay = letterOpenableDays()[0];
+  if(nextDay){
+    const m = letterDayMeta(nextDay);
+    const d = DAYS.find(x=> x.n === nextDay);
+    const wd = d ? (LW_WD[d.wd] || d.wd) : '';
+    const body = LW_B_BODY[lwPick('b:' + day, LW_B_BODY.length)];
+    html += `<div class="lw-card" role="region" aria-label="Next letter night">
+      <div class="lw-eyebrow">Next letter night</div>
+      <div class="lw-title">${m.tag}${wd ? ', ' + wd : ''}.</div>
+      <p class="lw-body">${body}</p>
+      <button type="button" class="txt-link" id="lwWriteBtn">Write a letter</button>
+    </div>`;
+  }
+  wrap.innerHTML = html;
+  const openBtn = wrap.querySelector('#lwOpenBtn');
+  if(openBtn) openBtn.onclick = ()=> goPage('profile','letters');
+  const castBtn = wrap.querySelector('#lwCastBtn');
+  if(castBtn) castBtn.onclick = ()=>{
+    const t = document.querySelector('.today-card');
+    if(t && t.scrollIntoView) t.scrollIntoView({behavior:'smooth', block:'start'});
+  };
+  const writeBtn = wrap.querySelector('#lwWriteBtn');
+  if(writeBtn) writeBtn.onclick = ()=> openWriteLetterSheet();
+}
 function updateLettersDot(){
   const on = lettersWaiting();
   const tab = document.querySelector('.tabbar .tab[data-tab="profile"]');
@@ -4566,7 +4706,7 @@ function renderLettersPage(){
   const opened = myOpenedLetters();
   wrap.innerHTML = `
     <div class="section-title">Sealed letters</div>
-    <div class="section-subnote">Notes from the four of us, sealed until a New Moon, a Full Moon, or Halloween. We simply love an occasion, and this is one.</div>
+    <div class="section-subnote">Notes from the four of us, sealed until a Moon moment or Halloween. We simply love an occasion, and this is one.</div>
     <div id="lettersList">
       ${unopened.length ? unopened.map(letterRowHtml).join('') : '<div class="ltr-empty">Nothing sealed yet.</div>'}
     </div>
@@ -5989,6 +6129,7 @@ async function renderAll(){
   safeRender('renderProfilePicSection', renderProfilePicSection);
   safeRender('renderTodayCard', renderTodayCard);
   safeRender('renderLettersHint', renderLettersHint);
+  safeRender('renderLettersWaiting', renderLettersWaiting);
   safeRender('renderQuestionCard', renderQuestionCard);
   safeRender('renderLettersPage', renderLettersPage);
   safeRender('renderStreakCard', renderStreakCard);
