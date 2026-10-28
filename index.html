@@ -399,18 +399,61 @@
   .feed-avatar.tappable, .leaderboard-row.tappable{cursor:pointer;}
 
   /* water tracker */
-  .water-box{border:1px solid var(--line);padding:14px 16px;}
+  .water-box{border:1px solid var(--line);padding:10px 12px;}
   .water-top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
   .water-id{display:flex;align-items:center;gap:10px;}
   .water-icon{width:36px;height:36px;border-radius:50%;background:#DDEEFF;color:#1F6FC2;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .water-btns{display:flex;gap:8px;}
   .water-btn{width:48px;height:44px;font-family:'Inter';font-size:14px;font-weight:500;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--text-primary);}
   .water-btn.plus{background:var(--blue);border-color:var(--blue);color:#0C3B6E;}
-  .water-drops{display:flex;justify-content:space-between;margin-top:14px;}
-  .water-drop{width:30px;height:30px;border-radius:50%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1.5px solid #B9DAFF;color:#8FC3FF;background:var(--bg);transition:background .15s,color .15s,transform .15s;}
-  .water-drop.bonus{border-style:dashed;}
-  .water-drop.on{background:var(--blue);border-color:var(--blue);color:var(--bg);transform:scale(1.06);}
-  .water-scale{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text-secondary);}
+  /* water bottle: fills as you add 8 oz, goal and bonus ticks, bubbles and a pop at each mark */
+  .bottle-row{display:flex;gap:12px;align-items:center;}
+  .bottle{width:44px;height:110px;position:relative;flex-shrink:0;margin-right:58px;}
+  .bottle svg{width:100%;height:100%;overflow:visible;display:block;}
+  .bottle .liq{transition:transform .7s cubic-bezier(.3,1.2,.4,1);}
+  .bottle.pop{animation:bottlepop .6s cubic-bezier(.2,1.6,.4,1);}
+  @keyframes bottlepop{0%{transform:scale(1);}40%{transform:scale(1.12);}100%{transform:scale(1);}}
+  .bottle .mk{font-size:10px;color:#1F6FC2;font-weight:600;position:absolute;left:52px;white-space:nowrap;line-height:1;}
+  .bub{position:absolute;border-radius:50%;background:rgba(255,255,255,.85);pointer-events:none;opacity:0;}
+  .bub.go{animation:bubrise 1.3s ease-in forwards;}
+  @keyframes bubrise{0%{opacity:.9;transform:translateY(0);}100%{opacity:0;transform:translateY(-38px);}}
+  .water-side{flex:1;min-width:0;}
+  .water-read{font-family:'Noto Serif Display',Georgia,serif;font-size:20px;line-height:1.1;color:var(--text-primary);}
+  .water-sub{font-size:11px;color:var(--text-secondary);font-weight:300;margin:2px 0 8px;}
+  .water-btns.row{gap:6px;}
+  .water-btns.row .water-btn{flex:1;width:auto;height:36px;min-width:0;}
+  /* casting ring on Today, one segment per habit */
+  .cring-wrap{display:flex;align-items:center;gap:12px;margin:0 0 12px;}
+  .cring{width:56px;height:56px;position:relative;flex-shrink:0;}
+  .cring svg{transform:rotate(-90deg);display:block;}
+  .cring .seg{fill:none;stroke-width:9;stroke-linecap:round;stroke:#F1ECE2;transition:stroke .4s;}
+  .cring .c{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Noto Serif Display',Georgia,serif;}
+  .cring .c b{font-size:17px;font-weight:400;line-height:1;}
+  .cring .c span{display:none;}
+  .cring.cast .c b{color:var(--pink);}
+  .cring.glow{animation:cringglow 1s ease-out;}
+  @keyframes cringglow{0%{filter:drop-shadow(0 0 0 rgba(255,111,168,0));}40%{filter:drop-shadow(0 0 14px rgba(255,111,168,.7));}100%{filter:drop-shadow(0 0 0 rgba(255,111,168,0));}}
+  .cring-txt{font-size:12px;color:var(--text-secondary);font-weight:300;line-height:1.4;}
+  .cring-txt strong{display:block;font-family:'Noto Serif Display',Georgia,serif;font-weight:400;font-size:15px;color:var(--text-primary);margin-bottom:2px;}
+  /* done moment on journal and no phone: tag, pop, burst, glow, confetti */
+  .check-row{position:relative;border-radius:6px;}
+  .check-row .done-tag{margin-left:auto;font-size:12px;font-weight:500;color:var(--pink);opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s;}
+  .check-row.isdone .done-tag{opacity:1;transform:none;}
+  .toggle.pop{animation:togpop .5s cubic-bezier(.2,1.6,.4,1);}
+  @keyframes togpop{0%{transform:scale(1);}40%{transform:scale(1.25);}100%{transform:scale(1);}}
+  .spark{position:absolute;left:22px;top:50%;width:6px;height:6px;border-radius:50%;pointer-events:none;opacity:0;z-index:2;}
+  .spark.go{animation:sparkgo .8s ease-out forwards;}
+  @keyframes sparkgo{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2);}}
+  .check-row.glow-pink.go{animation:rowglowp 1s ease-out;}
+  .check-row.glow-yellow.go{animation:rowglowy 1s ease-out;}
+  @keyframes rowglowp{0%{box-shadow:0 0 0 0 rgba(255,111,168,0);}30%{box-shadow:0 0 0 6px rgba(255,111,168,.35),0 0 24px rgba(255,111,168,.55);}100%{box-shadow:0 0 0 0 rgba(255,111,168,0);}}
+  @keyframes rowglowy{0%{box-shadow:0 0 0 0 rgba(255,201,79,0);}30%{box-shadow:0 0 0 6px rgba(255,201,79,.4),0 0 24px rgba(255,201,79,.7);}100%{box-shadow:0 0 0 0 rgba(255,201,79,0);}}
+  .today-card{position:relative;}
+  .conf-layer{position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;pointer-events:none;z-index:5;}
+  .conf{position:absolute;pointer-events:none;font-size:14px;opacity:0;}
+  .conf.go{animation:confgo 1.5s ease-out forwards;}
+  @keyframes confgo{0%{opacity:1;transform:translate(0,0) rotate(0) scale(.6);}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--r)) scale(1.1);}}
+  @media (prefers-reduced-motion: reduce){.bottle .liq{transition:none !important;}.bottle.pop,.cring.glow,.toggle.pop,.spark.go,.check-row.go,.bub.go,.conf.go{animation:none !important;}.conf-layer,.bub,.spark{display:none !important;}.check-row .done-tag{transition:none;}}
   .water-done{margin-top:10px;font-size:12px;font-weight:500;color:#1F6FC2;}
   .gallery-cell .cell-tag{position:absolute;top:6px;left:6px;font-size:10px;font-weight:600;font-family:'Inter';color:#1A1A1A;background:var(--yellow);border-radius:999px;padding:2px 7px;}
 
@@ -3449,8 +3492,8 @@ function buildDayChecks(day, person){
   const checks = document.createElement('div');
   checks.className = 'day-checks';
 
-  checks.appendChild(makeCheckRow('Journaled, 15 min', dd.journaled, (v)=>{ dd.journaled=v; onDayEdited(dd); }, 'acc-pink'));
-  checks.appendChild(makeCheckRow('No phone, 1 hour (any time today)', dd.noPhone, (v)=>{ dd.noPhone=v; onDayEdited(dd); }, 'acc-yellow'));
+  checks.appendChild(makeCheckRow('Journaled, 15 min', dd.journaled, (v)=>{ dd.journaled=v; onDayEdited(dd); }, 'acc-pink', 'journal'));
+  checks.appendChild(makeCheckRow('No phone, 1 hour (any time today)', dd.noPhone, (v)=>{ dd.noPhone=v; onDayEdited(dd); }, 'acc-yellow', 'nophone'));
   checks.appendChild(makeWaterRow(dd));
 
   const gratRow = document.createElement('div');
@@ -3546,6 +3589,29 @@ function covenLabelFor(count, viewerCast){
   return `${COUNT_WORDS[count]} spell${count===1?'':'s'} cast. ${COUNT_WORDS[4-count]} more to go.`;
 }
 
+const ringPrev = {};
+function buildCastRing(dd, person, dayN){
+  const wrap = document.createElement('div');
+  wrap.className = 'cring-wrap';
+  const j = !!dd.journaled, n = !!dd.noPhone, w = (dd.waterOz||0) >= 48;
+  const count = castCount(dd);
+  const cast = count >= 2;
+  const segs = [[j,'#FF6FA8'],[n,'#FFC94F'],[w,'#4FA8FF']].map((x,i)=>
+    `<circle class="seg" cx="42" cy="42" r="36" style="stroke:${x[0]?x[1]:'#F1ECE2'}" stroke-dasharray="66 160" stroke-dashoffset="${-75.4*i}"/>`).join('');
+  let title, sub;
+  if(cast){ title = 'Spell cast.'; sub = ''; }
+  else { title = 'Today\u2019s spell'; sub = count===1 ? 'Just one more and today\u2019s spell is cast.' : 'Any two of the three and today\u2019s spell is cast.'; }
+  wrap.innerHTML = `<div class="cring${cast?' cast':''}" role="img" aria-label="${count} of 3 habits done${cast?', spell cast':''}">
+      <svg width="56" height="56" viewBox="0 0 84 84" aria-hidden="true">${segs}</svg>
+      <div class="c"><b>${cast?'\u2726':count}</b><span>${cast?'CAST':'OF 3'}</span></div>
+    </div>
+    <div class="cring-txt"><strong>${title}</strong>${sub}</div>`;
+  const key = person + ':' + dayN;
+  if(cast && ringPrev[key] === false && !reduceMotion()) wrap.querySelector('.cring').classList.add('glow');
+  ringPrev[key] = cast;
+  return wrap;
+}
+
 function renderTodayCard(){
   const wrap = document.getElementById('todayCardWrap');
   if(!wrap) return;
@@ -3616,15 +3682,9 @@ function renderTodayCard(){
   promptEl.textContent = day.prompt;
   inner.appendChild(promptEl);
 
-  if(!cast && isEditable()){
-    const left = document.createElement('div');
-    left.className = 'today-left';
-    left.textContent = castCount(dd)===1 ? 'Just one more and today\u2019s spell is cast.' : 'Any two of the three and today\u2019s spell is cast.';
-    inner.appendChild(left);
-  }
-
   const astro = buildAstroBlock(day, person);
   if(astro) inner.appendChild(astro);
+  inner.appendChild(buildCastRing(dd, person, day.n));
   inner.appendChild(buildDayChecks(day, person));
   card.appendChild(inner);
   wrap.appendChild(card);
@@ -4422,6 +4482,7 @@ function closeLetterReading(){
 function breakLetterSeal(){
   if(lettersStage !== 'sealed') return;
   lettersStage = 'cracking';
+  haptic([20,40,30]);
   const q = (sel)=> document.querySelector('#lettersWrap ' + sel);
   const env = q('.ltr-envelope');
   if(env) env.classList.add('cracked'); else renderLettersPage();
@@ -5607,42 +5668,150 @@ function waterPoints(oz){
 
 const DROP_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5c-3 4-6 7.2-6 10.5a6 6 0 0 0 12 0c0-3.3-3-6.5-6-10.5z"></path></svg>';
 
+const waterShown = new WeakMap(); // what the bottle showed last time, so it can rise from there
+let bottleSeq = 0;
+function waterSurfaceY(oz){ return 184 - 124 * Math.min(oz, 64) / 64; }
 function makeWaterRow(dd){
   const box = document.createElement('div');
   box.className = 'water-box';
   const oz = dd.waterOz || 0;
   const pts = waterPoints(oz);
-  const meta = oz >= 48 ? `${oz} oz \u00b7 ${pts} ${pts===1?'pt':'pts'}` : `${oz} oz \u00b7 ${48-oz} to go`;
-  let drops = '';
-  for(let i=1;i<=8;i++) drops += `<div class="water-drop${oz>=i*8?' on':''}${i>6?' bonus':''}">${DROP_SVG}</div>`;
+  const prev = waterShown.has(dd) ? waterShown.get(dd) : oz;
+  const sub = oz >= 64 ? 'bonus reached' : (oz >= 48 ? `${64-oz} to bonus` : `${48-oz} to go`);
   const doneLine = oz>=64 ? 'Bonus hydration, 2 pts. Counts toward your spell.' : (oz>=48 ? 'Goal met, 1 pt. Counts toward your spell.' : '');
+  const id = 'bcp' + (++bottleSeq);
+  const shape = 'M34 8h24v14c0 6 20 12 20 36v112c0 8-6 14-14 14H28c-8 0-14-6-14-14V58c0-24 20-30 20-36z';
   box.innerHTML = `
-    <div class="water-top">
-      <div class="water-id">
-        <div class="water-icon">${DROP_SVG.replace('width="16" height="16"','width="20" height="20"')}</div>
-        <div><div class="session-label">Water</div><div class="session-meta">${meta}</div></div>
+    <div class="bottle-row">
+      <div class="bottle" role="img" aria-label="Water bottle, ${oz} ounces">
+        <svg viewBox="0 0 92 190" aria-hidden="true">
+          <defs><clipPath id="${id}"><path d="${shape}"/></clipPath></defs>
+          <path d="${shape}" fill="#F4FAFF" stroke="#B9DAFF" stroke-width="3"/>
+          <g clip-path="url(#${id})"><rect class="liq" x="0" y="0" width="92" height="190" fill="#4FA8FF" style="transform:translateY(${waterSurfaceY(prev)}px)"/></g>
+          <line x1="76" x2="100" y1="60" y2="60" stroke="#1F6FC2" stroke-width="3" stroke-dasharray="5 4"/>
+          <line x1="76" x2="100" y1="91" y2="91" stroke="#1F6FC2" stroke-width="3"/>
+        </svg>
+        <span class="mk" style="top:30px;">bonus 64</span><span class="mk" style="top:48px;">goal 48</span>
       </div>
-      <div class="water-btns">
-        <button type="button" class="water-btn minus" aria-label="Remove 8 ounces">\u22128</button>
-        <button type="button" class="water-btn plus" aria-label="Add 8 ounces">+8</button>
+      <div class="water-side">
+        <div class="water-read">${oz} oz</div>
+        <div class="water-sub">Water \u00b7 ${sub}</div>
+        <div class="water-btns row">
+          <button type="button" class="water-btn minus" aria-label="Remove 8 ounces">\u22128</button>
+          <button type="button" class="water-btn plus" aria-label="Add 8 ounces">+8</button>
+        </div>
       </div>
     </div>
-    <div class="water-drops" aria-hidden="true">${drops}</div>
-    <div class="water-scale"><span>8 oz each</span><span>goal 48 \u00b7 bonus 64</span></div>
     ${doneLine ? `<div class="water-done">${doneLine}</div>` : ''}`;
   const minusBtn = box.querySelector('.minus');
   const plusBtn = box.querySelector('.plus');
   minusBtn.disabled = plusBtn.disabled = !isEditable();
   if(isEditable()){
-    plusBtn.onclick = ()=>{ dd.waterOz = (dd.waterOz||0) + 8; onDayEdited(dd); };
-    minusBtn.onclick = ()=>{ dd.waterOz = Math.max(0, (dd.waterOz||0) - 8); onDayEdited(dd); };
+    plusBtn.onclick = ()=>{ haptic(10); dd.waterOz = (dd.waterOz||0) + 8; onDayEdited(dd); };
+    minusBtn.onclick = ()=>{ haptic(6); dd.waterOz = Math.max(0, (dd.waterOz||0) - 8); onDayEdited(dd); };
   }
+  // Rise (or fall) from where it was. Bubbles on the way up, a pop and a stronger buzz at 48 and 64.
+  const liq = box.querySelector('.liq');
+  const bottle = box.querySelector('.bottle');
+  requestAnimationFrame(()=>{
+    if(!liq.isConnected) return;
+    liq.style.transform = `translateY(${waterSurfaceY(oz)}px)`;
+    if(oz === prev || !bottle.offsetParent || reduceMotion()) return;
+    if(oz > prev){
+      for(let i=0;i<6;i++){
+        const bub = document.createElement('i');
+        bub.className = 'bub';
+        const sz = 2.5 + Math.random()*3;
+        bub.style.width = bub.style.height = sz + 'px';
+        bub.style.left = (12 + Math.random()*22) + 'px';
+        bub.style.bottom = (7 + Math.random()*16) + 'px';
+        bub.style.animationDelay = (i*.08) + 's';
+        bottle.appendChild(bub);
+        requestAnimationFrame(()=> bub.classList.add('go'));
+        setTimeout(()=> bub.remove(), 1600);
+      }
+    }
+    const crossed = (prev < 48 && oz >= 48) || (prev < 64 && oz >= 64);
+    if(crossed){
+      bottle.classList.remove('pop'); void bottle.offsetWidth; bottle.classList.add('pop');
+      haptic(oz >= 64 ? [20,40,20,40,30] : [20,40,30]);
+    }
+  });
+  setTimeout(()=> waterShown.set(dd, oz), 0);
   return box;
 }
 
-function makeCheckRow(labelText, checked, onChange, accent){
+// Done moment on journal and no phone. The card re-renders on every tap, so the tap only leaves a note
+// (doneAnim) and the row that gets built next plays the animation.
+let doneAnim = null;
+const reduceMotion = ()=>{ try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+function playDoneAnim(row, color, kind){
+  if(reduceMotion() || !row.isConnected || !row.offsetParent) return;
+  const toggle = row.querySelector('.toggle');
+  if(toggle){ toggle.classList.remove('pop'); void toggle.offsetWidth; toggle.classList.add('pop'); }
+  for(let i=0;i<18;i++){
+    const sp = document.createElement('i');
+    sp.className = 'spark';
+    const ang = i/18*Math.PI*2 + Math.random()*.3, d = 54*(.6+Math.random()*.6);
+    sp.style.setProperty('--dx', Math.cos(ang)*d + 'px');
+    sp.style.setProperty('--dy', Math.sin(ang)*d + 'px');
+    const sz = 7*(.6+Math.random()*.8);
+    sp.style.width = sp.style.height = sz + 'px';
+    sp.style.background = [color, '#FFC94F', '#FFFFFF'][i%3];
+    row.appendChild(sp);
+    requestAnimationFrame(()=> sp.classList.add('go'));
+    setTimeout(()=> sp.remove(), 900);
+  }
+  row.classList.remove('glow-pink','glow-yellow','go'); void row.offsetWidth;
+  row.classList.add('glow-' + kind, 'go');
+  setTimeout(()=> row.classList.remove('go'), 1100);
+  const card = row.closest('.today-card');
+  if(card){
+    const layer = document.createElement('div');
+    layer.className = 'conf-layer';
+    const cr = card.getBoundingClientRect(), tr = (toggle||row).getBoundingClientRect();
+    const ox = tr.left - cr.left + 22, oy = tr.top - cr.top + 8;
+    for(let i=0;i<30;i++){
+      const e = document.createElement('span');
+      e.className = 'conf';
+      e.textContent = ['\u2726','\u2727','\u2605'][i%3];
+      e.style.color = [color, '#FFC94F', '#FF6FA8', '#4FA8FF'][i%4];
+      e.style.left = ox + 'px'; e.style.top = oy + 'px';
+      e.style.setProperty('--dx', (Math.random()*(cr.width-ox-10) - Math.random()*ox*.6) + 'px');
+      e.style.setProperty('--dy', (Math.random()*260 - 60) + 'px');
+      e.style.setProperty('--r', (Math.random()*540-270) + 'deg');
+      e.style.animationDelay = (Math.random()*.15) + 's';
+      layer.appendChild(e);
+      requestAnimationFrame(()=> e.classList.add('go'));
+    }
+    card.appendChild(layer);
+    setTimeout(()=> layer.remove(), 1900);
+  }
+}
+
+// Haptics: Android vibrates. iPhone Safari 17.4 and up has no vibrate, but toggling a hidden
+// switch input gives a tick. Not tested on a real iPhone, so if it does nothing there, nothing breaks.
+let hapticSwitch = null;
+function haptic(pattern){
+  try{
+    if(navigator.vibrate){ navigator.vibrate(pattern); return; }
+    if(!hapticSwitch){
+      const lab = document.createElement('label');
+      lab.setAttribute('aria-hidden','true');
+      lab.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;overflow:hidden;';
+      const inp = document.createElement('input');
+      inp.type = 'checkbox'; inp.setAttribute('switch',''); inp.tabIndex = -1;
+      lab.appendChild(inp); document.body.appendChild(lab);
+      hapticSwitch = lab;
+    }
+    const n = Array.isArray(pattern) ? Math.max(1, Math.ceil(pattern.length/2)) : 1;
+    for(let i=0;i<n;i++) setTimeout(()=>{ try{ hapticSwitch.click(); }catch(e){} }, i*90);
+  }catch(e){}
+}
+
+function makeCheckRow(labelText, checked, onChange, accent, doneKey){
   const row = document.createElement('div');
-  row.className='check-row';
+  row.className='check-row' + (checked ? ' isdone' : '');
   const toggle = document.createElement('div');
   toggle.className='toggle'+(accent?' '+accent:'')+(checked?' on':'')+(isEditable()?'':' locked');
   const label = document.createElement('label');
@@ -5651,11 +5820,22 @@ function makeCheckRow(labelText, checked, onChange, accent){
     toggle.onclick = ()=>{
       const newVal = !toggle.classList.contains('on');
       toggle.classList.toggle('on');
+      if(newVal && doneKey){ doneAnim = {key: doneKey, at: Date.now()}; haptic([12,30,12]); }
       onChange(newVal);
     };
   }
+  const tag = document.createElement('span');
+  tag.className = 'done-tag';
+  tag.textContent = '\u2726 done';
   row.appendChild(toggle);
   row.appendChild(label);
+  row.appendChild(tag);
+  if(doneKey && checked && doneAnim && doneAnim.key === doneKey && Date.now() - doneAnim.at < 800){
+    const color = accent === 'acc-yellow' ? '#FFC94F' : '#FF6FA8';
+    const kind = accent === 'acc-yellow' ? 'yellow' : 'pink';
+    requestAnimationFrame(()=> playDoneAnim(row, color, kind));
+    setTimeout(()=>{ if(doneAnim && Date.now() - doneAnim.at >= 800) doneAnim = null; }, 900);
+  }
   return row;
 }
 
