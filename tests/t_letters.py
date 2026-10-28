@@ -21,7 +21,7 @@ with sync_playwright() as pw:
     check('L1 Letters page shows the empty state', 'nothing sealed yet' in pg.inner_text('#lettersWrap').lower())
     pg.click('#writeLetterBtn'); pg.wait_for_selector('#letterSheet')
     check('L2 To options are Me, the other three, and All of us', pg.locator('#letterToSelect option').all_inner_texts() == ['Me','Kellye','Lauren','Carolina','All of us'])
-    check('L2 Opens-on only offers days still ahead (plus Nina\'s one-time option, last)', pg.locator('#letterDaySelect option').all_inner_texts() == ['Oct 10, New Moon in Libra','Oct 25, Full Moon in Taurus','Oct 31, Halloween','Right now (just this once)'])
+    check('L2 Opens-on only offers days still ahead (plus Nina\'s one-time option, last)', pg.locator('#letterDaySelect option').all_inner_texts() == ['Oct 10, New Moon in Libra','Oct 25, Full Moon in Taurus','Oct 29, Gemini Moon','Oct 30, Moon in Cancer','Oct 31, Halloween','Right now (just this once)'])
     check('L2b idea defaults to the self version for Me + Day 10', "being fair to" in pg.inner_text('#letterIdea').lower())
     pg.select_option('#letterToSelect', 'Kellye')
     check('L2c idea switches to the person version for someone else', "never say with a straight face" in pg.inner_text('#letterIdea').lower())
@@ -29,6 +29,39 @@ with sync_playwright() as pw:
     check('L2d idea switches to the group version for All of us', 'whole coven' in pg.inner_text('#letterIdea').lower())
     pg.select_option('#letterDaySelect', '25')
     check('L2e idea updates for Day 25 too, still the group version', 'venus' in pg.inner_text('#letterIdea').lower() and 'coven' in pg.inner_text('#letterIdea').lower())
+    pg.select_option('#letterDaySelect', '29')
+    idea = lambda: pg.inner_text('#letterIdea').strip()
+    G29_SOME = ["Gemini Moon, the sign of talking, so let's talk. Tell them one thing you love about the way they show up for you.", "Gemini Moon is chatty by nature, so use it. Tell them the nicest thing you've thought about them and never said.", "Gemini Moon loves a good conversation, and this one is a love letter in disguise. Tell them what makes talking to them the best part of your day."]
+    G29_ALL = ["Gemini Moon, the sign of talking. Tell the coven what you love about the way the four of us talk to each other.", "Gemini Moon, the sign of talking, and this group has never run out of things to say. Tell the coven what you love about us.", "Gemini Moon is chatty by nature, and so are we. Tell the coven the group-chat moment that still makes you laugh."]
+    G29_ME = ["Gemini Moon, the sign of talking, and your mind has been loud all month. Tell future you what it's been saying, with nothing cleaned up.", "Gemini Moon wants the unfiltered version. Tell future you what you actually think, the part you leave out when you talk to everyone else.", "Gemini Moon, the sign of talking, so say the quiet part. Tell future you the one thing you're finally ready to admit."]
+    C30_SOME = ["The Moon moves into Cancer, the sign it rules, right after chatty Gemini. Skip the small talk and tell them what you actually feel about them.", "The Moon is home in Cancer, the sign it rules, and Cancer is all about the people who feel like family. Tell them what they mean to you.", "Cancer is the Moon's home sign, known for tenderness. Tell them the moment you knew they were your person."]
+    C30_ALL = ["The Moon moves into Cancer, the sign it rules, right after chatty Gemini. Skip the small talk and tell the coven what this group feels like to come home to.", "Cancer is the Moon's home sign, so let's talk about home. Tell the coven what this group has meant to you this month.", "The Moon is home in Cancer, and so is this group. Tell the coven the moment this month you felt most held by us."]
+    C30_ME = ["Cancer is the Moon's home sign, and home is where the truth gets quiet. Tell future you what you're still carrying that you wish you could set down.", "The Moon is home in Cancer, so be honest about what home means to you right now. Tell future you what you need more of and what you've outgrown.", "Cancer is the Moon's home sign, known for feeling everything. Tell future you what you've felt this month that you haven't said to anyone."]
+    pg.select_option('#letterDaySelect', '29')
+    check('L2f Day 29, group: one of the three approved lines', idea() in G29_ALL, idea())
+    first29 = idea()
+    pg.select_option('#letterToSelect', 'Kellye')
+    check('L2g Day 29, person: one of the three approved lines', idea() in G29_SOME, idea())
+    pg.select_option('#letterToSelect', 'Nina')
+    check('L2g2 Day 29, self: one of the three approved lines', idea() in G29_ME, idea())
+    pg.select_option('#letterDaySelect', '30')
+    check('L2h Day 30, self: one of the three approved lines', idea() in C30_ME, idea())
+    pg.select_option('#letterToSelect', 'Kellye')
+    check('L2h2 Day 30, person: one of the three approved lines', idea() in C30_SOME, idea())
+    pg.select_option('#letterToSelect', 'all')
+    check('L2i Day 30, group: one of the three approved lines', idea() in C30_ALL, idea())
+    first30 = idea()
+    pg.select_option('#letterDaySelect', '29'); pg.select_option('#letterToSelect', 'all')
+    check('L2k the line is steady while the sheet stays open (back to Day 29 + All of us gives the same one)', idea() == first29, (idea(), first29))
+    pg.select_option('#letterDaySelect', '30')
+    check('L2l same for Day 30 + All of us', idea() == first30, (idea(), first30))
+    seen = set()
+    for _ in range(14):
+        pg.click('#letterCancelBtn'); pg.wait_for_timeout(60)
+        pg.click('#writeLetterBtn'); pg.wait_for_selector('#letterSheet')
+        pg.select_option('#letterDaySelect', '29'); pg.select_option('#letterToSelect', 'all')
+        seen.add(idea())
+    check('L2m reopening the sheet rotates through the approved lines (more than one seen, all approved)', len(seen) > 1 and seen <= set(G29_ALL), seen)
     pg.select_option('#letterToSelect', 'Nina')
     pg.select_option('#letterDaySelect', '10')
     check('L3 Seal it starts disabled', pg.is_disabled('#letterSealBtn'))
@@ -130,7 +163,7 @@ with sync_playwright() as pw:
     check('L22 the intro mark is never shown in the app', 'intro' not in pg.inner_text('#lettersWrap').lower())
     check('L22 it shows as open right away: from Nina, to all of us, tap to break the seal', 'from nina, to all of us' in pg.inner_text('#lettersList').lower() and 'tap to break the seal' in pg.inner_text('#lettersList').lower(), pg.inner_text('#lettersList'))
     pg.click('#writeLetterBtn'); pg.wait_for_selector('#letterSheet')
-    check('L23 once sealed, the option is gone for good', pg.locator('#letterDaySelect option').all_inner_texts() == ['Oct 25, Full Moon in Taurus','Oct 31, Halloween'], pg.locator('#letterDaySelect option').all_inner_texts())
+    check('L23 once sealed, the option is gone for good', pg.locator('#letterDaySelect option').all_inner_texts() == ['Oct 25, Full Moon in Taurus','Oct 29, Gemini Moon','Oct 30, Moon in Cancer','Oct 31, Halloween'], pg.locator('#letterDaySelect option').all_inner_texts())
     check('L23 a second intro letter is refused', pg.evaluate("sealLetter('all', 0, 'again', {intro:true})") is False and len(json.loads(pg.evaluate("window.__FB['recalData/r2:recal-letters:Nina']"))) == 1)
     e.close()
 
@@ -148,7 +181,7 @@ with sync_playwright() as pw:
     e = Env(pw, seed_nina(), who='Kellye', now=D10b); e.open(); pg = e.page
     go(pg, 'profile/letters')
     pg.click('#writeLetterBtn'); pg.wait_for_selector('#letterSheet')
-    check('L25 Kellye is not offered Right now', pg.locator('#letterDaySelect option').all_inner_texts() == ['Oct 25, Full Moon in Taurus','Oct 31, Halloween'], pg.locator('#letterDaySelect option').all_inner_texts())
+    check('L25 Kellye is not offered Right now', pg.locator('#letterDaySelect option').all_inner_texts() == ['Oct 25, Full Moon in Taurus','Oct 29, Gemini Moon','Oct 30, Moon in Cancer','Oct 31, Halloween'], pg.locator('#letterDaySelect option').all_inner_texts())
     check('L25 Kellye cannot make an intro letter by calling it directly', pg.evaluate("sealLetter('all', 0, 'sneaky', {intro:true})") is False and not pg.evaluate("window.__FB['recalData/r2:recal-letters:Kellye']"))
     e.close()
 
@@ -497,6 +530,72 @@ with sync_playwright() as pw:
     errors = []; pg.on('pageerror', lambda x: errors.append(str(x)))
     tea_message(pg, 'photo:Kellye:99')
     check('E8 open app: an unknown post lands on The Tea without breaking', on_tea(pg) and pulsing(pg) is None and errors == [], errors)
+    e.close()
+
+
+    # ---------- Letters waiting cards on Today ----------
+    D28 = (2026,10,28,12,0,0)
+    D29 = (2026,10,29,12,0,0)
+    D31 = (2026,10,31,12,0,0)
+    A_BODY = ["It's open and it's waiting, and we are not going to be normal about this until you've read it.", "Someone sat down and got sentimental about you. Go see how sweet it is.", "Feelings were put in writing and the seal is ready. Open it before we do."]
+    B_BODY = ["Everyone is writing something. Don't be the one who shows up empty-handed.", "Three people could be sealing a letter to you right now. Write yours and find out who's feeling brave.", "Write yours today, because a letter you didn't send can't make anyone cry."]
+    C_PAIRS = [("One letter. One condition.", "Cast today's spell and the seal breaks itself. We don't make the rules, we just enforce them."), ("Not so fast.", "The letter is right there. Cast today's spell first, then we'll let you in."), ("Pay to play.", "The price is one spell. Cast today's, then read what they wrote."), ("Your letter is being held hostage.", "The ransom is today's spell. Cast it and we'll release it.")]
+    def letter_fb(opens=25, frm='Carolina'):
+        fb = seed_nina()
+        fb['recalData/r2:recal-letters:' + frm] = json.dumps([{"id": frm + ":1", "to": "Nina", "body": "Hi.", "opensDay": opens, "writtenAt": "2026-10-05T00:00:00.000Z"}])
+        return fb
+    txt = lambda pg, sel: pg.inner_text(sel).strip()
+
+    e = Env(pw, letter_fb(25), now=D8); e.open(); pg = e.page; go(pg, 'today')
+    check('W1 locked letter: no Letters-waiting card A, only the countdown', pg.locator('#lettersWaitingWrap .lw-card').count() == 1 and 'next letter night' in txt(pg, '#lettersWaitingWrap').lower(), txt(pg, '#lettersWaitingWrap'))
+    check('W1 card B title names the next night and the weekday', txt(pg, '#lettersWaitingWrap .lw-title') == 'New Moon in Libra, Saturday.', txt(pg, '#lettersWaitingWrap .lw-title'))
+    check('W1 card B body is one of the three approved lines', txt(pg, '#lettersWaitingWrap .lw-body') in B_BODY, txt(pg, '#lettersWaitingWrap .lw-body'))
+    before = txt(pg, '#lettersWaitingWrap')
+    pg.evaluate("renderLettersWaiting(); renderLettersWaiting();"); 
+    check('W2 re-rendering does not change the words', txt(pg, '#lettersWaitingWrap') == before)
+    pg.click('#lwWriteBtn'); pg.wait_for_selector('#letterSheet')
+    check('W3 card B link opens the write-a-letter sheet', vis(pg, '#letterSheet'))
+    e.close()
+
+    e = Env(pw, letter_fb(10), now=D10); e.open(); pg = e.page; go(pg, 'today')
+    cards_txt = pg.locator('#lettersWaitingWrap .lw-card').all_inner_texts()
+    check('W4 open letter: card A first, then card B', len(cards_txt) == 2 and 'sealed for you' in cards_txt[0].lower() and 'next letter night' in cards_txt[1].lower(), cards_txt)
+    check('W4 card A names the sender and uses an approved body', txt(pg, '#lettersWaitingWrap .lw-card:first-child .lw-title') == 'Carolina wrote you something.' and txt(pg, '#lettersWaitingWrap .lw-card:first-child .lw-body') in A_BODY, txt(pg, '#lettersWaitingWrap'))
+    check('W4 card A is not the dark gated card on Day 10', pg.locator('#lettersWaitingWrap .lw-gate').count() == 0)
+    pg.click('#lwOpenBtn'); pg.wait_for_timeout(300)
+    check('W5 Break the seal goes to the Letters page', 'profile/letters' in pg.evaluate('location.hash'), pg.evaluate('location.hash'))
+    e.close()
+
+    fb = letter_fb(10, 'Kellye'); 
+    fb['recalData/r2:recal-letters:Lauren'] = json.dumps([{"id":"Lauren:1","to":"all","body":"Hi all.","opensDay":10,"writtenAt":"2026-10-05T00:00:00.000Z"}])
+    e = Env(pw, fb, now=D10); e.open(); pg = e.page; go(pg, 'today')
+    check('W6 two open letters: the title says how many', txt(pg, '#lettersWaitingWrap .lw-card:first-child .lw-title') == 'Two letters are waiting for you.', txt(pg, '#lettersWaitingWrap .lw-card:first-child .lw-title'))
+    e.close()
+
+    e = Env(pw, letter_fb(25), now=D28); e.open(); pg = e.page; go(pg, 'today')
+    check('W7 Oct 28: an open letter is card A, the gate does not start until Oct 29', pg.locator('#lettersWaitingWrap .lw-gate').count() == 0 and pg.locator('#lwOpenBtn').count() == 1)
+    check('W7 card B counts down to Gemini Moon, Thursday', txt(pg, '#lettersWaitingWrap .lw-card:last-child .lw-title') == 'Gemini Moon, Thursday.', txt(pg, '#lettersWaitingWrap'))
+    e.close()
+
+    e = Env(pw, letter_fb(25), now=D29, width=360); e.open(); pg = e.page; go(pg, 'today')
+    ct = (txt(pg, '#lettersWaitingWrap .lw-gate .lw-title'), txt(pg, '#lettersWaitingWrap .lw-gate .lw-body'))
+    check('W8 Oct 29, spell not cast: the dark gated card C shows, one approved pair', pg.locator('#lettersWaitingWrap .lw-gate').count() == 1 and ct in C_PAIRS, ct)
+    check('W8 card C has Cast today\u2019s spell and no Break the seal', 'cast today' in txt(pg, '#lwCastBtn').lower() and pg.locator('#lwOpenBtn').count() == 0)
+    check('W8 card B shows Moon in Cancer, Friday', txt(pg, '#lettersWaitingWrap .lw-card:last-child .lw-title') == 'Moon in Cancer, Friday.', txt(pg, '#lettersWaitingWrap'))
+    check('W8 no sideways overflow at 360px', pg.evaluate("document.documentElement.scrollWidth") <= 360, pg.evaluate("document.documentElement.scrollWidth"))
+    pg.evaluate("(()=>{const d=dayData('Nina',29); d.journaled=true; d.noPhone=true; renderLettersWaiting();})()")
+    check('W9 once today\u2019s spell is cast, card C flips to card A', pg.locator('#lettersWaitingWrap .lw-gate').count() == 0 and pg.locator('#lwOpenBtn').count() == 1 and txt(pg, '#lettersWaitingWrap .lw-card:first-child .lw-title') == 'Carolina wrote you something.', txt(pg, '#lettersWaitingWrap'))
+    pg.evaluate("(()=>{const d=dayData('Nina',29); d.journaled=false; d.noPhone=false; renderLettersWaiting();})()")
+    go(pg, 'profile/letters')
+    check('W10 the gate is a nudge only: the Letters page still opens the letter', 'tap to break the seal' in pg.inner_text('#lettersList').lower())
+    e.close()
+
+    e = Env(pw, letter_fb(25), now=D31); e.open(); pg = e.page; go(pg, 'today')
+    check('W11 Oct 31, spell not cast: card C still applies, and no card B (no letter night left)', pg.locator('#lettersWaitingWrap .lw-gate').count() == 1 and 'next letter night' not in txt(pg, '#lettersWaitingWrap').lower(), txt(pg, '#lettersWaitingWrap'))
+    e.close()
+
+    e = Env(pw, seed_nina(), now=D26); e.open(); pg = e.page; go(pg, 'today')
+    check('W12 no letters and Oct 26: only card B, for Gemini Moon', pg.locator('#lettersWaitingWrap .lw-card').count() == 1 and txt(pg, '#lettersWaitingWrap .lw-title') == 'Gemini Moon, Thursday.', txt(pg, '#lettersWaitingWrap'))
     e.close()
 
 
