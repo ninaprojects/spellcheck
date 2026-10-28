@@ -816,7 +816,18 @@
   .ltr-replay-row .txt-link{color:#767066;border-bottom-color:#E9E4DA;}
   .ltr-stage.is-open .ltr-replay-row .txt-link{color:#D9C7A3;border-bottom-color:rgba(217,199,163,.45);}
   .ltr-char-count{font-size:11px;color:var(--text-secondary);text-align:right;margin-top:4px;}
-  .ltr-idea{font-size:12px;color:var(--text-secondary);font-weight:300;font-style:italic;margin-top:8px;line-height:1.4;}
+  .ltr-idea{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:18px;line-height:1.3;color:#fff;}
+  /* Eclipse: the brew's night sky, in blood red. Same type, spacing and radius as .qa-sky. Used by the letter idea prompt and the letter cards on Today. */
+  .eclipse{position:relative;overflow:hidden;isolation:isolate;border:none;border-radius:14px;color:#fff;text-align:left;
+    background:radial-gradient(120% 120% at 20% 0%,#7A1A2C 0%,transparent 60%),radial-gradient(100% 100% at 100% 100%,#A8352B 0%,transparent 55%),#1E0A12;}
+  .eclipse[hidden]{display:none;}
+  .eclipse::before{content:'';position:absolute;inset:-6px;z-index:-1;pointer-events:none;filter:blur(.9px);
+    background:radial-gradient(1.5px 1.5px at 12% 22%,#fff,transparent),radial-gradient(1px 1px at 30% 70%,#fff,transparent),radial-gradient(2px 2px at 55% 18%,#FFE9A8,transparent),radial-gradient(1px 1px at 72% 55%,#fff,transparent),radial-gradient(1.5px 1.5px at 88% 30%,#fff,transparent),radial-gradient(1px 1px at 45% 88%,#fff,transparent);}
+  .eclipse::after{content:'';position:absolute;right:-28px;top:-30px;width:110px;height:110px;border-radius:50%;z-index:-1;pointer-events:none;opacity:.55;
+    background:radial-gradient(circle at 38% 34%,#E0603F,#B52A2A 45%,#6E1220 80%);box-shadow:0 0 40px 12px rgba(190,50,45,.4);}
+  .ec-eb{font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#F2D98A;}
+  .ltr-eclipse{margin:4px 0 2px;padding:14px 16px 16px;}
+  .ltr-eclipse .ec-eb{margin-bottom:6px;}
 
   /* ---- Letters: slower opening, bigger envelope, and the scroll unrolls ---- */
   .ltr-stage{transition:background 1.8s ease;}
@@ -887,21 +898,17 @@
   @media (prefers-reduced-motion: reduce){.ltr-flash.go,.ltr-stage.is-open .ltr-em,.ltr-stage.is-open .ltr-star,.ltr-stage.is-open .ltr-hglow,.ltr-stage.is-open .ltr-moon{animation:none !important;}.ltr-bat-w{display:none !important;}.ltr-stage.scene-moon.is-open .ltr-moon{opacity:1;transform:none;}.ltr-float-ctl,.ltr-late{transition:none !important;}}
 
   /* ---- Letters: the hint card and the dots that say a letter is waiting ---- */
-  .lh-card{border:1px solid var(--line);background:var(--bg);padding:14px 16px;margin:0 0 18px;}
+  .lh-card{padding:18px 18px 14px;margin:0 0 18px;}
   .lh-top{display:flex;align-items:center;gap:12px;}
   .lh-ico{width:40px;height:40px;border-radius:50%;background:#FFE2EE;color:var(--text-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .lh-title{font-size:15px;font-weight:600;color:var(--text-primary);line-height:1.3;}
-  .lh-body{font-size:13px;font-weight:300;color:var(--text-secondary);line-height:1.5;margin-top:10px;}
+  .lh-title{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:18px;color:#fff;line-height:1.25;}
+  .lh-body{font-size:13px;font-weight:300;color:#F3DCD6;line-height:1.5;margin-top:10px;}
   .lh-actions{display:flex;justify-content:flex-end;margin-top:4px;}
-  .lw-card{border:1px solid var(--line);border-top:4px solid var(--pink);background:var(--bg);padding:16px 20px 18px;margin:0 0 18px;}
-  .lw-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;}
-  .lw-title{font-family:'Noto Serif Display',serif;font-size:22px;line-height:1.25;color:var(--text-primary);margin:6px 0 8px;}
-  .lw-body{font-size:14px;font-weight:300;color:var(--text-secondary);line-height:1.5;margin:0 0 14px;}
-  .lw-card.lw-gate{background:#1C1B3A;border-color:#1C1B3A;border-top-color:var(--pink);}
-  .lw-card.lw-gate .lw-eyebrow{color:#C9C7E8;}
-  .lw-card.lw-gate .lw-title{color:#FFFEFD;}
-  .lw-card.lw-gate .lw-body{color:#E4E2F5;}
-  .lw-card.lw-gate .txt-link{color:#FFFEFD;border-bottom-color:var(--pink);}
+  .lw-card{padding:18px 18px 20px;margin:0 0 18px;}
+  .lw-eyebrow{font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#F2D98A;}
+  .lw-title{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;line-height:1.25;color:#fff;margin:8px 0 8px;}
+  .lw-body{font-size:14px;font-weight:300;color:#F3DCD6;line-height:1.5;margin:0 0 14px;}
+  .eclipse .txt-link{color:#fff;border-bottom-color:var(--pink);}
   .tabbar .tab .tab-ico{position:relative;display:flex;}
   .tab-dot{position:absolute;top:-2px;right:-5px;width:10px;height:10px;border-radius:50%;background:var(--pink);border:2px solid var(--bg);box-sizing:border-box;}
   .tab-dot[hidden]{display:none;}
@@ -4275,7 +4282,7 @@ function openWriteLetterSheet(){
     <select id="letterToSelect" class="gratitude-input">${toOptions}</select>
     <label class="grat-label" style="margin-top:12px;">Opens on</label>
     <select id="letterDaySelect" class="gratitude-input">${dayOptions}</select>
-    <div class="ltr-idea" id="letterIdea"></div>
+    <div class="eclipse ltr-eclipse" id="letterIdeaWrap" hidden><div class="ec-eb">&#10022; Letter idea</div><div class="ltr-idea" id="letterIdea"></div></div>
     <label class="grat-label" style="margin-top:12px;">Your letter</label>
     <textarea id="letterBodyInput" class="gratitude-input" maxlength="${LETTER_MAX}" style="min-height:120px;resize:vertical;" placeholder="Say the thing" aria-label="Your letter"></textarea>
     <div class="ltr-char-count" id="letterCharCount">${LETTER_MAX} left</div>
@@ -4296,12 +4303,14 @@ function openWriteLetterSheet(){
   const toSelect = sheet.querySelector('#letterToSelect');
   const daySelect = sheet.querySelector('#letterDaySelect');
   const ideaEl = sheet.querySelector('#letterIdea');
+  const ideaWrap = sheet.querySelector('#letterIdeaWrap');
   const ideaPicks = {};
   const refreshIdea = ()=>{
     const isNow = daySelect.value === 'now';
     if(isNow) toSelect.value = 'all';
     toSelect.disabled = isNow;
     ideaEl.textContent = isNow ? '' : letterIdeaFor(Number(daySelect.value), toSelect.value, ideaPicks);
+    ideaWrap.hidden = !ideaEl.textContent;
   };
   toSelect.onchange = refreshIdea;
   daySelect.onchange = refreshIdea;
@@ -4574,7 +4583,7 @@ function renderLettersHint(){
   const wrap = document.getElementById('lettersHintWrap');
   if(!wrap) return;
   if(!myIdentity || currentPerson !== myIdentity || lettersHintSeen()){ wrap.innerHTML = ''; return; }
-  wrap.innerHTML = `<div class="lh-card" role="region" aria-label="New: sealed letters">
+  wrap.innerHTML = `<div class="lh-card eclipse" role="region" aria-label="New: sealed letters">
     <div class="lh-top"><span class="lh-ico">${LETTER_ENVELOPE_ICON}</span><div class="lh-title">New: sealed letters &#10022;</div></div>
     <div class="lh-body">Write one to any of us, all of us, or future you. Find it under the &ldquo;Me&rdquo; tab, then Letters.</div>
     <div class="lh-actions"><button type="button" class="txt-link quiet" id="lettersHintGot">Got it</button></div>
@@ -4631,7 +4640,7 @@ function renderLettersWaiting(){
     const gated = day >= 29 && day <= 31 && !isCast(dayData(myIdentity, day));
     if(gated){
       const v = LW_C[lwPick('c:' + day, LW_C.length)];
-      html += `<div class="lw-card lw-gate" role="region" aria-label="Letters waiting">
+      html += `<div class="lw-card lw-gate eclipse" role="region" aria-label="Letters waiting">
         <div class="lw-eyebrow">Sealed for you</div>
         <div class="lw-title">${v.title(n)}</div>
         <p class="lw-body">${v.body(n)}</p>
@@ -4642,7 +4651,7 @@ function renderLettersWaiting(){
       if(n === 1) title = ready[0].from === myIdentity ? 'You wrote yourself something.' : `${ready[0].from} wrote you something.`;
       else title = `${n <= 4 ? COUNT_WORDS[n] : n} letters are waiting for you.`;
       const body = LW_A_BODY[lwPick('a:' + day, LW_A_BODY.length)];
-      html += `<div class="lw-card" role="region" aria-label="Letters waiting">
+      html += `<div class="lw-card eclipse" role="region" aria-label="Letters waiting">
         <div class="lw-eyebrow">Sealed for you</div>
         <div class="lw-title">${title}</div>
         <p class="lw-body">${body}</p>
@@ -4656,7 +4665,7 @@ function renderLettersWaiting(){
     const d = DAYS.find(x=> x.n === nextDay);
     const wd = d ? (LW_WD[d.wd] || d.wd) : '';
     const body = LW_B_BODY[lwPick('b:' + day, LW_B_BODY.length)];
-    html += `<div class="lw-card" role="region" aria-label="Next letter night">
+    html += `<div class="lw-card eclipse" role="region" aria-label="Next letter night">
       <div class="lw-eyebrow">Next letter night</div>
       <div class="lw-title">${m.tag}${wd ? ', ' + wd : ''}.</div>
       <p class="lw-body">${body}</p>
