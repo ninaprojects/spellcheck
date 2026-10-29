@@ -541,7 +541,7 @@ with sync_playwright() as pw:
     D31 = (2026,10,31,12,0,0)
     A_BODY = ["It's open and it's waiting, and we are not going to be normal about this until you've read it.", "Someone sat down and got sentimental about you. Go see how sweet it is.", "Feelings were put in writing and the seal is ready. Open it before we do."]
     B_BODY = ["Everyone is writing something. Don't be the one who shows up empty-handed.", "Three people could be sealing a letter to you right now. Write yours and find out who's feeling brave.", "Write yours today, because a letter you didn't send can't make anyone cry."]
-    C_PAIRS = [("One letter. One condition.", "Cast today's spell and the seal breaks itself. We don't make the rules, we just enforce them."), ("Not so fast.", "The letter is right there. Cast today's spell first, then we'll let you in."), ("Pay to play.", "The price is one spell. Cast today's, then read what they wrote."), ("Your letter is being held hostage.", "The ransom is today's spell. Cast it and we'll release it.")]
+    C_PAIRS = [("Someone wrote you a letter.", "Cast today's spell first, then read it with a full heart. It's worth showing up for."), ("Not so fast.", "The letter is right there, and so is today's spell. Do the spell, then get emotional."), ("Pay to play, sort of.", "There's no fee. Cast today's spell anyway, then read what they wrote."), ("Your letter is being held hostage.", "No ransom, though. Just a polite request that you cast today's spell first.")]
     def letter_fb(opens=25, frm='Carolina'):
         fb = seed_nina()
         fb['recalData/r2:recal-letters:' + frm] = json.dumps([{"id": frm + ":1", "to": "Nina", "body": "Hi.", "opensDay": opens, "writtenAt": "2026-10-05T00:00:00.000Z"}])

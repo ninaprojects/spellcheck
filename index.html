@@ -948,6 +948,9 @@
   .lh-body{font-size:13px;font-weight:300;color:#F3DCD6;line-height:1.5;margin-top:10px;}
   .lh-actions{display:flex;justify-content:flex-end;margin-top:4px;}
   .lw-card{padding:18px 18px 20px;margin:0 0 18px;}
+  .lw-unseal{animation:lwUnseal .7s ease both;}
+  @keyframes lwUnseal{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion: reduce){.lw-unseal{animation:none !important;}}
   .lw-eyebrow{font-family:'Inter';font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#F2D98A;}
   .lw-title{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;line-height:1.25;color:#fff;margin:8px 0 8px;}
   .lw-body{font-size:14px;font-weight:300;color:#F3DCD6;line-height:1.5;margin:0 0 14px;}
@@ -3572,6 +3575,8 @@ function onDayEdited(dd){
   stampCast(dd);
   savePerson(currentPerson);
   safeRender('renderTodayCard', renderTodayCard);
+  safeRender('renderLettersWaiting', renderLettersWaiting);
+  safeRender('updateLettersDot', updateLettersDot);
   safeRender('renderStreakCard', renderStreakCard);
   safeRender('renderCovenFeed', renderCovenFeed);
   safeRender('renderChapters', renderChapters);
@@ -4674,16 +4679,17 @@ const LW_B_BODY = [
 ];
 // Card C: [title, body]. Singular and plural handled by count.
 const LW_C = [
-  { title: n=> `${n <= 4 ? COUNT_WORDS[n] : n} letter${n===1?'':'s'}. One condition.`,
-    body: ()=> "Cast today's spell and the seal breaks itself. We don't make the rules, we just enforce them." },
+  { title: ()=> "Someone wrote you a letter.",
+    body: n=> `Cast today's spell first, then read ${n===1?'it':'them'} with a full heart. ${n===1?'It\'s':'They\'re'} worth showing up for.` },
   { title: ()=> "Not so fast.",
-    body: n=> `The ${n===1?'letter is':'letters are'} right there. Cast today's spell first, then we'll let you in.` },
-  { title: ()=> "Pay to play.",
-    body: ()=> "The price is one spell. Cast today's, then read what they wrote." },
+    body: n=> `The ${n===1?'letter is':'letters are'} right there, and so is today's spell. Do the spell, then get emotional.` },
+  { title: ()=> "Pay to play, sort of.",
+    body: ()=> "There's no fee. Cast today's spell anyway, then read what they wrote." },
   { title: n=> `Your ${n===1?'letter is':'letters are'} being held hostage.`,
-    body: n=> `The ransom is today's spell. Cast it and we'll release ${n===1?'it':'them'}.` }
+    body: ()=> "No ransom, though. Just a polite request that you cast today's spell first." }
 ];
 const lwPicks = {};
+let lwWasGated = false;
 function lwPick(key, len){
   if(lwPicks[key] == null) lwPicks[key] = Math.floor(Math.random() * len);
   return lwPicks[key];
@@ -4697,8 +4703,11 @@ function renderLettersWaiting(){
   const ready = myUnopenedLetters().filter(l=> letterIsUnlocked(l.opensDay));
   const n = ready.length;
   let html = '';
+  if(n === 0) lwWasGated = false;
   if(n > 0){
     const gated = day >= 29 && day <= 31 && !isCast(dayData(myIdentity, day));
+    const unsealing = lwWasGated && !gated && !reduceMotion();
+    lwWasGated = gated;
     if(gated){
       const v = LW_C[lwPick('c:' + day, LW_C.length)];
       html += `<div class="lw-card lw-gate eclipse" role="region" aria-label="Letters waiting">
@@ -4712,7 +4721,7 @@ function renderLettersWaiting(){
       if(n === 1) title = ready[0].from === myIdentity ? 'You wrote yourself something.' : `${ready[0].from} wrote you something.`;
       else title = `${n <= 4 ? COUNT_WORDS[n] : n} letters are waiting for you.`;
       const body = LW_A_BODY[lwPick('a:' + day, LW_A_BODY.length)];
-      html += `<div class="lw-card eclipse" role="region" aria-label="Letters waiting">
+      html += `<div class="lw-card eclipse${unsealing?' lw-unseal':''}" role="region" aria-label="Letters waiting">
         <div class="lw-eyebrow">Sealed for you</div>
         <div class="lw-title">${title}</div>
         <p class="lw-body">${body}</p>
