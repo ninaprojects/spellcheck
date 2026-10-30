@@ -802,5 +802,51 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('letter nights: not sent on any other day', !pushes.some(x => x.title === 'Gemini Moon is Thursday ✦'), pushes);
 }
 
+// ---------- last call to write a letter (8pm Pacific, the evening before a letter night closes) ----------
+{
+  const CANCER = 'Homework due tonight, sorry \u2726', HALLOWEEN = 'Last call, then go be weird \u2726';
+  const CANCER_BODY = 'The only assignment: one letter for Moon in Cancer. It closes tonight. Gold stars for feelings.';
+  const HALLOWEEN_BODY = 'Halloween letters close tonight. Seal one before the party starts.';
+  const has = (title) => pushes.filter(x => x.title === title);
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  put('r2:recal-letters:Kellye', [{ id: 'Kellye:9', to: 'Nina', body: 'wrote it', opensDay: 30, writtenAt: '2026-10-28T12:00:00Z' }]);
+  put('r2:recal-letters:Lauren', [{ id: 'Lauren:9', to: 'Lauren', body: 'to me', opensDay: 30, writtenAt: '2026-10-28T12:00:00Z' }]);
+  put('r2:recal-letters:Carolina', [{ id: 'Carolina:9', to: 'all', body: 'wrong night', opensDay: 25, writtenAt: '2026-10-20T12:00:00Z' }]);
+  await baseline();
+  await runSettled('2026-10-30T02:50:00Z'); // 7:50pm Pacific, Oct 29
+  check('last call: nothing before 8pm', !has(CANCER).length, pushes);
+  await runSettled('2026-10-30T03:05:00Z'); // 8:05pm Pacific
+  const got = has(CANCER);
+  check('last call: only people who have not written for that night', got.length === 2 && ['Nina', 'Carolina'].every(p => got.some(x => x.to === p)), got);
+  check('last call: exact copy', got.every(x => x.body === CANCER_BODY), got);
+  check('last call: no target, so a tap just opens the app', got.every(x => !x.target), got);
+  await runSettled('2026-10-30T04:30:00Z'); // 9:30pm
+  check('last call: once only', has(CANCER).length === 0 || has(CANCER).length === got.length, pushes);
+  // Oct 30: Halloween. Nina wrote for night 31 on Oct 29, so she is skipped.
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  put('r2:recal-letters:Nina', [{ id: 'Nina:9', to: 'all', body: 'boo', opensDay: 31, writtenAt: '2026-10-29T12:00:00Z' }]);
+  await baseline();
+  await runSettled('2026-10-31T03:05:00Z'); // 8:05pm Pacific, Oct 30
+  const h = has(HALLOWEEN);
+  check('last call (Halloween): the other three get it, Nina already wrote', h.length === 3 && !h.some(x => x.to === 'Nina') && h.every(x => x.body === HALLOWEEN_BODY), h);
+  // No last call on days with no letter night the next day, or after Halloween.
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  await baseline();
+  await runSettled('2026-10-28T02:35:00Z'); // Oct 27, next day is not a letter night
+  await runSettled('2026-10-31T16:00:00Z');
+  check('last call: not sent on other days', !has(CANCER).length && !has(HALLOWEEN).length, pushes);
+  // Switched off with the Coven activity switch.
+  resetWorld();
+  for (const p of PEOPLE) putPerson(p, person({}));
+  put('recal-notif-prefs:Nina', { activity: false });
+  await baseline();
+  await runSettled('2026-10-30T03:05:00Z');
+  check('last call: respects the Coven activity switch', !has(CANCER).some(x => x.to === 'Nina') && has(CANCER).length === 3, has(CANCER));
+  check('last call: no em dashes in the copy', !/\u2014/.test(CANCER + CANCER_BODY + HALLOWEEN + HALLOWEEN_BODY));
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);

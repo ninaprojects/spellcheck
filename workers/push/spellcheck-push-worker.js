@@ -47,6 +47,14 @@ const INTRO_PUSH = { title: "You've got mail, witches ✦", body: "Nina wrote al
 // on this Day of the challenge, from this Pacific hour. Change these two numbers to move it.
 const LETTER_NIGHTS_PUSH = { title: 'Gemini Moon is Thursday \u2726', body: 'Two new letter nights this week, and Gemini goes first. Write yours before the Moon moves on.' };
 const LETTER_NIGHTS_SEND = { day: 28, hour: 9 }; // Wed Oct 28, from 9:00am so it never stacks on the 8am spell
+// Last call to write, sent the evening before a letter night closes for writing (a night closes when its own day starts).
+// Only to people who have not sealed a letter for that night. Keyed by the letter night's day. 8pm Pacific (Nina's call). It shares the hour with the "break the seal" job, so a person with an
+// unopened letter who has not written yet gets both. Approved copy, Oct 2026.
+const LETTER_LAST_CALL = {
+  30: { title: 'Homework due tonight, sorry \u2726', body: 'The only assignment: one letter for Moon in Cancer. It closes tonight. Gold stars for feelings.' },
+  31: { title: 'Last call, then go be weird \u2726', body: 'Halloween letters close tonight. Seal one before the party starts.' }
+};
+const LETTER_LAST_CALL_AT = { hour: 20, minute: 0 };
 // When the one-time resend goes out: on this Day of the challenge (Oct N), from this Pacific hour and minute,
 // with an hour of grace in case the Worker is a little late. To schedule another one, change these three numbers.
 const INTRO_RESEND = { day: 18, hour: 22, minute: 0 }; // Sunday Oct 18, from 10:00pm
@@ -953,11 +961,12 @@ export async function run(env, now) {
     const castOn = (p, n) => !!(data[p] && data[p].days && isCast(data[p].days[n]));
     let streak = 0;
     for (let n = today - 1; n >= 1 && PEOPLE.every(p => castOn(p, n)); n--) streak++;
-    for (const job of ['morning', 'brew', 'nudge', 'recap', 'letters', 'introResend', 'letterNights']) {
+    for (const job of ['morning', 'brew', 'nudge', 'recap', 'letters', 'introResend', 'letterNights', 'lastCall']) {
       const inWindow = job === 'morning' ? (ptHour >= 8 && ptHour < 12)
         : job === 'brew' ? (ptHour >= 12 && ptHour < 22 && !!QUESTIONS[today])
         : job === 'nudge' ? (ptHour >= 19 && ptHour < 22)
         : job === 'letters' ? (ptHour >= 20 && ptHour < 22 && today >= 10 && today <= 31) // starts at 8pm so it never collides with the 7pm nudge
+        : job === 'lastCall' ? (!!LETTER_LAST_CALL[today + 1] && ((ptHour === LETTER_LAST_CALL_AT.hour && pacificMinute(now) >= LETTER_LAST_CALL_AT.minute) || (ptHour > LETTER_LAST_CALL_AT.hour && ptHour < 22))) // from 8pm, skipped once the window shuts at 10pm
         : job === 'letterNights' ? (today === LETTER_NIGHTS_SEND.day && ptHour >= LETTER_NIGHTS_SEND.hour && ptHour < 12) // once, from 9am, skipped if the Worker was down all morning
         : job === 'introResend' ? (today === INTRO_RESEND.day && ((ptHour === INTRO_RESEND.hour && pacificMinute(now) >= INTRO_RESEND.minute) || ptHour === INTRO_RESEND.hour + 1)) // once, at the time set above, with an hour of grace
         : (isSunday && today >= 7 && ptHour >= 18 && ptHour < 22); // Sunday recap, from 6pm
@@ -970,7 +979,7 @@ export async function run(env, now) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
         if (job === 'introResend' && person === 'Nina') { finish(); continue; } // it is her own letter
-        const prefKey = (job === 'recap' || job === 'letters' || job === 'introResend' || job === 'letterNights') ? 'activity' : job === 'brew' ? 'morning' : job;
+        const prefKey = (job === 'recap' || job === 'letters' || job === 'introResend' || job === 'letterNights' || job === 'lastCall') ? 'activity' : job === 'brew' ? 'morning' : job;
         if (!(await prefsFor(person))[prefKey]) { console.log(person, 'turned', job, 'off, skipping.'); finish(); continue; }
         let msg;
         if (job === 'morning') {
@@ -987,6 +996,11 @@ export async function run(env, now) {
           msg = { ...INTRO_PUSH };
         } else if (job === 'letterNights') {
           msg = { ...LETTER_NIGHTS_PUSH };
+        } else if (job === 'lastCall') {
+          // Skip anyone who has already sealed a letter for tomorrow's night (to anyone, herself included).
+          const mine = (await readKey(R2 + 'recal-letters:' + person)) || [];
+          if (mine.some(l => l && l.opensDay === today + 1)) { console.log(person, 'already wrote for night', today + 1, ', no last call.'); finish(); continue; }
+          msg = { ...LETTER_LAST_CALL[today + 1] };
         } else if (job === 'recap') {
           msg = recapMessage(weekStats(data, reactions, today));
         } else if (job === 'letters') {
