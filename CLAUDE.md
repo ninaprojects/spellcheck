@@ -91,8 +91,9 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 ## Workflow
 
 - Nina reviews anything creative (copy, tone, wording) or structural (layout, navigation) before it is built. Show the plan or the actual text first. Wait for a go-ahead. Do not implement unapproved changes.
-- Work on a branch named `claude/<short-topic>` and open a pull request. Never merge to `main` yourself. Merging deploys to four daily users, so Nina merges.
-- After Nina merges, she checks on her phone right away. If something is wrong, revert the merge. Say plainly what to check and where.
+- Work on a branch named `claude/<short-topic>` and open a pull request. Merging deploys to four daily users, so a PR never merges without Nina's yes.
+- In a chat with Nina, Claude does the merge so she does not have to go to GitHub. Confirm first: say what will go live and get a clear yes in that chat, then merge the PR (use the REST API, `gh api -X PUT repos/ninaprojects/spellcheck/pulls/<n>/merge`, because GraphQL is blocked) and report the merge commit. Her direct instruction to push or merge counts as the yes. Do not merge on your own initiative, in a scheduled or unattended run, or for anything she has not approved (copy, layout, or a change she has not seen).
+- After the merge, say plainly what to check on her phone and how to revert it (the merge commit). She checks right away, and if something is wrong, the merge gets reverted.
 - Worker changes: edit the file under `workers/`, tell Nina, and she pastes it into Cloudflare. Say exactly what changed.
 - Commit messages: a short summary line, with an optional longer description. Say which file(s) changed.
 - Ask one short question at a time.
