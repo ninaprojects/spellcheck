@@ -804,9 +804,9 @@ check('someone without notifications is skipped, the others still hear', sentTo(
 
 // ---------- last call to write a letter (8pm Pacific, the evening before a letter night closes) ----------
 {
-  const CANCER = 'Last call for Cancer letters \u2726', HALLOWEEN = 'Last letters before Halloween \u2726';
-  const CANCER_BODY = 'Tomorrow is Moon in Cancer, and writing for that night closes when it starts. Say the soft thing tonight, we\'ll all be a little brave together.';
-  const HALLOWEEN_BODY = 'Writing closes at midnight for the Halloween letters. Say the thing, seal it, and let it be a little spooky.';
+  const CANCER = 'Homework due tonight, sorry \u2726', HALLOWEEN = 'Last call, then go be weird \u2726';
+  const CANCER_BODY = 'The only assignment: one letter for Moon in Cancer. It closes tonight. Gold stars for feelings.';
+  const HALLOWEEN_BODY = 'Halloween letters close tonight. Seal one before the party starts, then go be weird in public.';
   const has = (title) => pushes.filter(x => x.title === title);
   resetWorld();
   for (const p of PEOPLE) putPerson(p, person({}));

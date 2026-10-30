@@ -51,8 +51,8 @@ const LETTER_NIGHTS_SEND = { day: 28, hour: 9 }; // Wed Oct 28, from 9:00am so i
 // Only to people who have not sealed a letter for that night. Keyed by the letter night's day. 8pm Pacific (Nina's call). It shares the hour with the "break the seal" job, so a person with an
 // unopened letter who has not written yet gets both. Approved copy, Oct 2026.
 const LETTER_LAST_CALL = {
-  30: { title: 'Last call for Cancer letters \u2726', body: 'Tomorrow is Moon in Cancer, and writing for that night closes when it starts. Say the soft thing tonight, we\'ll all be a little brave together.' },
-  31: { title: 'Last letters before Halloween \u2726', body: 'Writing closes at midnight for the Halloween letters. Say the thing, seal it, and let it be a little spooky.' }
+  30: { title: 'Homework due tonight, sorry \u2726', body: 'The only assignment: one letter for Moon in Cancer. It closes tonight. Gold stars for feelings.' },
+  31: { title: 'Last call, then go be weird \u2726', body: 'Halloween letters close tonight. Seal one before the party starts, then go be weird in public.' }
 };
 const LETTER_LAST_CALL_AT = { hour: 20, minute: 0 };
 // When the one-time resend goes out: on this Day of the challenge (Oct N), from this Pacific hour and minute,
