@@ -806,7 +806,7 @@ check('someone without notifications is skipped, the others still hear', sentTo(
 {
   const CANCER = 'Homework due tonight, sorry \u2726', HALLOWEEN = 'Last call, then go be weird \u2726';
   const CANCER_BODY = 'The only assignment: one letter for Moon in Cancer. It closes tonight. Gold stars for feelings.';
-  const HALLOWEEN_BODY = 'Halloween letters close tonight. Seal one before the party starts, then go be weird in public.';
+  const HALLOWEEN_BODY = 'Halloween letters close tonight. Seal one before the party starts.';
   const has = (title) => pushes.filter(x => x.title === title);
   resetWorld();
   for (const p of PEOPLE) putPerson(p, person({}));

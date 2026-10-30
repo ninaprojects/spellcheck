@@ -52,7 +52,7 @@ const LETTER_NIGHTS_SEND = { day: 28, hour: 9 }; // Wed Oct 28, from 9:00am so i
 // unopened letter who has not written yet gets both. Approved copy, Oct 2026.
 const LETTER_LAST_CALL = {
   30: { title: 'Homework due tonight, sorry \u2726', body: 'The only assignment: one letter for Moon in Cancer. It closes tonight. Gold stars for feelings.' },
-  31: { title: 'Last call, then go be weird \u2726', body: 'Halloween letters close tonight. Seal one before the party starts, then go be weird in public.' }
+  31: { title: 'Last call, then go be weird \u2726', body: 'Halloween letters close tonight. Seal one before the party starts.' }
 };
 const LETTER_LAST_CALL_AT = { hour: 20, minute: 0 };
 // When the one-time resend goes out: on this Day of the challenge (Oct N), from this Pacific hour and minute,
