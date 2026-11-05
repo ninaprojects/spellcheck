@@ -227,7 +227,25 @@ function val(p,hid,k){const l=D.log[p]||{};return (l[k]&&l[k][hid])||0;}
 function isDone(p,h,k){const v=val(p,h.id,k);return h.type==='number'?v>=h.target:v>=1;}
 function counts(h,k){return !!h.days[wd(k)];}
 function pausedOn(h,k){return h.paused&&h.pausedAt&&k>=h.pausedAt;}
+function weekCount(p,h,wk){let n=0;for(let i=0;i<7;i++){const k=addDays(wk,i);if(k<=todayK()&&isDone(p,h,k))n++;}return n;}
+function weeklyStreak(p,h,upTo){
+  const cw=weekStart(upTo||todayK());const first=weekStart(h.createdDay||todayK());
+  let wk=cw,n=0,g=0;
+  if(!upTo&&pausedOn(h,todayK())&&h.pausedAt)wk=addDays(weekStart(h.pausedAt),-7);
+  while(g++<200&&wk>=first){
+    if(weekCount(p,h,wk)>=h.perWeek)n++;
+    else if(wk!==cw)break;
+    wk=addDays(wk,-7);
+  }
+  return n;
+}
+function weeklyBest(p,h){
+  let best=0,cur=0,wk=weekStart(h.createdDay||todayK());const cw=weekStart(todayK());
+  while(wk<=cw){if(weekCount(p,h,wk)>=h.perWeek){cur++;best=Math.max(best,cur);}else if(wk!==cw)cur=0;wk=addDays(wk,7);}
+  return best;
+}
 function streak(p,h){
+  if(h.perWeek)return weeklyStreak(p,h);
   let k=todayK(),n=0;
   if(pausedOn(h,k)){k=addDays(h.pausedAt,-1);}
   let guard=0;
@@ -242,6 +260,7 @@ function streak(p,h){
   return n;
 }
 function bestStreak(p,h){
+  if(h.perWeek)return weeklyBest(p,h);
   let best=0,cur=0;let k=h.createdDay||todayK();const end=todayK();
   while(k<=end){
     if(counts(h,k)){if(isDone(p,h,k)){cur++;best=Math.max(best,cur);}else if(k!==end){cur=0;}}
@@ -307,7 +326,8 @@ function habitRow(h){
   const s=streak(p,h);
   const rest=!counts(h,t);const paused=pausedOn(h,t);
   let line='';
-  if(h.type==='number')line=`${v} of ${h.target} ${esc(h.unit)} today`+(s?` · ${s} day${s===1?'':'s'} in a row`:'');
+  if(h.perWeek){const c=weekCount(p,h,weekStart(t));line=(h.type==='number'?`${v} of ${h.target} ${esc(h.unit)} today · `:'')+`${c} of ${h.perWeek} this week`+(s?` · ${s} week${s===1?'':'s'} in a row`:'');}
+  else if(h.type==='number')line=`${v} of ${h.target} ${esc(h.unit)} today`+(s?` · ${s} day${s===1?'':'s'} in a row`:'');
   else line=s?`${s} day${s===1?'':'s'} in a row`:'Not started yet';
   const tag=h.shared?'<span>Shared with the coven</span>':'';
   let ctl='';
@@ -354,7 +374,7 @@ function anyShared(p,k){ // "showed up" counts shared habits, the coven habit, o
 }
 
 function viewAdd(){
-  const d=ui.draft||(ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:false,preset:null,days:[1,1,1,1,1,1,1]});
+  const d=ui.draft||(ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:false,preset:null,days:[1,1,1,1,1,1,1],freq:'days',perWeek:3});
   const grp=(g,l)=>`<div style="display:flex;flex-direction:column;gap:8px"><div class="label">${g}</div><div class="grid2">${l.map(p=>`<button class="opt${d.preset===p.id?' on':''}" aria-pressed="${d.preset===p.id}" data-act="preset" data-id="${p.id}"><span>${p.name}</span><span>${p.amount}</span></button>`).join('')}</div></div>`;
   return `<div class="top"><div class="h2">New habit</div><a class="link" href="#today" data-act="closeadd">Close</a></div><div class="body">
   <div style="display:flex;flex-direction:column;gap:16px"><div class="label">Start from a preset</div>${Object.keys(PRESETS).map(g=>grp(g,PRESETS[g])).join('')}</div>
@@ -362,7 +382,8 @@ function viewAdd(){
   <div><div class="label">How do you count it</div><div class="seg"><button class="${d.type==='yesno'?'on':''}" data-act="dtype" data-v="yesno">Yes or no</button><button class="${d.type==='number'?'on':''}" data-act="dtype" data-v="number">A number</button></div>
   ${d.type==='number'?`<div class="grid2" style="margin-top:10px"><div class="field"><label for="tg">Daily target</label><input id="tg" type="number" inputmode="numeric" value="${d.target}" data-in="target"></div><div class="field"><label for="un">Unit</label><input id="un" type="text" value="${esc(d.unit)}" data-in="unit"></div></div>
   <div class="row"><span class="small">Steps of ${d.step}.</span><button class="link" data-act="stepedit" aria-expanded="${ui.stepEdit}">${ui.stepEdit?'Done':'Change'}</button></div>${ui.stepEdit?`<div class="field"><label for="st">Step size</label><input id="st" type="number" inputmode="numeric" value="${d.step}" data-in="step"></div>`:''}`:''}</div>
-  <div><div class="label">Which days count</div><div class="days" style="margin-top:8px">${['M','T','W','T','F','S','S'].map((l,i)=>`<button class="${d.days[i]?'on':''}" aria-pressed="${!!d.days[i]}" aria-label="${DOW[i]}" data-act="dday" data-i="${i}">${l}</button>`).join('')}</div><div class="small" style="margin-top:6px">Missing a day that counts resets the streak. Other days are rest days.</div></div>
+  <div><div class="label">How often</div><div class="seg"><button class="${d.freq!=='week'?'on':''}" data-act="dfreq" data-v="days">Certain days</button><button class="${d.freq==='week'?'on':''}" data-act="dfreq" data-v="week">Times a week</button></div>
+  ${d.freq==='week'?`<div class="row" style="justify-content:flex-start;gap:16px;margin-top:8px"><button class="step" aria-label="Fewer times" data-act="dweekdn">−</button><b style="font-size:20px">${d.perWeek}</b><button class="step" aria-label="More times" data-act="dweekup">+</button><span class="sec">${d.perWeek===1?'time':'times'} a week</span></div><div class="small" style="margin-top:6px">Any days you like. Your streak counts weeks you hit it.</div>`:`<div class="days" style="margin-top:8px">${['M','T','W','T','F','S','S'].map((l,i)=>`<button class="${d.days[i]?'on':''}" aria-pressed="${!!d.days[i]}" aria-label="${DOW[i]}" data-act="dday" data-i="${i}">${l}</button>`).join('')}</div><div class="small" style="margin-top:6px">Missing a day that counts resets the streak. Other days are rest days.</div>`}</div>
   <div><div class="label">Who can see it</div><div class="seg"><button class="${!d.shared?'on':''}" data-act="dshare" data-v="0">Just me</button><button class="${d.shared?'on':''}" data-act="dshare" data-v="1">The coven</button></div><div class="small" style="margin-top:6px">${shareLine(d.shared)}</div></div>
   <button class="pill" data-act="create"${d.name.trim()?'':' disabled'}>Add habit</button></div>`;
 }
@@ -371,7 +392,7 @@ function suggestStep(n){n=parseInt(n,10);if(!n||n<1)return 1;const raw=n/10;for(
 
 function viewDetail(id){
   const f=findHabit(id);if(!f||f.p!==me)return `<div class="body"><a class="link" href="#today">Back</a><div class="h2">That habit is not here.</div></div>`+nav();
-  const h=f.h;const t=todayK();const s=streak(me,h),best=bestStreak(me,h);
+  const h=f.h;const t=todayK();const s=streak(me,h),best=bestStreak(me,h);const U=h.perWeek?'week':'day';
   const ws=weekStart(t);const start=addDays(ws,-28);
   let cells='';
   for(let i=0;i<35;i++){
@@ -379,15 +400,16 @@ function viewDetail(id){
     if(k===t){st='background:#fff;border:2px solid var(--text)';lb='Today';}
     else if(k>t){st='background:#fff;border:1px dashed var(--line2)';lb='Coming up';}
     else if(!counts(h,k)){st='background:#fff;border:1px solid var(--line)';lb='Rest day';}
+    else if(h.perWeek&&!isDone(me,h,k)){st='background:#fff;border:1px solid var(--line)';lb='Not done';}
     else if(!isDone(me,h,k)||(h.createdDay&&k<h.createdDay)){st='background:#ECE8E0';lb='Missed';}
     cells+=`<div role="img" aria-label="${lb}, ${k}" style="${st}"></div>`;
   }
   const restDays=DOW.filter((_,i)=>!h.days[i]);
-  const sched=restDays.length?`Counts ${DOW.filter((_,i)=>h.days[i]).map(x=>x.slice(0,3)).join(', ')}. ${restDays.join(', ')} ${restDays.length>1?'are rest days':'is a rest day'}.`:'Counts every day.';
-  const sl=h.paused?`${s} days in a row, held safely while you are away.`:s===0?'Nothing yet. Today is a good day to start.':h.shared?`${s} day${s===1?'':'s'} in a row. We noticed, and we are acting very normal about it.`:`${s} day${s===1?'':'s'} in a row. Nobody knows but you.`;
+  const sched=h.perWeek?`${h.perWeek} time${h.perWeek===1?'':'s'} a week, any days. ${weekCount(me,h,ws)} so far this week.`:restDays.length?`Counts ${DOW.filter((_,i)=>h.days[i]).map(x=>x.slice(0,3)).join(', ')}. ${restDays.join(', ')} ${restDays.length>1?'are rest days':'is a rest day'}.`:'Counts every day.';
+  const sl=h.paused?`${s} ${U}s in a row, held safely while you are away.`:s===0?'Nothing yet. Today is a good day to start.':h.shared?`${s} ${U}${s===1?'':'s'} in a row. We noticed, and we are acting very normal about it.`:`${s} ${U}${s===1?'':'s'} in a row. Nobody knows but you.`;
   return sub(['#today','Back'],`<a class="link" href="#edit/${h.id}">Edit</a>`)+`<div class="body">
   <div><div class="h1">${esc(h.name)}</div><div class="sec">${h.type==='number'?`${h.target} ${esc(h.unit)} a day`:'Yes or no'}</div></div>
-  <div class="big"><b>${s}</b><div><div>days in a row</div><div class="small">Longest: ${best} day${best===1?'':'s'}</div></div></div>
+  <div class="big"><b>${s}</b><div><div>${U}s in a row</div><div class="small">Longest: ${best} ${U}${best===1?'':'s'}</div></div></div>
   <div><div class="h2">${sl}</div><div class="small">${sched}</div></div>
   <div class="card"><div class="label">Last five weeks</div><div class="heat">${['M','T','W','T','F','S','S'].map(x=>`<div class="hd">${x}</div>`).join('')}${cells}</div>
    <div class="small" style="display:flex;gap:12px;flex-wrap:wrap"><span><i class="dot" style="background:var(--yellow);width:10px;height:10px"></i> Done</span><span><i class="dot" style="background:#ECE8E0;width:10px;height:10px"></i> Missed</span><span><i class="dot" style="border:1px solid var(--line2);width:10px;height:10px"></i> Rest day</span></div></div>
@@ -398,13 +420,13 @@ function viewDetail(id){
 
 function viewEdit(id){
   const f=findHabit(id);if(!f||f.p!==me)return `<div class="body"><a class="link" href="#today">Back</a></div>`+nav();
-  const h=f.h;const d=ui.draft&&ui.draft._id===id?ui.draft:(ui.draft={_id:id,name:h.name,target:h.target,days:h.days.slice(),step:h.step});
+  const h=f.h;const d=ui.draft&&ui.draft._id===id?ui.draft:(ui.draft={_id:id,name:h.name,target:h.target,days:h.days.slice(),step:h.step,perWeek:h.perWeek||0});
   const steps=[1,2,5,8,10,25,50,100];
   return `<div class="top"><a class="link quiet" href="#habit/${id}" data-act="cancel">Cancel</a><button class="link" data-act="saveedit" data-id="${id}">Save</button></div><div class="body">
   <div class="h1" style="font-size:24px">Edit habit</div>
   <div class="field"><label for="en">Name</label><input id="en" type="text" value="${esc(d.name)}" data-in="name"></div>
   ${h.type==='number'?`<div class="field"><label for="et">Daily target</label><input id="et" type="number" inputmode="numeric" value="${d.target}" data-in="target"><div class="small">New target starts today. Past days keep the target they had.</div></div>`:''}
-  <div><div class="label">Which days count</div><div class="days" style="margin-top:8px">${['M','T','W','T','F','S','S'].map((l,i)=>`<button class="${d.days[i]?'on':''}" aria-pressed="${!!d.days[i]}" aria-label="${DOW[i]}" data-act="dday" data-i="${i}">${l}</button>`).join('')}</div><div class="small" style="margin-top:6px">Your streak counts the schedule you have now.</div></div>
+  ${h.perWeek?`<div><div class="label">Times a week</div><div class="row" style="justify-content:flex-start;gap:16px;margin-top:6px"><button class="step" aria-label="Fewer times" data-act="eweekdn">−</button><b style="font-size:20px">${d.perWeek}</b><button class="step" aria-label="More times" data-act="eweekup">+</button></div><div class="small">Any days you like. Your streak counts weeks you hit it.</div></div>`:`<div><div class="label">Which days count</div><div class="days" style="margin-top:8px">${['M','T','W','T','F','S','S'].map((l,i)=>`<button class="${d.days[i]?'on':''}" aria-pressed="${!!d.days[i]}" aria-label="${DOW[i]}" data-act="dday" data-i="${i}">${l}</button>`).join('')}</div><div class="small" style="margin-top:6px">Your streak counts the schedule you have now.</div></div>`}
   ${h.type==='number'?`<div><div class="label">Step size</div><div class="row" style="justify-content:flex-start;gap:16px;margin-top:6px"><button class="step" aria-label="Smaller step" data-act="stepdn">−</button><b style="font-size:20px">${d.step}</b><button class="step" aria-label="Bigger step" data-act="stepup">+</button></div><div class="small">Each tap on Today adds ${d.step}.</div></div>`:''}
   <div class="card">${!ui.confirm?`<div class="small">Archiving takes it off Today. Your history and streak stay saved, and you can bring it back any time.</div><button class="pill out" data-act="askarch">Archive this habit</button>`:`<div class="h2">Archive ${esc(h.name)}?</div><div class="small">It leaves Today. Your ${streak(me,h)} day streak and every day you logged stay saved under Me. Bring it back whenever you like.</div><div class="row" style="justify-content:flex-start;gap:18px"><button class="link" data-act="archive" data-id="${id}">Archive</button><button class="link quiet" data-act="keep">Keep it</button></div>`}</div>
   </div>`;
@@ -440,9 +462,10 @@ function buildFeed(){
         const f=findHabit(id);if(!f||f.p!==p||!f.h.shared)continue;
         const h=f.h;if(!isDone(p,h,k))continue;
         // streak as of day k
-        const n=streakAt(p,h,k);if(!n)continue;
+        const n=streakAt(p,h,k);if(!n&&!h.perWeek)continue;
         const pre=presetOf(h);let text,bonus='';
-        if([7,14,30].includes(n)){text=fill(pick(L_MILE[n],p+id+n),{name:'\u0001',habit:h.name,n});bonus=pre&&BONUS[pre.id]?pick(BONUS[pre.id][n],id+n):'';}
+        if(!h.perWeek&&[7,14,30].includes(n)){text=fill(pick(L_MILE[n],p+id+n),{name:'\u0001',habit:h.name,n});bonus=pre&&BONUS[pre.id]?pick(BONUS[pre.id][n],id+n):'';}
+        else if(h.perWeek)text=`\u0001 finished ${h.name}. ${weekCount(p,h,weekStart(k))} of ${h.perWeek} this week.`;
         else text=fill(pick(L_FINISH,p+id+k),{name:'\u0001',habit:h.name,n});
         items.push({id:'f:'+p+':'+id+':'+k,at:k+'z',who:p,text:text,bonus});
       }
@@ -453,6 +476,7 @@ function buildFeed(){
   return items.slice(0,25);
 }
 function streakAt(p,h,k){
+  if(h.perWeek){return weekCount(p,h,weekStart(k))===h.perWeek&&isDone(p,h,k)?weeklyStreak(p,h,k):0;}
   let n=0,x=k,g=0;
   while(g++<800){
     if(h.createdDay&&x<h.createdDay)break;
@@ -525,7 +549,7 @@ function viewStandings(){
 function viewJourney(){
   const hs=myHabits(me);
   return topbar()+`<div class="body"><div class="h1">Journey</div>
-  ${hs.length?hs.map(h=>`<div class="card"><div class="row"><button class="name h2" style="background:none;border:0;padding:0;text-align:left" data-go="habit/${h.id}">${esc(h.name)}</button><span class="small">${streak(me,h)} now · ${bestStreak(me,h)} best</span></div><div class="small">${countDone(h)} days done since ${longDate(h.createdDay||todayK())}.</div></div>`).join(''):'<div class="small">Your habit history builds here as you go.</div>'}</div>`+nav();
+  ${hs.length?hs.map(h=>`<div class="card"><div class="row"><button class="name h2" style="background:none;border:0;padding:0;text-align:left" data-go="habit/${h.id}">${esc(h.name)}</button><span class="small">${streak(me,h)} now · ${bestStreak(me,h)} best${h.perWeek?' weeks':''}</span></div><div class="small">${countDone(h)} days done since ${longDate(h.createdDay||todayK())}.</div></div>`).join(''):'<div class="small">Your habit history builds here as you go.</div>'}</div>`+nav();
 }
 function countDone(h){let n=0,k=h.createdDay||todayK();const e=todayK();while(k<=e){if(counts(h,k)&&isDone(me,h,k))n++;k=addDays(k,1);}return n;}
 
@@ -609,21 +633,27 @@ document.addEventListener('click',e=>{
     case 'cov':setVal(id,t,val(me,id,t)>=1?0:1);break;
     case 'preset':{const p=ALLP.find(x=>x.id===id);const d=ui.draft;d.preset=id;d.name=p.full;d.type=p.type;if(p.target){d.target=p.target;d.unit=p.unit;d.step=p.step;d.stepTouched=true;}else{d.target=1;}break;}
     case 'dtype':ui.draft.type=b.dataset.v;if(b.dataset.v==='number'&&ui.draft.target<2){ui.draft.target=100;ui.draft.unit='reps';ui.draft.step=10;}break;
+    case 'dfreq':ui.draft.freq=b.dataset.v;break;
+    case 'dweekup':ui.draft.perWeek=Math.min(7,(+ui.draft.perWeek||1)+1);break;
+    case 'dweekdn':ui.draft.perWeek=Math.max(1,(+ui.draft.perWeek||1)-1);break;
+    case 'eweekup':ui.draft.perWeek=Math.min(7,(+ui.draft.perWeek||1)+1);break;
+    case 'eweekdn':ui.draft.perWeek=Math.max(1,(+ui.draft.perWeek||1)-1);break;
     case 'dday':{const d=ui.draft;d.days[+b.dataset.i]=d.days[+b.dataset.i]?0:1;break;}
     case 'dshare':ui.draft.shared=b.dataset.v==='1';break;
     case 'stepedit':ui.stepEdit=!ui.stepEdit;break;
     case 'closeadd':ui.draft=null;break;
-    case 'startgroup':ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:true,preset:null,days:[1,1,1,1,1,1,1],group:true};break;
+    case 'startgroup':ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:true,preset:null,days:[1,1,1,1,1,1,1],freq:'days',perWeek:3,group:true};break;
     case 'create':{
       const d=ui.draft;if(!d.name.trim())return;
-      const o={name:d.name.trim(),type:d.type,days:d.days.slice(),shared:d.shared,preset:d.preset||null};
+      const o={name:d.name.trim(),type:d.type,days:d.freq==='week'?[1,1,1,1,1,1,1]:d.days.slice(),shared:d.shared,preset:d.preset||null};
+      if(d.freq==='week')o.perWeek=Math.max(1,Math.min(7,+d.perWeek||1));
       if(d.type==='number'){o.target=Math.max(1,+d.target||1);o.unit=d.unit||'';o.step=Math.max(1,+d.step||1);}
       let h;if(d.group){o.shared=true;}
       h=newHabit(o);if(d.group){h.groupId=h.id;h.groupOwner=me;save('habits');}
       ui.draft=null;location.hash='#today';return;}
     case 'hshare':{const f=findHabit(id);f.h.shared=b.dataset.v==='1';save('habits');break;}
     case 'pause':{const f=findHabit(id);f.h.paused=!f.h.paused;f.h.pausedAt=f.h.paused?t:null;save('habits');break;}
-    case 'saveedit':{const f=findHabit(id);const d=ui.draft;f.h.name=(d.name||f.h.name).trim();if(f.h.type==='number'){f.h.target=Math.max(1,+d.target||f.h.target);f.h.step=d.step;}f.h.days=d.days.slice();save('habits');ui.draft=null;location.hash='#habit/'+id;return;}
+    case 'saveedit':{const f=findHabit(id);const d=ui.draft;f.h.name=(d.name||f.h.name).trim();if(f.h.type==='number'){f.h.target=Math.max(1,+d.target||f.h.target);f.h.step=d.step;}if(f.h.perWeek)f.h.perWeek=Math.max(1,Math.min(7,+d.perWeek||f.h.perWeek));else f.h.days=d.days.slice();save('habits');ui.draft=null;location.hash='#habit/'+id;return;}
     case 'cancel':ui.draft=null;break;
     case 'stepdn':case 'stepup':{const st=[1,2,5,8,10,25,50,100];let i=st.indexOf(+ui.draft.step);if(i<0)i=2;i=Math.max(0,Math.min(st.length-1,i+(a==='stepup'?1:-1)));ui.draft.step=st[i];break;}
     case 'askarch':ui.confirm=true;break;
