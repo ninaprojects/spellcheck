@@ -848,5 +848,55 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('last call: no em dashes in the copy', !/\u2014/.test(CANCER + CANCER_BODY + HALLOWEEN + HALLOWEEN_BODY));
 }
 
+
+// ===== habit tracker pushes (h3) =====
+{
+  const habit = (o) => Object.assign({ id: 'h' + Math.random().toString(36).slice(2, 7), name: 'Read', type: 'yesno', target: 1, days: [1, 1, 1, 1, 1, 1, 1], archived: false }, o);
+  const runH = async (iso) => { pushes = []; return W.habitsRun(env, at(iso), { fresh: true }); };
+  const THU_EVE = '2026-11-06T03:30:00Z'; // Thu Nov 5, 7:30pm Pacific
+  resetWorld();
+  const hRead = habit({ id: 'r1' }); const hDone = habit({ id: 'r2' });
+  put('h3-habits-Nina', { r1: hRead });
+  put('h3-habits-Kellye', { r2: hDone }); put('h3-log-Kellye', { '2026-11-05': { r2: 1 } });
+  put('h3-habits-Carolina', { r3: habit({ id: 'r3' }) }); put('recal-notif-prefs:Carolina', { nudge: false });
+  // Lauren has no habits in the new app
+  await runH(THU_EVE);
+  check('h3 nudge: only the person with a habit still due gets it', pushes.length === 1 && pushes[0].to === 'Nina', pushes);
+  check('h3 nudge: copy is one of the drafts, no em dash', W.H3_NUDGE.includes(pushes[0].body) && !/\u2014/.test(W.H3_NUDGE.join('')));
+  await runH(plus(THU_EVE, 60));
+  check('h3 nudge: once per person per day', pushes.length === 0, pushes);
+  await runH('2026-11-05T23:00:00Z'); // 3pm Pacific
+  check('h3 nudge: nothing outside the evening window', pushes.length === 0, pushes);
+  // weekly habit: only nags when every remaining day is needed
+  resetWorld();
+  put('h3-habits-Nina', { w1: habit({ id: 'w1', perWeek: 3 }) });
+  await runH(THU_EVE); // Thu, 0 of 3, 4 days left including today: not yet
+  check('h3 nudge: weekly habit not nagged early in the week', pushes.length === 0, pushes);
+  resetWorld();
+  put('h3-habits-Nina', { w1: habit({ id: 'w1', perWeek: 3 }) }); put('h3-log-Nina', { '2026-11-02': { w1: 1 } });
+  await runH('2026-11-09T03:30:00Z'); // Sun Nov 8, 7:30pm: 1 of 3, need 2, only 1 day left
+  check('h3 nudge: weekly habit nagged when every remaining day is needed', pushes.some(x => x.to === 'Nina' && W.H3_NUDGE.includes(x.body)), pushes);
+  // vote reminder, Sunday 6:30pm Pacific
+  resetWorld();
+  for (const p of ['Nina', 'Kellye', 'Lauren']) put('h3-habits-' + p, { a: habit({ id: 'a' }) });
+  put('h3-vote-Nina', { '2026-11-09': 'walk' });
+  await runH('2026-11-09T02:30:00Z');
+  const votePush = pushes.filter(x => x.title === W.H3_VOTE_PUSH.title);
+  check('h3 vote reminder: skips people who already voted', votePush.length === 2 && !votePush.some(x => x.to === 'Nina'), pushes);
+  // result, Monday 9am Pacific
+  resetWorld();
+  for (const p of ['Nina', 'Kellye', 'Lauren']) put('h3-habits-' + p, { a: habit({ id: 'a' }) });
+  put('h3-vote-Nina', { '2026-11-09': 'walk' }); put('h3-vote-Kellye', { '2026-11-09': 'walk' }); put('h3-vote-Lauren', { '2026-11-09': 'tidy' });
+  await runH('2026-11-09T17:00:00Z');
+  const res = pushes.filter(x => x.body.includes('10 minute walk outside'));
+  check('h3 result: winner announced to people using the app', res.length === 3 && pushes.length === 3, pushes);
+  resetWorld();
+  for (const p of PEOPLE) put('h3-habits-' + p, { a: habit({ id: 'a' }) });
+  await runH('2026-11-09T17:00:00Z');
+  check('h3 result: no push when nobody voted', pushes.length === 0, pushes);
+  check('h3 tie break matches the app (stable per week)', W.h3Winner({ a: 'walk', b: 'tidy' }, '2026-11-09') === W.h3Winner({ c: 'tidy', d: 'walk' }, '2026-11-09'));
+  check('h3 stays under the call budget', W.callsUsed() < 46, W.callsUsed());
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);

@@ -491,7 +491,11 @@ function composeActivityText(items, castTodayCount) {
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(run(env, new Date()).catch(e => console.error('run failed', e && e.stack || e)));
+    ctx.waitUntil(
+      run(env, new Date()).catch(e => console.error('run failed', e && e.stack || e))
+        .then(() => habitsRun(env, new Date()))
+        .catch(e => console.error('habits run failed', e && e.stack || e))
+    );
   },
   async fetch() {
     return new Response('Spell Check push worker. Nothing to see here.', { status: 200 });
@@ -1087,6 +1091,123 @@ export async function run(env, now) {
 
   if (changed) await persist(true);
   return { sent, quiet };
+}
+
+// ---------- new habit tracker pushes (index.html, data under recalData/h3-*) ----------
+// Three scheduled pushes for the habit tracker, kept apart from the Round 2 jobs above. They share the
+// run's call counter, use their own state key, and claim each send (saved as done) BEFORE it goes out.
+//   h3nudge   7pm to 9:59pm Pacific, every day: someone has a habit due today that is not done yet.
+//   h3vote    Sunday 6pm to 9:59pm Pacific: next week's coven habit vote is still open for her.
+//   h3result  Monday 8am to 11:59am Pacific: the coven habit for this week, if anyone voted.
+// ALL THREE LINES OF COPY BELOW ARE DRAFTS AND NEED NINA'S APPROVAL BEFORE THIS IS PASTED INTO CLOUDFLARE.
+const H3_STATE_KEY = 'h3-push-state';
+export const H3_VOTE_NAMES = { phone: 'Phone-free hour', walk: '10 minute walk outside', tidy: 'Tidy 10 minutes', water: 'Drink a full glass first thing' };
+export const H3_NUDGE = [
+  'One small thing counts. We will be here when you do it.',
+  'Your habits are waiting. One small thing and you are in.',
+  'The day is not over. One small thing and you join the coven.',
+];
+export const H3_VOTE_PUSH = { title: 'Last call to vote \u2726', body: 'Next week\u2019s coven habit is still open. Pick one before the night is over, or we run it back.' };
+export function h3ResultPush(name) { return { title: 'This week\u2019s coven habit \u2726', body: `${name}. Everyone is in, whether they know it yet or not.` }; }
+function h3Date(now) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); }
+function h3Add(k, n) { const d = new Date(k + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function h3Wd(k) { return (new Date(k + 'T12:00:00Z').getUTCDay() + 6) % 7; } // Monday is 0
+function h3Hash(s) { let h = 0; for (const c of String(s)) { h = (h * 31 + c.charCodeAt(0)) | 0; } return Math.abs(h); } // same as the app
+function h3Done(h, log, k) { const v = (log[k] && log[k][h.id]) || 0; return h.type === 'number' ? v >= (h.target || 1) : v >= 1; }
+export function h3Due(h, log, date) {
+  if (!h || h.archived) return false;
+  if (h.paused && h.pausedAt && date >= h.pausedAt) return false;
+  if (h3Done(h, log, date)) return false;
+  const wd = h3Wd(date);
+  if (h.perWeek) {
+    const ws = h3Add(date, -wd);
+    let c = 0;
+    for (let i = 0; i <= wd; i++) if (h3Done(h, log, h3Add(ws, i))) c++;
+    if (c >= h.perWeek) return false;
+    return (h.perWeek - c) >= (7 - wd); // only nag when every remaining day is needed
+  }
+  return !!(h.days && h.days[wd]);
+}
+export function h3Winner(votes, weekKey) {
+  const t = {};
+  for (const v of Object.values(votes)) t[v] = (t[v] || 0) + 1;
+  const ids = Object.keys(t);
+  if (!ids.length) return null;
+  const max = Math.max(...ids.map(i => t[i]));
+  const tied = ids.filter(i => t[i] === max).sort();
+  return tied[h3Hash(weekKey) % tied.length];
+}
+export async function habitsRun(env, now, opts = {}) {
+  if (opts.fresh) resetRun(); // tests only. In production it shares the call counter of the run() just before it.
+  const date = h3Date(now);
+  const ptHour = pacificHour(now);
+  const dow = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short' }).format(now);
+  const jobs = [];
+  if (ptHour >= 19 && ptHour < 22) jobs.push('h3nudge');
+  if (dow === 'Sun' && ptHour >= 18 && ptHour < 22) jobs.push('h3vote');
+  if (dow === 'Mon' && ptHour >= 8 && ptHour < 12) jobs.push('h3result');
+  const sent = [];
+  if (!jobs.length) return { sent };
+  let st;
+  try { st = (await readKey(H3_STATE_KEY)) || {}; } catch (e) { console.error('h3 state read failed, sending nothing:', e && e.message); return { sent }; }
+  st.sched = st.sched || {};
+  let changed = false;
+  let token = null;
+  for (const job of jobs) {
+    await guard(job, async () => {
+      let rec = st.sched[job];
+      if (!rec || rec.date !== date) { rec = st.sched[job] = { date, done: [] }; changed = true; }
+      const outbox = [];
+      let winner = null, weekKey = null;
+      if (job === 'h3result') {
+        weekKey = date;
+        const votes = {};
+        for (const p of PEOPLE) { const v = (await readKey('h3-vote-' + p)) || {}; if (v[weekKey]) votes[p] = v[weekKey]; }
+        winner = h3Winner(votes, weekKey);
+        if (!winner) { console.log('Nobody voted for the week of', weekKey, ', no result push.'); return; }
+      }
+      for (const person of PEOPLE) {
+        if (rec.done.includes(person)) continue;
+        const finish = () => { rec.done.push(person); changed = true; };
+        const prefs = Object.assign({ activity: true, nudge: true }, (await readKey('recal-notif-prefs:' + person)) || {});
+        if (!(job === 'h3nudge' ? prefs.nudge : prefs.activity)) { finish(); continue; }
+        const habits = Object.values((await readKey('h3-habits-' + person)) || {}).filter(h => h && !h.archived);
+        if (!habits.length) { finish(); continue; } // not using the new app
+        let msg;
+        if (job === 'h3nudge') {
+          const log = (await readKey('h3-log-' + person)) || {};
+          if (!habits.some(h => h3Due(h, log, date))) { finish(); continue; }
+          msg = { title: 'Still time today \u2726', body: H3_NUDGE[h3Hash(date + person) % H3_NUDGE.length] };
+        } else if (job === 'h3vote') {
+          const nextWeek = h3Add(date, 7 - h3Wd(date));
+          const v = (await readKey('h3-vote-' + person)) || {};
+          if (v[nextWeek]) { finish(); continue; }
+          msg = { ...H3_VOTE_PUSH };
+        } else {
+          msg = h3ResultPush(H3_VOTE_NAMES[winner] || winner);
+        }
+        const tok = await readRaw('recal-fcm-token:' + person);
+        if (!tok) { finish(); continue; }
+        finish();
+        outbox.push({ person, msg, tok });
+      }
+      if (!outbox.length) return;
+      try { await writeKey(H3_STATE_KEY, st, true); changed = false; } catch (e) {
+        for (const o of outbox) rec.done = rec.done.filter(x => x !== o.person);
+        console.error(job, 'could not save state, not sending:', e && e.message);
+        return;
+      }
+      for (const { person, msg, tok } of outbox) {
+        try {
+          if (!token) token = await getAccessToken(env);
+          await sendPush(env, token, tok, msg);
+          sent.push({ owner: person, job, ...msg });
+        } catch (e) { console.error(job, 'send failed for', person, e && e.message); }
+      }
+    });
+  }
+  if (changed) { try { await writeKey(H3_STATE_KEY, st, true); } catch (e) { console.error('h3 state save failed', e && e.message); } }
+  return { sent };
 }
 
 // ---------- Google auth + FCM (data-only, same as the morning push) ----------
