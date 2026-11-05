@@ -14,6 +14,7 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 
 ## Files
 
+- NOVEMBER 2026 SWAP: `index.html` is now the new habit tracker (single file, own data under `recalData/h3-*`, reads the old `recal-whoami` so nobody re-picks a name). The Round 2 app is `old-app.html`, unchanged, and the existing tests run against it. Details below describe `old-app.html` unless they say otherwise.
 - `index.html`: the entire app. Single file, HTML/CSS/JS, no build step. Views: Today, Coven, Journey, and Me. Me is the profile view (`data-view="profile"`, `#profile`). It is also reached from the top bar avatar and from any person's avatar, which show that person's profile. The Me tab always shows your own. There is no Receipts tab: an old `#receipts` link lands on Journey, on The 31 days page.
 - `round1.html`: read-only Round 1 archive. Its storage layer is stubbed so it cannot write to Firebase.
 - `sw.js`: service worker. Offline support, installability, and manual display of push notifications through a raw `push` listener.
