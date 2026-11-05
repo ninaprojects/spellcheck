@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1A1A1A">
+<meta name="color-scheme" content="light dark">
 <title>Spell Check</title>
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
@@ -19,10 +20,13 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <style>
-:root{--bg:#FFFEFD;--text:#1A1A1A;--sec:#767066;--yellow:#FFC94F;--ytint:#FFF3D6;--pink:#FF6FA8;--ptint:#FFEEF5;--blue:#4FA8FF;--line:#E9E4DA;--line2:#D8D2C6;--plum:#6B4E8A;--ctl:#8C8578}
+:root{--surface:#FFFFFF;--soft:#ECE8E0;--sky-line:#E1D6EE;--bg:#FFFEFD;--text:#1A1A1A;--sec:#767066;--yellow:#FFC94F;--ytint:#FFF3D6;--pink:#FF6FA8;--ptint:#FFEEF5;--blue:#4FA8FF;--line:#E9E4DA;--line2:#D8D2C6;--plum:#6B4E8A;--ctl:#8C8578}
+@media (prefers-color-scheme:dark){:root{--bg:#15131A;--surface:#201D29;--text:#F2EFEA;--sec:#A8A2B5;--line:#34303F;--line2:#463F55;--ctl:#8F889C;--ytint:#3B3120;--ptint:#3C2133;--plum:#B79CE0;--soft:#34303F;--sky-line:#463F55;color-scheme:dark}
+.check.on svg path{stroke:#1A1A1A}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:100dvh;display:flex;justify-content:center;-webkit-tap-highlight-color:transparent}
+a{color:inherit}
 button,a,.opt{touch-action:manipulation}
 #app{width:100%;max-width:480px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;position:relative}
 button,input{font-family:inherit;color:inherit}
@@ -33,7 +37,7 @@ button{cursor:pointer}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--ytint);border:2px solid var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
 .body{flex:1;padding:6px 20px 110px;display:flex;flex-direction:column;gap:16px}
 .date{font-size:13px;color:var(--sec)}
-.card{background:#FFFEFD;border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--bg);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:10px}
 .card.bar{border-top:4px solid var(--pink)}
 .label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sec)}
 .h1{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:28px;line-height:1.15}
@@ -44,19 +48,19 @@ button{cursor:pointer}
 .link{min-height:44px;display:inline-flex;align-items:center;background:none;border:0;padding:0;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:4px;color:var(--text)}
 .link.quiet{color:var(--sec);text-decoration:none}
 .pill{min-height:52px;border:0;border-radius:999px;background:var(--ptint);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-decoration:none;width:100%}
-.pill.out{background:#fff;border:1px solid var(--text)}
+.pill.out{background:var(--surface);border:1px solid var(--text)}
 .pill[disabled]{opacity:.45}
 .chip{min-height:36px;border:1px solid var(--pink);background:var(--ptint);border-radius:999px;padding:0 14px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
-.chip.on{border-color:var(--plum);color:var(--plum);background:#fff}
+.chip.on{border-color:var(--plum);color:var(--plum);background:var(--surface)}
 .habit{padding:14px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .habit:last-child{border-bottom:0}
 .habit .name{font-size:16px;font-weight:600;background:none;border:0;padding:0;text-align:left}
 .tags{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--sec);margin-top:2px}
-.check{width:44px;height:44px;border-radius:50%;background:#fff;border:2px solid var(--ctl);display:flex;align-items:center;justify-content:center;flex:none;padding:0}
+.check{width:44px;height:44px;border-radius:50%;background:var(--surface);border:2px solid var(--ctl);display:flex;align-items:center;justify-content:center;flex:none;padding:0}
 .check.on{background:var(--yellow);border-color:var(--yellow)}
 .bar6{height:6px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
 .bar6>div{height:6px;background:var(--yellow)}
-.step{min-width:44px;min-height:44px;border-radius:22px;border:1px solid var(--line2);background:#fff;font-size:14px;font-weight:600;padding:0 12px}
+.step{min-width:44px;min-height:44px;border-radius:22px;border:1px solid var(--line2);background:var(--surface);font-size:14px;font-weight:600;padding:0 12px}
 .done{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--plum);padding:0 8px}
 nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
 nav a{flex:1;min-height:56px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sec);text-decoration:none}
@@ -66,14 +70,14 @@ nav a.on{color:var(--text);box-shadow:inset 0 3px 0 var(--pink)}
 .seg button.on{color:var(--text);text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:6px}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-size:13px;color:var(--sec)}
-input[type=text],input[type=number]{font-size:16px;height:48px;border:1px solid var(--ctl);border-radius:12px;padding:0 14px;background:#fff;width:100%}
-.opt{min-height:56px;border-radius:12px;border:1px solid var(--line2);background:#fff;padding:8px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;font-size:15px;font-weight:600}
+input[type=text],input[type=number]{font-size:16px;height:48px;border:1px solid var(--ctl);border-radius:12px;padding:0 14px;background:var(--surface);width:100%}
+.opt{min-height:56px;border-radius:12px;border:1px solid var(--line2);background:var(--surface);padding:8px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;font-size:15px;font-weight:600}
 .opt span+span{font-size:12px;font-weight:400;color:var(--sec)}
 .opt .d{font-size:13px;font-weight:400;color:var(--sec)}
 .opt.on{background:var(--ptint);border-color:var(--pink)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.days button{min-height:44px;border-radius:12px;border:1px solid var(--line2);background:#fff;font-weight:600;font-size:14px;color:var(--sec)}
+.days button{min-height:44px;border-radius:12px;border:1px solid var(--line2);background:var(--surface);font-weight:600;font-size:14px;color:var(--sec)}
 .days button.on{background:var(--ytint);border-color:var(--yellow);color:var(--text)}
 .heat{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .heat div{aspect-ratio:1;border-radius:6px}
@@ -85,15 +89,20 @@ input[type=text],input[type=number]{font-size:16px;height:48px;border:1px solid 
 .feed b{font-weight:600}
 .bonus{font-size:13px;color:var(--sec);margin-top:2px}
 .rx{display:flex;gap:8px}
-.rx button{min-height:36px;border:1px solid var(--line2);background:#fff;border-radius:999px;padding:0 12px;font-size:14px}
+.rx button{min-height:36px;border:1px solid var(--line2);background:var(--surface);border-radius:999px;padding:0 12px;font-size:14px}
 .rx button.on{background:var(--ptint);border-color:var(--pink)}
-.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;background:#fff;border:2px solid var(--line2);color:var(--sec)}
+.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;background:var(--surface);border:2px solid var(--line2);color:var(--sec)}
 .av.on{background:var(--ytint);border-color:var(--yellow);color:var(--text)}
 .rank{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .rank:last-child{border-bottom:0}
-.sync{position:fixed;top:calc(8px + env(safe-area-inset-top));right:12px;z-index:5;font-size:11px;color:var(--sec)}
+.sync{position:fixed;top:calc(8px + env(safe-area-inset-top));right:64px;z-index:5;font-size:11px;color:var(--sec)}
 .center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:0 28px}
 .warn{border:1px solid var(--yellow);background:var(--ytint);padding:12px;font-size:13px}
+.sky{background:radial-gradient(circle at 18% 22%,rgba(255,255,255,.55) 0 1px,transparent 2px),radial-gradient(circle at 72% 30%,rgba(255,255,255,.45) 0 1px,transparent 2px),radial-gradient(circle at 44% 78%,rgba(255,255,255,.5) 0 1px,transparent 2px),radial-gradient(circle at 88% 70%,rgba(255,201,79,.7) 0 1.5px,transparent 2.5px),#1B1630;color:#fff;border:0;padding:18px;display:flex;flex-direction:column;gap:10px}
+.sky .label{color:#CBBFE6}.sky .small{color:#CBBFE6}
+.sky .pill{background:#FFEEF5;color:#1A1A1A;white-space:nowrap}
+.sky input{background:#fff;color:#1A1A1A;border:0}
+.mini{width:22px;height:22px;border-radius:50%;background:var(--ytint);border:1px solid var(--yellow);color:var(--text);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;margin-right:-6px}
 @media (prefers-reduced-motion:no-preference){button{transition:background .15s,border-color .15s}}
 </style>
 </head>
@@ -145,6 +154,10 @@ const L_MILE={
 };
 const L_GROUP=['{name} started {habit}. Peer pressure, but make it healthy.','{name} wants a {habit} club. Membership is free and mildly mandatory.','{name} started {habit}. Join before it gets awkward.','Group habit alert. {name} started {habit} and your presence is requested.'];
 const L_MOON=['{name} cast the {event} spell. The moon is taking credit.','{name} did the {event} spell. The tides are impressed.','{event} week. {name} cast the spell and the moon noticed.','{name} cast the {event} spell. Very lunar of them.','The moon is up to nonsense and {name} is in on it.','{name} cast the {event} spell. Feral behavior. We are proud.','{event}: everyone is acting unwell, and {name} cast the spell anyway.','{name} cast the {event} spell and did not ask anyone\'s permission.'];
+/* DRAFT brew questions. ok:false means Nina has not approved them, so the brew card stays hidden.
+   Add ?brew=preview to the URL to see the card with these drafts. */
+const BREW_PREVIEW=/[?&]brew=preview/.test(location.search);
+const QUESTIONS=['What did you do this week that nobody saw?','What is a tiny thing that made today better?','What are you pretending not to be excited about?','What would you do tomorrow if nobody could judge you?','What is the best thing you ate this week?','Which of us would you call first with good news?','What is a small win nobody clapped for?','What are you avoiding that would take five minutes?','What song has been on repeat?','What is something you used to love that you want back?','What is the kindest thing someone did for you lately?','What would your past self be proud of you for?','What is a hill you will die on this week?','What are you secretly good at?','What was the last thing that made you laugh out loud?','If today had a theme song, what would it be?','What is one thing you are letting go of?','What is a smell that takes you somewhere?','What is your most unhinged opinion about food?','What did you need to hear today?','What is a boundary you are proud of?','What is your comfort show right now?','What is one thing you want to do before the year ends?','What would a perfect Sunday look like?','What was the best thing you read, watched, or heard this week?','What are you grateful for that is not obvious?','What is something you are weirdly proud of?','What is one thing you would confess to the group chat?'].map(q=>({q,ok:false}));
 const BREW_LINE='{name} answered today\'s brew. No spoilers until you do.';
 
 /* ---------- helpers ---------- */
@@ -171,10 +184,10 @@ const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slic
 let me=null;
 let autoDetected=false;
 try{me=localStorage.getItem('h3-whoami');if(!me){const old=localStorage.getItem('recal-whoami');if(old&&PEOPLE.includes(old)){me=old;autoDetected=true;localStorage.setItem('h3-whoami',old);}}}catch(e){}
-const D={habits:{},log:{},prof:{},vote:{},rx:{}}; // each: {Person: data}
-PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};});
+const D={habits:{},log:{},prof:{},vote:{},rx:{},qa:{}}; // each: {Person: data}
+PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};D.qa[p]={};});
 let loaded=false;
-const ui={route:'today',arg:null,addPreset:null,voteOpen:true,standMode:'week',sky:null,setupStep:1,stepEdit:false,confirm:false,draft:null};
+const ui={brewOpen:false,route:'today',arg:null,addPreset:null,voteOpen:true,standMode:'week',sky:null,setupStep:1,stepEdit:false,confirm:false,draft:null};
 
 function keyFor(kind,p){return 'recalData/h3-'+kind+'-'+p;}
 function cacheGet(kind,p){try{const v=localStorage.getItem('h3c-'+kind+'-'+p);return v?JSON.parse(v):null;}catch(e){return null;}}
@@ -190,7 +203,7 @@ function save(kind){
   db.ref(keyFor(kind,me)).set(JSON.stringify(v)).then(()=>{pending--;if(!pending)setSync('Saved');setTimeout(()=>{if(!pending)setSync('');},1500);}).catch(e=>{pending--;setSync('Not saved. Check your connection.');console.error(e);});
 }
 function startSync(){
-  ['habits','log','prof','vote','rx'].forEach(kind=>PEOPLE.forEach(p=>{
+  ['habits','log','prof','vote','rx','qa'].forEach(kind=>PEOPLE.forEach(p=>{
     const c=cacheGet(kind,p);if(c)D[kind][p]=c;
     if(!db)return;
     db.ref(keyFor(kind,p)).on('value',s=>{
@@ -301,6 +314,12 @@ function winnerFor(wk){
 function covenHabitFor(wk){ // the habit running this week = winner of last week's vote, else the previous habit, else the first option
   return winnerFor(wk)||(wk>weekStart(SEASON_START)?covenHabitFor(addDays(wk,-7)):'phone');
 }
+function brewQ(k){
+  const i=Math.round((parse(k)-parse(SEASON_START))/86400000);if(i<0)return null;
+  const q=QUESTIONS[i%QUESTIONS.length];return q&&(q.ok||BREW_PREVIEW)?q.q:null;
+}
+function brewAns(p,k){return (D.qa[p]||{})[k]||null;}
+function brewRevealed(k){return !!brewAns(me,k)||k<todayK();}
 function votingWeek(k){return addDays(weekStart(k),7);} // vote is for next week
 
 /* ---------- people helpers ---------- */
@@ -355,7 +374,8 @@ function viewToday(){
   const phase=moonPhaseName(t);
   return topbar()+`<div class="body">
   <div class="date">${longDate(t)}</div>
-  <div class="card" style="border-color:#E1D6EE"><div class="row"><div class="label" style="color:var(--plum)">Your sky today</div><span class="small">${esc(phase)}</span></div><div class="h2">${skyLine(phase)}</div><a class="link" href="#sky">Read your sky</a></div>
+  <div class="card" style="border-color:var(--sky-line)"><div class="row"><div class="label" style="color:var(--plum)">Your sky today</div><span class="small">${esc(phase)}</span></div><div class="h2">${skyLine(phase)}</div><a class="link" href="#sky">Read your sky</a></div>
+  ${brewCard(t)}
   <div class="card"><div class="row"><div class="h2">Your habits</div><a class="link" href="#add">Add</a></div>
    ${hs.length?hs.map(habitRow).join(''):`<div style="padding:8px 0"><div class="h2">Welcome to the new Spell Check.</div><div class="small" style="margin-top:4px">Add a habit and it shows up here. Share it and the coven can cheer you on.</div></div>`}
   </div>
@@ -366,6 +386,17 @@ function viewToday(){
    ${ev?`<div class="row" style="border-top:1px solid var(--line);padding-top:10px"><div><div class="label">Spell · ${esc(ev.name)} week</div><div class="h2" style="margin-top:4px">This week's spell</div><div class="small">Set one small intention under the ${esc(ev.name)}.</div></div><button class="check${spDone?' on':''}" aria-pressed="${spDone}" aria-label="Spell, mark done" data-act="cov" data-id="${spId}">${spDone?CHECK:''}</button></div>`:''}
    <div class="small">${showedLine}</div></div>
   </div>`+nav();
+}
+function brewCard(t){
+  const q=brewQ(t);if(!q)return '';
+  const ans=PEOPLE.filter(p=>brewAns(p,t));const mine=brewAns(me,t);
+  const others=ans.filter(p=>p!==me);
+  const wait=!mine&&others.length?`${ans.length} of 4 answered. ${list(others)} already answered. No spoilers until you do.`:`${ans.length} of 4 answered`;
+  let body;
+  if(ui.brewOpen){body=`<div class="field"><label for="bi" style="color:#CBBFE6">Your answer, 140 characters</label><input id="bi" type="text" maxlength="140" value="${esc(mine?mine.t:'')}" data-in="brew" autocomplete="off"></div><div style="display:flex;gap:16px;align-items:center"><button class="pill" data-act="brewsave" style="width:auto;padding:0 24px">Save</button><button class="link" data-act="brewclose" style="color:#CBBFE6;text-decoration-color:#CBBFE6">Cancel</button></div>`;}
+  else if(mine){body=`<div style="font-size:16px;line-height:1.4">${esc(mine.t)}</div><div class="row"><span class="small">${wait}</span><button class="link" data-act="brewopen" style="color:#fff;text-decoration-color:#FFC94F">Edit</button></div>`;}
+  else body=`<div class="row"><div style="display:flex;align-items:center;gap:12px"><span aria-hidden="true" style="display:inline-flex;padding-left:6px">${ans.map(p=>`<span class="mini">${initial(p)}</span>`).join('')}</span><span class="small">${wait}</span></div><button class="pill" data-act="brewopen" style="width:auto;padding:0 22px;min-height:44px">Spill it</button></div>`;
+  return `<div class="card sky"><div class="label">Today's brew</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;line-height:1.25">${esc(q)}</div>${body}</div>`;
 }
 function skyLine(phase){return phase==='New Moon'?'A fresh start is on the table.':phase==='Full Moon'?'Things are bright and a little loud.':'The moon is doing its thing. So are we.';}
 function list(a){return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
@@ -399,11 +430,11 @@ function viewDetail(id){
   let cells='';
   for(let i=0;i<35;i++){
     const k=addDays(start,i);let st='background:var(--yellow)',lb='Done';
-    if(k===t){st='background:#fff;border:2px solid var(--text)';lb='Today';}
-    else if(k>t){st='background:#fff;border:1px dashed var(--line2)';lb='Coming up';}
-    else if(!counts(h,k)){st='background:#fff;border:1px solid var(--line)';lb='Rest day';}
-    else if(h.perWeek&&!isDone(me,h,k)){st='background:#fff;border:1px solid var(--line)';lb='Not done';}
-    else if(!isDone(me,h,k)||(h.createdDay&&k<h.createdDay)){st='background:#ECE8E0';lb='Missed';}
+    if(k===t){st='background:var(--surface);border:2px solid var(--text)';lb='Today';}
+    else if(k>t){st='background:var(--surface);border:1px dashed var(--line2)';lb='Coming up';}
+    else if(!counts(h,k)){st='background:var(--surface);border:1px solid var(--line)';lb='Rest day';}
+    else if(h.perWeek&&!isDone(me,h,k)){st='background:var(--surface);border:1px solid var(--line)';lb='Not done';}
+    else if(!isDone(me,h,k)||(h.createdDay&&k<h.createdDay)){st='background:var(--soft)';lb='Missed';}
     cells+=`<div role="img" aria-label="${lb}, ${k}" style="${st}"></div>`;
   }
   const restDays=DOW.filter((_,i)=>!h.days[i]);
@@ -414,7 +445,7 @@ function viewDetail(id){
   <div class="big"><b>${s}</b><div><div>${U}s in a row</div><div class="small">Longest: ${best} ${U}${best===1?'':'s'}</div></div></div>
   <div><div class="h2">${sl}</div><div class="small">${sched}</div></div>
   <div class="card"><div class="label">Last five weeks</div><div class="heat">${['M','T','W','T','F','S','S'].map(x=>`<div class="hd">${x}</div>`).join('')}${cells}</div>
-   <div class="small" style="display:flex;gap:12px;flex-wrap:wrap"><span><i class="dot" style="background:var(--yellow);width:10px;height:10px"></i> Done</span><span><i class="dot" style="background:#ECE8E0;width:10px;height:10px"></i> Missed</span><span><i class="dot" style="border:1px solid var(--line2);width:10px;height:10px"></i> Rest day</span></div></div>
+   <div class="small" style="display:flex;gap:12px;flex-wrap:wrap"><span><i class="dot" style="background:var(--yellow);width:10px;height:10px"></i> Done</span><span><i class="dot" style="background:var(--soft);width:10px;height:10px"></i> Missed</span><span><i class="dot" style="border:1px solid var(--line2);width:10px;height:10px"></i> Rest day</span></div></div>
   <div><div class="label">Who can see it</div><div class="seg"><button class="${!h.shared?'on':''}" data-act="hshare" data-v="0" data-id="${h.id}">Just me</button><button class="${h.shared?'on':''}" data-act="hshare" data-v="1" data-id="${h.id}">The coven</button></div><div class="small" style="margin-top:6px">${shareLine(h.shared)}</div></div>
   <div class="card"><div class="label">Pause</div><div class="small">${h.paused?`Paused since ${longDate(h.pausedAt)}. Your streak holds.`:'Pausing holds your streak for up to 14 days. We do not ask why.'}</div><button class="pill out" data-act="pause" data-id="${h.id}">${h.paused?'Resume now':'Pause this habit'}</button></div>
   </div>`+nav();
@@ -439,7 +470,7 @@ function viewSky(){
   const ev=weekEvent(t);const next=moonEvents(addDays(t,1),addDays(t,45))[0];
   return sub(['#today','Back'],`<span class="small">${longDate(t)}</span>`)+`<div class="body">
   <div class="seg" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div>
-  <div class="card" style="border-color:#E1D6EE"><div class="row"><div class="label" style="color:var(--plum)">${own?'Your sky today':esc(who)+'’s sky today'}</div><span class="small">${esc(moonPhaseName(t))}</span></div>
+  <div class="card" style="border-color:var(--sky-line)"><div class="row"><div class="label" style="color:var(--plum)">${own?'Your sky today':esc(who)+'’s sky today'}</div><span class="small">${esc(moonPhaseName(t))}</span></div>
    <div class="h2">${skyLine(moonPhaseName(t))}</div>
    <div class="small">${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} Moon phases here are computed and can be off by about a day. Daily sign-by-sign readings are not in this version yet.</div></div>
   <div class="card"><div class="h2">${own?'Your big 3':esc(who)+'’s big 3'}</div><div class="grid2" style="grid-template-columns:repeat(3,1fr)">${['Sun','Moon','Rising'].map(k=>`<div><div class="label">${k}</div><div class="h2">${esc(b[k.toLowerCase()]||'Not set')}</div></div>`).join('')}</div><div class="small">${own?'Add or change these in Me.':'Set by '+esc(who)+' in her profile.'}</div></div>
@@ -474,6 +505,14 @@ function buildFeed(){
     }
     for(const h of myHabits(p)){if(h.groupOwner&&h.groupOwner===p&&h.groupId===h.id&&h.shared)items.push({id:'g:'+h.id,at:(h.createdDay||t)+'g',who:p,text:fill(pick(L_GROUP,h.id),{name:'\u0001',habit:h.name}),join:h});}
   }
+  for(let i=0;i<7;i++){
+    const k=addDays(t,-i);const q=brewQ(k);if(!q)continue;
+    const ans=PEOPLE.filter(p=>brewAns(p,k));if(!ans.length)continue;
+    let body;
+    if(brewRevealed(k))body=`<div class="label" style="margin-bottom:4px">Brew${k===t?', today':', '+longDate(k)}</div><div style="font-weight:600;margin-bottom:6px">${esc(q)}</div>`+ans.map(p=>`<div style="margin-top:4px"><b>${esc(p)}</b> ${esc(brewAns(p,k).t)}</div>`).join('');
+    else body=ans.map(p=>`<div style="margin-top:4px">${esc(fill(BREW_LINE,{name:p}))}</div>`).join('');
+    items.push({id:'qa:'+k,at:k+'q',who:'',body});
+  }
   items.sort((a,b)=>b.at<a.at?-1:1);
   return items.slice(0,25);
 }
@@ -493,7 +532,8 @@ function rxCount(id,k){return PEOPLE.filter(p=>((D.rx[p]||{})[id]||{})[k]).lengt
 function feedItem(it){
   // render who's name bold at the start: text contains \u0001 where the name goes
   let html;
-  if(it.text.includes('\u0001'))html=esc(it.text).replace('\u0001','<b>'+esc(it.who)+'</b>');
+  if(it.body)html=it.body;
+  else if(it.text.includes('\u0001'))html=esc(it.text).replace('\u0001','<b>'+esc(it.who)+'</b>');
   else html='<b>'+esc(it.who)+'</b>'+esc(it.text);
   const joinable=it.join&&it.join.groupOwner!==me&&!myHabits(me).some(h=>h.groupId===it.join.groupId);
   const right=it.join?(joinable?`<button class="chip" data-act="join" data-id="${it.join.id}">Join</button>`:`<span class="done">${it.join.groupOwner===me?'Yours':'✓ In'}</span>`):`<div class="rx">${GL.map(g=>{const on=((D.rx[me]||{})[it.id]||{})[g.k];const n=rxCount(it.id,g.k);return `<button class="${on?'on':''}" aria-pressed="${!!on}" aria-label="${g.l}" data-act="rx" data-id="${esc(it.id)}" data-k="${g.k}">${g.g}${n?' '+n:''}</button>`;}).join('')}</div>`;
@@ -635,6 +675,9 @@ document.addEventListener('click',e=>{
     case 'cov':setVal(id,t,val(me,id,t)>=1?0:1);break;
     case 'preset':{const p=ALLP.find(x=>x.id===id);const d=ui.draft;d.preset=id;d.name=p.full;d.type=p.type;if(p.target){d.target=p.target;d.unit=p.unit;d.step=p.step;d.stepTouched=true;}else{d.target=1;}break;}
     case 'dtype':ui.draft.type=b.dataset.v;if(b.dataset.v==='number'&&ui.draft.target<2){ui.draft.target=100;ui.draft.unit='reps';ui.draft.step=10;}break;
+    case 'brewopen':ui.brewOpen=true;break;
+    case 'brewclose':ui.brewOpen=false;break;
+    case 'brewsave':{const el=document.getElementById('bi');const v=(el?el.value:'').replace(/\s+/g,' ').trim().slice(0,140);if(v){(D.qa[me]||(D.qa[me]={}))[t]={t:v,at:Date.now()};save('qa');}ui.brewOpen=false;break;}
     case 'dfreq':ui.draft.freq=b.dataset.v;break;
     case 'dweekup':ui.draft.perWeek=Math.min(7,(+ui.draft.perWeek||1)+1);break;
     case 'dweekdn':ui.draft.perWeek=Math.max(1,(+ui.draft.perWeek||1)-1);break;
@@ -678,6 +721,7 @@ document.addEventListener('input',e=>{
   const i=e.target.dataset&&e.target.dataset.in;if(!i)return;const v=e.target.value;
   if(i.startsWith('big-')){const pr=D.prof[me]||(D.prof[me]={});(pr.big3||(pr.big3={}))[i.slice(4)]=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);return;}
   if(i==='sname'){const pr=D.prof[me]||(D.prof[me]={});pr.name=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);return;}
+  if(i==='brew')return;
   const d=ui.draft;if(!d)return;
   d[i]=v;
   if(i==='name'&&d.preset&&ALLP.find(x=>x.id===d.preset).full!==v)d.preset=null;
