@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FFFEFD">
+<title>Spell Check</title>
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+Display:wght@600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#FFFEFD;--text:#1A1A1A;--sec:#767066;--yellow:#FFC94F;--ytint:#FFF3D6;--pink:#FF6FA8;--ptint:#FFEEF5;--blue:#4FA8FF;--line:#E9E4DA;--line2:#D8D2C6;--plum:#6B4E8A;--ctl:#8C8578}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;position:relative}
+button,input{font-family:inherit;color:inherit}
+button{cursor:pointer}
+.serif{font-family:'Noto Serif Display',Georgia,serif;font-weight:600}
+.top{display:flex;align-items:center;justify-content:space-between;padding:22px 20px 10px}
+.brand{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:22px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--ytint);border:2px solid var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.body{flex:1;padding:6px 20px 110px;display:flex;flex-direction:column;gap:16px}
+.date{font-size:13px;color:var(--sec)}
+.card{background:#FFFEFD;border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:10px}
+.card.bar{border-top:4px solid var(--pink)}
+.label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sec)}
+.h1{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:28px;line-height:1.15}
+.h2{font-size:17px;font-weight:600}
+.sec{color:var(--sec)}
+.small{font-size:13px;line-height:1.45;color:var(--sec)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.link{min-height:44px;display:inline-flex;align-items:center;background:none;border:0;padding:0;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:4px;color:var(--text)}
+.link.quiet{color:var(--sec);text-decoration:none}
+.pill{min-height:52px;border:0;border-radius:999px;background:var(--ptint);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-decoration:none;width:100%}
+.pill.out{background:#fff;border:1px solid var(--text)}
+.pill[disabled]{opacity:.45}
+.chip{min-height:36px;border:1px solid var(--pink);background:var(--ptint);border-radius:999px;padding:0 14px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.chip.on{border-color:var(--plum);color:var(--plum);background:#fff}
+.habit{padding:14px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.habit:last-child{border-bottom:0}
+.habit .name{font-size:16px;font-weight:600;background:none;border:0;padding:0;text-align:left}
+.tags{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--sec);margin-top:2px}
+.check{width:44px;height:44px;border-radius:50%;background:#fff;border:2px solid var(--ctl);display:flex;align-items:center;justify-content:center;flex:none;padding:0}
+.check.on{background:var(--yellow);border-color:var(--yellow)}
+.bar6{height:6px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
+.bar6>div{height:6px;background:var(--yellow)}
+.step{min-width:44px;min-height:44px;border-radius:22px;border:1px solid var(--line2);background:#fff;font-size:14px;font-weight:600;padding:0 12px}
+.done{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--plum);padding:0 8px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav a{flex:1;min-height:56px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sec);text-decoration:none}
+nav a.on{color:var(--text);box-shadow:inset 0 3px 0 var(--pink)}
+.seg{display:flex;gap:22px}
+.seg button{min-height:44px;border:0;background:none;padding:0;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sec)}
+.seg button.on{color:var(--text);text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:6px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--sec)}
+input[type=text],input[type=number]{font-size:16px;height:48px;border:1px solid var(--ctl);border-radius:12px;padding:0 14px;background:#fff;width:100%}
+.opt{min-height:56px;border-radius:12px;border:1px solid var(--line2);background:#fff;padding:8px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;font-size:15px;font-weight:600}
+.opt span+span{font-size:12px;font-weight:400;color:var(--sec)}
+.opt.on{background:var(--ptint);border-color:var(--pink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.days button{min-height:44px;border-radius:12px;border:1px solid var(--line2);background:#fff;font-weight:600;font-size:14px;color:var(--sec)}
+.days button.on{background:var(--ytint);border-color:var(--yellow);color:var(--text)}
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.heat div{aspect-ratio:1;border-radius:6px}
+.heat .hd{aspect-ratio:auto;text-align:center;font-size:11px;color:var(--sec)}
+.big{display:flex;align-items:baseline;gap:10px}
+.big b{font-family:'Noto Serif Display',Georgia,serif;font-size:56px;line-height:1}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.feed{padding:12px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.feed b{font-weight:600}
+.bonus{font-size:13px;color:var(--sec);margin-top:2px}
+.rx{display:flex;gap:8px}
+.rx button{min-height:36px;border:1px solid var(--line2);background:#fff;border-radius:999px;padding:0 12px;font-size:14px}
+.rx button.on{background:var(--ptint);border-color:var(--pink)}
+.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;background:#fff;border:2px solid var(--line2);color:var(--sec)}
+.av.on{background:var(--ytint);border-color:var(--yellow);color:var(--text)}
+.rank{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rank:last-child{border-bottom:0}
+.sync{position:fixed;top:8px;right:12px;font-size:11px;color:var(--sec)}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:0 28px}
+.warn{border:1px solid var(--yellow);background:var(--ytint);padding:12px;font-size:13px}
+@media (prefers-reduced-motion:no-preference){button{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="sync" id="sync" aria-live="polite"></div>
+<script>
+/* ============================================================
+   Spell Check, habits edition.
+   Separate from index.html. Same Firebase project, own namespace:
+   recalData/h3-<kind>-<Person>. Each person writes only her own records.
+   ============================================================ */
+const PEOPLE=['Nina','Kellye','Lauren','Carolina'];
+const SEASON_START='2026-11-05';
+const FB={apiKey:"AIzaSyBMsNA93P1g8ND5OLMPFh6uSBSEDlOz8mk",authDomain:"cast-and-check.firebaseapp.com",projectId:"cast-and-check",storageBucket:"cast-and-check.firebasestorage.app",messagingSenderId:"936031353099",appId:"1:936031353099:web:312bb33e8939843497ca0e",databaseURL:"https://cast-and-check-default-rtdb.firebaseio.com/"};
+let db=null;
+try{firebase.initializeApp(FB);db=firebase.database();}catch(e){console.error(e);}
+
+/* ---------- presets ---------- */
+const PRESETS={
+ Body:[{id:'move',name:'Move',amount:'30 min',full:'Move 30 min',type:'yesno'},{id:'sleep',name:'Sleep',amount:'8 hours',full:'Sleep 8 hours',type:'number',target:8,unit:'hours',step:1},{id:'water',name:'Water',amount:'48 oz',full:'Water',type:'number',target:48,unit:'oz',step:8},{id:'stretch',name:'Stretch',amount:'5 min',full:'Stretch 5 min',type:'yesno'}],
+ Mind:[{id:'read',name:'Read',amount:'10 min',full:'Read 10 min',type:'yesno'},{id:'journal',name:'Journal',amount:'15 min',full:'Journal 15 min',type:'yesno'},{id:'noscroll',name:'No scroll',amount:'1 hour',full:'No scroll, 1 hour',type:'yesno'},{id:'meditate',name:'Meditate',amount:'10 min',full:'Meditate 10 min',type:'yesno'}],
+ Home:[{id:'outside',name:'Go outside',amount:'10 min',full:'Go outside 10 min',type:'yesno'},{id:'tidy',name:'Tidy',amount:'10 min',full:'Tidy 10 min',type:'yesno'},{id:'cook',name:'Cook at home',amount:'1 meal',full:'Cook at home',type:'yesno'},{id:'call',name:'Call a friend',amount:'10 min',full:'Call a friend 10 min',type:'yesno'}],
+ Money:[{id:'nospend',name:'No-spend day',amount:'Fixed bills do not count',full:'No-spend day',type:'yesno'}]
+};
+const ALLP=Object.values(PRESETS).flat();
+
+/* ---------- approved copy (Draft status in the copy library until Nina logs it) ---------- */
+const BONUS={ // preset id -> {7:[],14:[],30:[]}
+ move:{7:['The couch has noticed.'],14:['The couch has filed a formal complaint.'],30:['The couch is in mourning. We are not.']},
+ sleep:{7:['Actual sleep. Rare and beautiful.'],14:['A person who goes to bed. Imagine.'],30:['Pillow loyalty confirmed.']},
+ water:{7:['Thirst level: handled.'],14:['Thirst level: nonexistent. Confidence level: rising.'],30:['Thirst has left the chat.']},
+ stretch:{7:['Toes touched. Ego stretched.'],14:['Hips unlocked. Dangerous.'],30:['The splits are getting comfy. Show off.']},
+ read:{7:['Chapter one. Things are getting steamy.'],14:['Cliffhanger survived. Barely.'],30:['A month in. The spice level is concerning.']},
+ journal:{7:['Dear diary, it is going well.'],14:['The memoir is coming along.'],30:['Someone call a publisher.']},
+ noscroll:{7:['Eyes up. The world has been busy.'],14:['The phone is writing you a long text.'],30:['The algorithm has filed a missing person report.']},
+ meditate:{7:['Inner peace is loading.'],14:['Thoughts are being left on read.'],30:['Enlightenment is on the way. Please hold.']},
+ outside:{7:['Vitamin D sends regards.','Grass touched. Documented.'],14:['The sidewalk knows your name.','The sun has been informed.'],30:['Houseplant energy, with legs.','Officially a touch-grass professional.']},
+ tidy:{7:['Somewhere, a drawer is relieved.','One drawer down. The others are nervous.'],14:['The junk drawer is shaking.','The clutter is packing its bags.'],30:['Guests will be confused.','The clutter has moved out. Dramatic.']},
+ cook:{7:['The takeout app is worried.','The stove is back in business.'],14:['Chef energy.','The spice rack is getting a promotion.'],30:['The kitchen has a reputation now.','A tiny restaurant with a very small staff.']},
+ call:{7:['Somebody\'s phone is thrilled.','Someone\'s day just got better.'],14:['Talking out loud, to a person. Brave.','The group chat is jealous.'],30:['The phone is finally doing its original job.','Friendship, but audible.']},
+ nospend:{7:['The wallet exhales.','Zero dollars, full dignity.'],14:['The wallet is on a retreat. Do not disturb.','The wallet has never felt better.','The wallet is on a spa day. Free, of course.'],30:['Legendary behavior.','The bank account sends a thank you card.']}
+};
+const L_FINISH=['{name} did {habit} again. Day {n}. Suspiciously consistent.','{habit} is done for {name}. Day {n} in a row.','Another day, another {habit}. {name} is on day {n}.'];
+const L_MILE={
+ 7:['{name} is 7 days deep on {habit}. Somebody check on {name}, it is going suspiciously well.','Seven days of {habit} for {name}. We are being very normal about it.','{name} hit 7 days on {habit}. Nobody panic.','A full week of {habit}. {name} is not messing around.'],
+ 14:['Fourteen days of {habit}. {name} is a menace and we love it.','Two weeks of {habit} for {name}. The rest of us are taking notes.','{name} is 14 days in on {habit}. This is becoming a pattern.','Fourteen days. {name} and {habit} are basically a couple.'],
+ 30:['Thirty days of {habit}. {name} has entered a whole era.','{name} just hit 30 days on {habit}. We are not worthy.','Thirty days of {habit}. {name} has made it a personality.','A full month of {habit} for {name}. Someone get this person a trophy.']
+};
+const L_GROUP=['{name} started {habit}. Peer pressure, but make it healthy.','{name} wants a {habit} club. Membership is free and mildly mandatory.','{name} started {habit}. Join before it gets awkward.','Group habit alert. {name} started {habit} and your presence is requested.'];
+const L_MOON=['{name} cast the {event} spell. The moon is taking credit.','{name} did the {event} spell. The tides are impressed.','{event} week. {name} cast the spell and the moon noticed.','{name} cast the {event} spell. Very lunar of them.','The moon is up to nonsense and {name} is in on it.','{name} cast the {event} spell. Feral behavior. We are proud.','{event}: everyone is acting unwell, and {name} cast the spell anyway.','{name} cast the {event} spell and did not ask anyone\'s permission.'];
+const BREW_LINE='{name} answered today\'s brew. No spoilers until you do.';
+
+/* ---------- helpers ---------- */
+const $app=document.getElementById('app');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const dkey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);};
+const addDays=(k,n)=>{const d=parse(k);d.setDate(d.getDate()+n);return dkey(d);};
+const wd=k=>(parse(k).getDay()+6)%7; // Mon=0
+const weekStart=k=>addDays(k,-wd(k));
+let NOW=()=>new Date();
+const todayK=()=>dkey(NOW());
+const hash=s=>{let h=0;for(const c of String(s)){h=(h*31+c.charCodeAt(0))|0;}return Math.abs(h);};
+const pick=(arr,seed)=>arr[hash(seed)%arr.length];
+const fill=(t,o)=>t.replace(/\{(\w+)\}/g,(m,k)=>o[k]!=null?o[k]:m);
+const DOW=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const longDate=k=>{const d=parse(k);return DOW[wd(k)]+', '+MON[d.getMonth()]+' '+d.getDate();};
+const CHECK='<svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5" fill="none" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+
+/* ---------- state ---------- */
+let me=null;
+try{me=localStorage.getItem('h3-whoami');}catch(e){}
+const D={habits:{},log:{},prof:{},vote:{},rx:{}}; // each: {Person: data}
+PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};});
+let loaded=false;
+const ui={route:'today',arg:null,addPreset:null,voteOpen:true,standMode:'week',sky:null,setupStep:1,stepEdit:false,confirm:false,draft:null};
+
+function keyFor(kind,p){return 'recalData/h3-'+kind+'-'+p;}
+function cacheGet(kind,p){try{const v=localStorage.getItem('h3c-'+kind+'-'+p);return v?JSON.parse(v):null;}catch(e){return null;}}
+function cacheSet(kind,p,v){try{localStorage.setItem('h3c-'+kind+'-'+p,JSON.stringify(v));}catch(e){}}
+let pending=0;
+function setSync(t){const el=document.getElementById('sync');if(el)el.textContent=t;}
+function save(kind){
+  if(!me)return;
+  const v=D[kind][me]||{};
+  cacheSet(kind,me,v);
+  if(!db)return;
+  pending++;setSync('Saving');
+  db.ref(keyFor(kind,me)).set(JSON.stringify(v)).then(()=>{pending--;if(!pending)setSync('Saved');setTimeout(()=>{if(!pending)setSync('');},1500);}).catch(e=>{pending--;setSync('Not saved. Check your connection.');console.error(e);});
+}
+function startSync(){
+  ['habits','log','prof','vote','rx'].forEach(kind=>PEOPLE.forEach(p=>{
+    const c=cacheGet(kind,p);if(c)D[kind][p]=c;
+    if(!db)return;
+    db.ref(keyFor(kind,p)).on('value',s=>{
+      if(p===me&&pending)return; // do not clobber my own in-flight write
+      const raw=s.val();let v=null;
+      try{v=raw?(typeof raw==='string'?JSON.parse(raw):raw):null;}catch(e){}
+      if(v){D[kind][p]=v;cacheSet(kind,p,v);}
+      loaded=true;render();
+    },e=>console.error(e));
+  }));
+}
+
+/* ---------- moon (computed, approximate to within about a day) ---------- */
+function moonEvents(fromK,toK){
+  const out=[];const P=29.530588861;
+  for(let k=-2;k<40;k++){
+    for(const half of [0,0.5]){
+      const jd=2451550.09766+P*(Math.round(((parse(fromK).getTime()/86400000+2440587.5-2451550.09766)/P))+k+half);
+      const ms=(jd-2440587.5)*86400000;const d=new Date(ms);const key=dkey(d);
+      if(key>=fromK&&key<=toK)out.push({k:key,name:half?'Full Moon':'New Moon'});
+    }
+  }
+  return out;
+}
+function weekEvent(k){const ws=weekStart(k);const ev=moonEvents(ws,addDays(ws,6));return ev[0]||null;}
+function moonPhaseName(k){
+  const P=29.530588861;const jd=parse(k).getTime()/86400000+2440587.5+0.5;
+  const age=((jd-2451550.09766)%P+P)%P;
+  const n=['New Moon','Waxing crescent','First quarter','Waxing gibbous','Full Moon','Waning gibbous','Last quarter','Waning crescent'];
+  return n[Math.floor(((age/P)*8+0.5))%8];
+}
+
+/* ---------- habit math ---------- */
+function myHabits(p){return Object.values(D.habits[p]||{}).filter(h=>h&&!h.archived).sort((a,b)=>(a.created||0)-(b.created||0));}
+function val(p,hid,k){const l=D.log[p]||{};return (l[k]&&l[k][hid])||0;}
+function isDone(p,h,k){const v=val(p,h.id,k);return h.type==='number'?v>=h.target:v>=1;}
+function counts(h,k){return !!h.days[wd(k)];}
+function pausedOn(h,k){return h.paused&&h.pausedAt&&k>=h.pausedAt;}
+function streak(p,h){
+  let k=todayK(),n=0;
+  if(pausedOn(h,k)){k=addDays(h.pausedAt,-1);}
+  let guard=0;
+  while(guard++<800){
+    if(h.created&&k<h.createdDay)break;
+    if(!counts(h,k)){k=addDays(k,-1);continue;}
+    if(isDone(p,h,k)){n++;}
+    else if(k!==todayK()&&!(pausedOn(h,k)))break;
+    else if(k===todayK()){/* today not done yet, not a miss */}
+    k=addDays(k,-1);
+  }
+  return n;
+}
+function bestStreak(p,h){
+  let best=0,cur=0;let k=h.createdDay||todayK();const end=todayK();
+  while(k<=end){
+    if(counts(h,k)){if(isDone(p,h,k)){cur++;best=Math.max(best,cur);}else if(k!==end){cur=0;}}
+    k=addDays(k,1);
+  }
+  return best;
+}
+function setVal(hid,k,v){
+  const l=D.log[me]||(D.log[me]={});(l[k]||(l[k]={}))[hid]=v;
+  if(!v)delete l[k][hid];
+  save('log');
+}
+function newHabit(o){
+  const id=uid();
+  const h=Object.assign({id,name:'Habit',type:'yesno',target:1,unit:'',step:1,days:[1,1,1,1,1,1,1],shared:false,paused:false,archived:false,created:Date.now(),createdDay:todayK()},o);
+  (D.habits[me]||(D.habits[me]={}))[id]=h;save('habits');return h;
+}
+function findHabit(id){for(const p of PEOPLE){const h=(D.habits[p]||{})[id];if(h)return {p,h};}return null;}
+function presetOf(h){return ALLP.find(x=>x.id===h.preset);}
+
+/* ---------- coven habit / votes ---------- */
+const VOTE_OPTIONS=[
+ {id:'phone',name:'Phone-free hour',desc:'One hour, any hour.'},
+ {id:'walk',name:'10 minute walk outside',desc:'Fresh air counts. So does a lap around the block.'},
+ {id:'tidy',name:'Tidy 10 minutes',desc:'One drawer, one counter, one corner.'},
+ {id:'water',name:'Drink a full glass first thing',desc:'Before coffee. We will know.'}
+];
+function optName(id){const o=VOTE_OPTIONS.find(x=>x.id===id);return o?o.name:'Phone-free hour';}
+function votesFor(wk){const r={};PEOPLE.forEach(p=>{const v=(D.vote[p]||{})[wk];if(v)r[p]=v;});return r;}
+function winnerFor(wk){
+  const v=votesFor(wk);const t={};Object.values(v).forEach(o=>t[o]=(t[o]||0)+1);
+  const ids=Object.keys(t);if(!ids.length)return null;
+  const max=Math.max(...ids.map(i=>t[i]));const tied=ids.filter(i=>t[i]===max).sort();
+  return tied[hash(wk)%tied.length]; // random tie break, stable per week
+}
+function covenHabitFor(wk){ // the habit running this week = winner of last week's vote, else the previous habit, else the first option
+  const prev=addDays(wk,-7);return winnerFor(prev)||(wk>weekStart(SEASON_START)?covenHabitFor(prev):'phone');
+}
+function votingWeek(k){return addDays(weekStart(k),7);} // vote is for next week
+
+/* ---------- people helpers ---------- */
+function initial(p){return (p||'?').charAt(0).toUpperCase();}
+function sharedHabits(p){return myHabits(p).filter(h=>h.shared);}
+
+/* ---------- render ---------- */
+function nav(){
+  const t=ui.route;const on=(...r)=>r.includes(t)?' class="on"':'';
+  return `<nav><a href="#today"${on('today','habit','edit','add','sky')}>Today</a><a href="#coven"${on('coven','standings')}>Coven</a><a href="#journey"${on('journey')}>Journey</a><a href="#me"${on('me','connections')}>Me</a></nav>`;
+}
+function topbar(){return `<div class="top"><div class="brand">Spell Check</div><a class="avatar" href="#me" aria-label="${esc(me)}" style="text-decoration:none;color:inherit">${initial(me)}</a></div>`;}
+function sub(back,right){return `<div class="top"><a class="link" href="${back[0]}">${back[1]}</a>${right||''}</div>`;}
+
+function viewGate(){
+  return `<div class="center"><div class="brand">Spell Check</div>
+  <div class="h1">Welcome back. Which witch are you?</div>
+  <div class="sec" style="font-size:16px;line-height:1.45">Pick your name. Round 2 stays right where it is, in the original Spell Check.</div>
+  <div style="display:flex;flex-direction:column;gap:8px">${PEOPLE.map(p=>`<button class="opt" data-act="who" data-p="${p}" style="min-height:52px;font-size:16px">${p}</button>`).join('')}</div>
+  <div class="small">Private by default. You choose what the coven sees, one habit at a time.</div></div>`;
+}
+
+function habitRow(h){
+  const p=me,t=todayK();const v=val(p,h.id,t);const done=isDone(p,h,t);
+  const s=streak(p,h);
+  const rest=!counts(h,t);const paused=pausedOn(h,t);
+  let line='';
+  if(h.type==='number')line=`${v} of ${h.target} ${esc(h.unit)} today`+(s?` · ${s} day${s===1?'':'s'} in a row`:'');
+  else line=s?`${s} day${s===1?'':'s'} in a row`:'Not started yet';
+  const tag=h.shared?'<span>Shared with the coven</span>':'';
+  let ctl='';
+  if(paused)ctl=`<span class="done" style="color:var(--sec)">Paused</span>`;
+  else if(rest)ctl=`<span class="done" style="color:var(--sec)">Rest day</span>`;
+  else if(h.type==='number'){
+    ctl=`<div style="display:flex;gap:8px;align-items:center"><button class="step" aria-label="Remove ${h.step} ${esc(h.unit)}" data-act="sub" data-id="${h.id}">−</button>`+(done?`<span class="done">Done</span>`:`<button class="step" aria-label="Add ${h.step} ${esc(h.unit)}" data-act="add" data-id="${h.id}">+${h.step}</button>`)+`</div>`;
+  } else ctl=`<button class="check${done?' on':''}" aria-pressed="${done}" aria-label="${esc(h.name)}, mark done" data-act="tog" data-id="${h.id}">${done?CHECK:''}</button>`;
+  const bar=h.type==='number'?`<div class="bar6"><div style="width:${Math.min(100,Math.round(v/h.target*100))}%"></div></div>`:'';
+  return `<div><div class="habit" style="border-bottom:0"><div style="min-width:0"><button class="name" data-go="habit/${h.id}">${esc(h.name)}</button><div class="tags"><span>${line}</span>${tag}</div></div>${ctl}</div>${bar}</div>`;
+}
+
+function viewToday(){
+  const t=todayK();const hs=myHabits(me);
+  const wk=weekStart(t);const ch=covenHabitFor(wk);
+  const chId='_coven_'+wk;const chDone=val(me,chId,t)>=1;
+  const ev=weekEvent(t);const spId='_spell_'+wk;const spDone=val(me,spId,t)>=1;
+  const showed=PEOPLE.filter(p=>anyShared(p,t));
+  const members=PEOPLE.map(p=>{const d=(val(p,chId,t)>=1);return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div class="av${d?' on':''}">${initial(p)}</div><div class="small">${p}</div></div>`;}).join('');
+  const nDone=PEOPLE.filter(p=>val(p,chId,t)>=1).length;
+  const waiting=PEOPLE.filter(p=>!anyShared(p,t));
+  const showedLine=showed.length===4?'All four showed up today.':showed.length===0?'Nobody has shown up yet today. Do one thing to go first.':(showed.includes(me)?`${showed.length} of 4 showed up. Waiting on ${list(waiting)}.`:`${showed.length} of 4 showed up. Do one thing today to join ${list(showed)}.`);
+  const phase=moonPhaseName(t);
+  return topbar()+`<div class="body">
+  <div class="date">${longDate(t)}</div>
+  <div class="card" style="border-color:#E1D6EE"><div class="row"><div class="label" style="color:var(--plum)">Your sky today</div><span class="small">${esc(phase)}</span></div><div class="h2">${skyLine(phase)}</div><a class="link" href="#sky">Read your sky</a></div>
+  <div class="card"><div class="row"><div class="h2">Your habits</div><a class="link" href="#add">Add</a></div>
+   ${hs.length?hs.map(habitRow).join(''):`<div class="small" style="padding:8px 0">No habits yet. Add one and it shows up here.</div>`}
+  </div>
+  <div class="card bar"><div class="label">The coven, this week</div>
+   <div class="row"><div><div class="label">This week's habit</div><div class="h2">${esc(optName(ch))}</div></div><div class="small">${nDone} of 4 done today</div></div>
+   <div style="display:flex;justify-content:space-between">${members}</div>
+   <button class="pill${chDone?' out':''}" aria-pressed="${chDone}" data-act="cov" data-id="${chId}">${chDone?'Done for today':'Mark done'}</button>
+   ${ev?`<div class="row" style="border-top:1px solid var(--line);padding-top:10px"><div><div class="label">Spell · ${esc(ev.name)} week</div><div class="h2" style="margin-top:4px">This week's spell</div><div class="small">Set one small intention under the ${esc(ev.name)}.</div></div><button class="check${spDone?' on':''}" aria-pressed="${spDone}" aria-label="Spell, mark done" data-act="cov" data-id="${spId}">${spDone?CHECK:''}</button></div>`:''}
+   <div class="small">${showedLine}</div></div>
+  </div>`+nav();
+}
+function skyLine(phase){return phase==='New Moon'?'A fresh start is on the table.':phase==='Full Moon'?'Things are bright and a little loud.':'The moon is doing its thing. So are we.';}
+function list(a){return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
+function anyShared(p,k){ // "showed up" counts shared habits, the coven habit, or the spell. Private habits never leak.
+  const l=(D.log[p]||{})[k]||{};
+  for(const id in l){if(!l[id])continue;if(id.startsWith('_'))return true;const f=findHabit(id);if(f&&f.p===p&&f.h.shared&&isDone(p,f.h,k))return true;}
+  return false;
+}
+
+function viewAdd(){
+  const d=ui.draft||(ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:false,preset:null,days:[1,1,1,1,1,1,1]});
+  const grp=(g,l)=>`<div style="display:flex;flex-direction:column;gap:8px"><div class="label">${g}</div><div class="grid2">${l.map(p=>`<button class="opt${d.preset===p.id?' on':''}" aria-pressed="${d.preset===p.id}" data-act="preset" data-id="${p.id}"><span>${p.name}</span><span>${p.amount}</span></button>`).join('')}</div></div>`;
+  return `<div class="top"><div class="h2">New habit</div><a class="link" href="#today" data-act="closeadd">Close</a></div><div class="body">
+  <div style="display:flex;flex-direction:column;gap:16px"><div class="label">Start from a preset</div>${Object.keys(PRESETS).map(g=>grp(g,PRESETS[g])).join('')}</div>
+  <div class="field"><label for="hn">Or name your own</label><input id="hn" type="text" value="${esc(d.name)}" placeholder="Sit-ups" data-in="name"></div>
+  <div><div class="label">How do you count it</div><div class="seg"><button class="${d.type==='yesno'?'on':''}" data-act="dtype" data-v="yesno">Yes or no</button><button class="${d.type==='number'?'on':''}" data-act="dtype" data-v="number">A number</button></div>
+  ${d.type==='number'?`<div class="grid2" style="margin-top:10px"><div class="field"><label for="tg">Daily target</label><input id="tg" type="number" inputmode="numeric" value="${d.target}" data-in="target"></div><div class="field"><label for="un">Unit</label><input id="un" type="text" value="${esc(d.unit)}" data-in="unit"></div></div>
+  <div class="row"><span class="small">Steps of ${d.step}.</span><button class="link" data-act="stepedit" aria-expanded="${ui.stepEdit}">${ui.stepEdit?'Done':'Change'}</button></div>${ui.stepEdit?`<div class="field"><label for="st">Step size</label><input id="st" type="number" inputmode="numeric" value="${d.step}" data-in="step"></div>`:''}`:''}</div>
+  <div><div class="label">Which days count</div><div class="days" style="margin-top:8px">${['M','T','W','T','F','S','S'].map((l,i)=>`<button class="${d.days[i]?'on':''}" aria-pressed="${!!d.days[i]}" aria-label="${DOW[i]}" data-act="dday" data-i="${i}">${l}</button>`).join('')}</div><div class="small" style="margin-top:6px">Missing a day that counts resets the streak. Other days are rest days.</div></div>
+  <div><div class="label">Who can see it</div><div class="seg"><button class="${!d.shared?'on':''}" data-act="dshare" data-v="0">Just me</button><button class="${d.shared?'on':''}" data-act="dshare" data-v="1">The coven</button></div><div class="small" style="margin-top:6px">${shareLine(d.shared)}</div></div>
+  <button class="pill" data-act="create"${d.name.trim()?'':' disabled'}>Add habit</button></div>`;
+}
+function shareLine(s){return s?'The coven sees your streak and the days you finished. Totals and notes stay with you.':'Only you see this habit. Share it later whenever you like.';}
+function suggestStep(n){n=parseInt(n,10);if(!n||n<1)return 1;const raw=n/10;for(const x of [1,2,5,10,20,25,50,100])if(x>=raw)return x;return 100;}
+
+function viewDetail(id){
+  const f=findHabit(id);if(!f||f.p!==me)return `<div class="body"><a class="link" href="#today">Back</a><div class="h2">That habit is not here.</div></div>`+nav();
+  const h=f.h;const t=todayK();const s=streak(me,h),best=bestStreak(me,h);
+  const ws=weekStart(t);const start=addDays(ws,-28);
+  let cells='';
+  for(let i=0;i<35;i++){
+    const k=addDays(start,i);let st='background:var(--yellow)',lb='Done';
+    if(k===t){st='background:#fff;border:2px solid var(--text)';lb='Today';}
+    else if(k>t){st='background:#fff;border:1px dashed var(--line2)';lb='Coming up';}
+    else if(!counts(h,k)){st='background:#fff;border:1px solid var(--line)';lb='Rest day';}
+    else if(!isDone(me,h,k)||(h.createdDay&&k<h.createdDay)){st='background:#ECE8E0';lb='Missed';}
+    cells+=`<div role="img" aria-label="${lb}, ${k}" style="${st}"></div>`;
+  }
+  const restDays=DOW.filter((_,i)=>!h.days[i]);
+  const sched=restDays.length?`Counts ${DOW.filter((_,i)=>h.days[i]).map(x=>x.slice(0,3)).join(', ')}. ${restDays.join(', ')} ${restDays.length>1?'are rest days':'is a rest day'}.`:'Counts every day.';
+  const sl=h.paused?`${s} days in a row, held safely while you are away.`:s===0?'Nothing yet. Today is a good day to start.':h.shared?`${s} day${s===1?'':'s'} in a row. We noticed, and we are acting very normal about it.`:`${s} day${s===1?'':'s'} in a row. Nobody knows but you.`;
+  return sub(['#today','Back'],`<a class="link" href="#edit/${h.id}">Edit</a>`)+`<div class="body">
+  <div><div class="h1">${esc(h.name)}</div><div class="sec">${h.type==='number'?`${h.target} ${esc(h.unit)} a day`:'Yes or no'}</div></div>
+  <div class="big"><b>${s}</b><div><div>days in a row</div><div class="small">Longest: ${best} day${best===1?'':'s'}</div></div></div>
+  <div><div class="h2">${sl}</div><div class="small">${sched}</div></div>
+  <div class="card"><div class="label">Last five weeks</div><div class="heat">${['M','T','W','T','F','S','S'].map(x=>`<div class="hd">${x}</div>`).join('')}${cells}</div>
+   <div class="small" style="display:flex;gap:12px;flex-wrap:wrap"><span><i class="dot" style="background:var(--yellow);width:10px;height:10px"></i> Done</span><span><i class="dot" style="background:#ECE8E0;width:10px;height:10px"></i> Missed</span><span><i class="dot" style="border:1px solid var(--line2);width:10px;height:10px"></i> Rest day</span></div></div>
+  <div><div class="label">Who can see it</div><div class="seg"><button class="${!h.shared?'on':''}" data-act="hshare" data-v="0" data-id="${h.id}">Just me</button><button class="${h.shared?'on':''}" data-act="hshare" data-v="1" data-id="${h.id}">The coven</button></div><div class="small" style="margin-top:6px">${shareLine(h.shared)}</div></div>
+  <div class="card"><div class="label">Pause</div><div class="small">${h.paused?`Paused since ${longDate(h.pausedAt)}. Your streak holds.`:'Pausing holds your streak for up to 14 days. We do not ask why.'}</div><button class="pill out" data-act="pause" data-id="${h.id}">${h.paused?'Resume now':'Pause this habit'}</button></div>
+  </div>`+nav();
+}
+
+function viewEdit(id){
+  const f=findHabit(id);if(!f||f.p!==me)return `<div class="body"><a class="link" href="#today">Back</a></div>`+nav();
+  const h=f.h;const d=ui.draft&&ui.draft._id===id?ui.draft:(ui.draft={_id:id,name:h.name,target:h.target,days:h.days.slice(),step:h.step});
+  const steps=[1,2,5,8,10,25,50,100];
+  return `<div class="top"><a class="link quiet" href="#habit/${id}" data-act="cancel">Cancel</a><button class="link" data-act="saveedit" data-id="${id}">Save</button></div><div class="body">
+  <div class="h1" style="font-size:24px">Edit habit</div>
+  <div class="field"><label for="en">Name</label><input id="en" type="text" value="${esc(d.name)}" data-in="name"></div>
+  ${h.type==='number'?`<div class="field"><label for="et">Daily target</label><input id="et" type="number" inputmode="numeric" value="${d.target}" data-in="target"><div class="small">New target starts today. Past days keep the target they had.</div></div>`:''}
+  <div><div class="label">Which days count</div><div class="days" style="margin-top:8px">${['M','T','W','T','F','S','S'].map((l,i)=>`<button class="${d.days[i]?'on':''}" aria-pressed="${!!d.days[i]}" aria-label="${DOW[i]}" data-act="dday" data-i="${i}">${l}</button>`).join('')}</div><div class="small" style="margin-top:6px">Your streak counts the schedule you have now.</div></div>
+  ${h.type==='number'?`<div><div class="label">Step size</div><div class="row" style="justify-content:flex-start;gap:16px;margin-top:6px"><button class="step" aria-label="Smaller step" data-act="stepdn">−</button><b style="font-size:20px">${d.step}</b><button class="step" aria-label="Bigger step" data-act="stepup">+</button></div><div class="small">Each tap on Today adds ${d.step}.</div></div>`:''}
+  <div class="card">${!ui.confirm?`<div class="small">Archiving takes it off Today. Your history and streak stay saved, and you can bring it back any time.</div><button class="pill out" data-act="askarch">Archive this habit</button>`:`<div class="h2">Archive ${esc(h.name)}?</div><div class="small">It leaves Today. Your ${streak(me,h)} day streak and every day you logged stay saved under Me. Bring it back whenever you like.</div><div class="row" style="justify-content:flex-start;gap:18px"><button class="link" data-act="archive" data-id="${id}">Archive</button><button class="link quiet" data-act="keep">Keep it</button></div>`}</div>
+  </div>`;
+}
+
+function viewSky(){
+  const t=todayK();const who=ui.sky||me;const own=who===me;const pr=D.prof[who]||{};const b=pr.big3||{};
+  const ev=weekEvent(t);const next=moonEvents(addDays(t,1),addDays(t,45))[0];
+  return sub(['#today','Back'],`<span class="small">${longDate(t)}</span>`)+`<div class="body">
+  <div class="seg" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div>
+  <div class="card" style="border-color:#E1D6EE"><div class="row"><div class="label" style="color:var(--plum)">${own?'Your sky today':esc(who)+'’s sky today'}</div><span class="small">${esc(moonPhaseName(t))}</span></div>
+   <div class="h2">${skyLine(moonPhaseName(t))}</div>
+   <div class="small">${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} Moon phases here are computed and can be off by about a day. Daily sign-by-sign readings are not in this version yet.</div></div>
+  <div class="card"><div class="h2">${own?'Your big 3':esc(who)+'’s big 3'}</div><div class="grid2" style="grid-template-columns:repeat(3,1fr)">${['Sun','Moon','Rising'].map(k=>`<div><div class="label">${k}</div><div class="h2">${esc(b[k.toLowerCase()]||'Not set')}</div></div>`).join('')}</div><div class="small">${own?'Add or change these in Me.':'Set by '+esc(who)+' in her profile.'}</div></div>
+  <div class="card"><div class="label">Coming up</div>${next?`<div class="h2">${longDate(next.k)}</div><div class="small">${esc(next.name)}</div>`:'<div class="small">Nothing on the calendar yet.</div>'}</div></div>`+nav();
+}
+
+/* ---------- feed ---------- */
+function buildFeed(){
+  const items=[];const t=todayK();
+  const wk=weekStart(t);
+  // vote result for this week
+  const pw=addDays(wk,-7);const w=winnerFor(pw);
+  if(w)items.push({id:'vote:'+wk,at:wk+'a',who:'The coven',text:` has spoken. Next week is ${optName(w)}.`.replace('Next week is','This week is')});
+  else if(Object.keys(votesFor(pw)).length===0&&wk>weekStart(SEASON_START))items.push({id:'novote:'+wk,at:wk+'a',who:'The coven',text:` Nobody voted, so we are running it back. This week is ${optName(covenHabitFor(wk))} again.`});
+  for(const p of PEOPLE){
+    const logs=D.log[p]||{};
+    for(const k of Object.keys(logs).sort().slice(-14)){
+      for(const id of Object.keys(logs[k]||{})){
+        if(!logs[k][id])continue;
+        if(id.startsWith('_spell_')){const ev=weekEvent(k);if(ev)items.push({id:'sp:'+p+k,at:k+'m',who:p,text:' '+fill(pick(L_MOON,p+k),{name:'',event:ev.name}).replace(/^\s+/,'').replace(/^(\{name\}\s*)/,'')});continue;}
+        if(id.startsWith('_'))continue;
+        const f=findHabit(id);if(!f||f.p!==p||!f.h.shared)continue;
+        const h=f.h;if(!isDone(p,h,k))continue;
+        // streak as of day k
+        const n=streakAt(p,h,k);if(!n)continue;
+        const pre=presetOf(h);let text,bonus='';
+        if([7,14,30].includes(n)){text=fill(pick(L_MILE[n],p+id+n),{name:'\u0001',habit:h.name,n});bonus=pre&&BONUS[pre.id]?pick(BONUS[pre.id][n],id+n):'';}
+        else text=fill(pick(L_FINISH,p+id+k),{name:'\u0001',habit:h.name,n});
+        items.push({id:'f:'+p+':'+id+':'+k,at:k+'z',who:p,text:text,bonus});
+      }
+    }
+    for(const h of myHabits(p)){if(h.groupOwner&&h.groupOwner===p&&h.groupId===h.id&&h.shared)items.push({id:'g:'+h.id,at:(h.createdDay||t)+'g',who:p,text:fill(pick(L_GROUP,h.id),{name:'\u0001',habit:h.name}),join:h});}
+  }
+  items.sort((a,b)=>b.at<a.at?-1:1);
+  return items.slice(0,25);
+}
+function streakAt(p,h,k){
+  let n=0,x=k,g=0;
+  while(g++<800){
+    if(h.createdDay&&x<h.createdDay)break;
+    if(!counts(h,x)){x=addDays(x,-1);continue;}
+    if(isDone(p,h,x))n++;else break;
+    x=addDays(x,-1);
+  }
+  return n;
+}
+const GL=[{k:'heart',g:'♡',l:'Heart swelling'},{k:'spell',g:'✦',l:'Spellbound'},{k:'moon',g:'☾',l:'Calm tides'}];
+function rxCount(id,k){return PEOPLE.filter(p=>((D.rx[p]||{})[id]||{})[k]).length;}
+function feedItem(it){
+  // render who's name bold at the start: text contains \u0001 where the name goes
+  let html;
+  if(it.text.includes('\u0001'))html=esc(it.text).replace('\u0001','<b>'+esc(it.who)+'</b>');
+  else html='<b>'+esc(it.who)+'</b>'+esc(it.text);
+  const joinable=it.join&&it.join.groupOwner!==me&&!myHabits(me).some(h=>h.groupId===it.join.groupId);
+  const right=it.join?(joinable?`<button class="chip" data-act="join" data-id="${it.join.id}">Join</button>`:`<span class="done">${it.join.groupOwner===me?'Yours':'✓ In'}</span>`):`<div class="rx">${GL.map(g=>{const on=((D.rx[me]||{})[it.id]||{})[g.k];const n=rxCount(it.id,g.k);return `<button class="${on?'on':''}" aria-pressed="${!!on}" aria-label="${g.l}" data-act="rx" data-id="${esc(it.id)}" data-k="${g.k}">${g.g}${n?' '+n:''}</button>`;}).join('')}</div>`;
+  return `<div class="feed"><div>${html}${it.bonus?`<div class="bonus">${esc(it.bonus)}</div>`:''}</div><div style="display:flex">${right}</div></div>`;
+}
+function groupsList(){
+  const g={};PEOPLE.forEach(p=>myHabits(p).forEach(h=>{if(h.groupId&&h.shared){(g[h.groupId]=g[h.groupId]||[]).push({p,h});}}));
+  return Object.values(g);
+}
+function viewCoven(){
+  const t=todayK();const vw=votingWeek(t);const votes=votesFor(vw);const mine=votes[me];
+  const showOpts=ui.voteOpen||!mine;
+  const tally=Object.keys(votes).length+' of 4 voted.';
+  const opts=VOTE_OPTIONS.map(o=>{
+    const vs=PEOPLE.filter(p=>votes[p]===o.id);
+    return `<button class="opt${mine===o.id?' on':''}" aria-pressed="${mine===o.id}" data-act="vote" data-id="${o.id}" style="gap:6px"><div class="row" style="width:100%"><span>${esc(o.name)}</span><span>${mine===o.id?CHECK:''}</span></div><span>${esc(o.desc)}</span><span>${vs.length?vs.map(initial).join(' ')+' · '+vs.length+(vs.length>1?' votes':' vote'):'No votes yet'}</span></button>`;
+  }).join('');
+  const gl=groupsList();
+  const feed=buildFeed();
+  return topbar()+`<div class="body">
+  <div class="seg"><button class="on">The Tea</button><button data-go="standings">Standings</button></div>
+  <div class="card bar">${showOpts?`<div class="label">Next week's coven habit</div><div class="h2">What are we doing next week?</div><div class="small">Pick one by Sunday, or we run it back like nothing happened.</div>${opts}<div class="small">${tally}</div>`:`<div class="row"><div><div class="label">Next week's coven habit</div><div class="h2">You voted: ${esc(optName(mine))}</div><div class="small">${tally} Winner announced Sunday night.</div></div><button class="link" data-act="reopen">Change vote</button></div>`}</div>
+  <div class="card bar"><div class="row"><div class="h2">Group habits</div><a class="link" href="#add" data-act="startgroup">Start one</a></div>
+   ${gl.length?gl.map(g=>{const first=g[0];const inn=g.some(x=>x.p===me);const owner=g.find(x=>x.h.groupOwner===x.p)||first;return `<div class="habit"><div><div class="h2">${esc(first.h.name)}</div><div class="small">${g.map(x=>initial(x.p)).join(' ')} · Started by ${esc(owner.p)}</div></div>${inn?'<span class="done">✓ In</span>':`<button class="chip" data-act="join" data-id="${owner.h.id}">Join</button>`}</div>`;}).join(''):'<div class="small">No group habits yet. Start one and anyone can join.</div>'}</div>
+  <div><div class="h2">Lately</div>${feed.length?feed.map(feedItem).join(''):'<div class="small" style="padding:10px 0">Quiet in here. Share a habit and finish it to get things going.</div>'}<div class="small" style="margin-top:8px">Habits only show up here when their owner shares them.</div></div>
+  </div>`+nav();
+}
+
+function pointsFor(p,from,to){
+  let pts=0,days=0;
+  let k=from;while(k<=to){
+    let day=false;const l=(D.log[p]||{})[k]||{};
+    for(const id in l){if(!l[id])continue;if(id.startsWith('_')){pts++;day=true;continue;}const f=findHabit(id);if(f&&f.p===p&&f.h.shared&&isDone(p,f.h,k)){pts++;day=true;}}
+    if(day)days++;k=addDays(k,1);
+  }
+  return {pts:pts*10,days};
+}
+function viewStandings(){
+  const t=todayK();const week=ui.standMode==='week';
+  const from=week?weekStart(t):SEASON_START;const to=week?addDays(weekStart(t),6)<t?addDays(weekStart(t),6):t:t;
+  const seasonDays=Math.max(1,Math.round((parse(t)-parse(SEASON_START))/86400000)+1);
+  const rows=PEOPLE.map(p=>{const r=pointsFor(p,from,to);const sh=sharedHabits(p);const best=sh.length?Math.max(...sh.map(h=>streak(p,h))):0;
+    const dots=[];if(week){for(let i=0;i<7;i++){const k=addDays(weekStart(t),i);dots.push(k<=t&&pointsFor(p,k,k).days>0);}}
+    return {p,pts:r.pts,days:r.days,best,dots};}).sort((a,b)=>b.pts-a.pts||b.days-a.days||hash(a.p)-hash(b.p));
+  const gap=rows[0].pts-rows[1].pts;
+  const cap=rows[0].pts===0?'Nobody has scored yet. Somebody has to go first.':gap===0?`${rows[0].p} and ${rows[1].p} are tied. Nobody is keeping score. Everybody is keeping score.`:`${rows[0].p} leads by ${gap}. Nobody is keeping score. Everybody is keeping score.`;
+  return topbar()+`<div class="body">
+  <div class="seg"><button data-go="coven">The Tea</button><button class="on">Standings</button></div>
+  <div class="seg"><button class="${week?'on':''}" data-act="stand" data-v="week">This week</button><button class="${!week?'on':''}" data-act="stand" data-v="season">Season</button></div>
+  <div class="card" style="padding:0 16px">${rows.map((r,i)=>`<div class="rank"><div class="h2" style="width:18px">${i+1}</div><div class="av on">${initial(r.p)}</div><div style="flex:1"><div class="h2">${r.p}</div><div class="small" style="display:flex;gap:8px;align-items:center">${week?`<span aria-hidden="true">${r.dots.map(d=>`<i class="dot" style="width:8px;height:8px;margin-right:3px;background:${d?'var(--yellow)':'var(--line)'}"></i>`).join('')}</span><span>${r.days} of 7</span>`:`<span>Showed up ${r.days} of ${seasonDays} days</span>`}</div></div><div style="text-align:right"><div class="h2">${r.pts}</div><div class="small">${r.best} day streak</div></div></div>`).join('')}</div>
+  <div class="h2" style="font-size:15px">${cap}</div>
+  <div class="small">Points are just for fun. Showed up counts any day you did one thing. Only shared habits, the coven habit and the spell count, so private habits stay private.</div></div>`+nav();
+}
+
+function viewJourney(){
+  const hs=myHabits(me);
+  return topbar()+`<div class="body"><div class="h1">Journey</div>
+  ${hs.length?hs.map(h=>`<div class="card"><div class="row"><button class="name h2" style="background:none;border:0;padding:0;text-align:left" data-go="habit/${h.id}">${esc(h.name)}</button><span class="small">${streak(me,h)} now · ${bestStreak(me,h)} best</span></div><div class="small">${countDone(h)} days done since ${longDate(h.createdDay||todayK())}.</div></div>`).join(''):'<div class="small">Your habit history builds here as you go.</div>'}</div>`+nav();
+}
+function countDone(h){let n=0,k=h.createdDay||todayK();const e=todayK();while(k<=e){if(counts(h,k)&&isDone(me,h,k))n++;k=addDays(k,1);}return n;}
+
+function viewMe(){
+  const pr=D.prof[me]||{};const b=pr.big3||{};
+  const arch=Object.values(D.habits[me]||{}).filter(h=>h.archived);
+  return topbar()+`<div class="body"><div class="h1">${esc(pr.name||me)}</div>
+  <div class="card"><div class="h2">Your big 3</div><div class="small">Your Sun, Moon, and Rising signs shape your daily sky.</div>
+   <div class="grid2" style="grid-template-columns:repeat(3,1fr)">${['sun','moon','rising'].map(k=>`<div class="field"><label for="b-${k}">${k[0].toUpperCase()+k.slice(1)}</label><input id="b-${k}" type="text" value="${esc(b[k]||'')}" placeholder="Sign" data-in="big-${k}"></div>`).join('')}</div></div>
+  <a class="pill out" href="#connections">Connections</a>
+  ${arch.length?`<div class="card"><div class="label">Archived</div>${arch.map(h=>`<div class="habit"><div><div class="h2">${esc(h.name)}</div><div class="small">${streak(me,h)} day streak saved</div></div><button class="chip" data-act="unarch" data-id="${h.id}">Bring back</button></div>`).join('')}</div>`:''}
+  <div class="small">Signed in as ${esc(me)}.</div><button class="link quiet" data-act="switch">Not you?</button>
+  <div class="small">Your Round 2 habits, journal, and photos stay in the original Spell Check. Nothing there changes.</div></div>`+nav();
+}
+function viewConnections(){
+  return sub(['#me','Back'])+`<div class="body"><div><div class="h1" style="font-size:26px">Connections</div><div class="sec" style="margin-top:6px">Connect an app and it can tick habits for you. You pick which habit each one counts toward.</div></div>
+  ${['Oura','Strava'].map(n=>`<div class="card"><div class="row"><div class="h2">${n}</div><span class="chip on" style="border-color:var(--line2);color:var(--sec)">Soon</span></div><div class="small">${n==='Oura'?'Sleep and activity from your ring can tick habits like Sleep 8 hours.':'A logged workout can tick habits like Move 30 min.'} Not switched on yet, so tick by hand for now.</div></div>`).join('')}
+  <div class="card"><div class="row"><div class="h2">Apple Health</div><span class="chip on" style="border-color:var(--line2);color:var(--sec)">Incoming</span></div>
+   <div class="small">Apple does not let apps like this one read Health directly, so this one is still being worked out.</div>
+   <div style="background:var(--ytint);padding:12px;display:flex;flex-direction:column;gap:6px"><div class="label">Until then</div><div style="font-size:14px;line-height:1.45">Record workouts in the Apple Workout app and turn on Automatic Uploads in Strava. Then connect Strava above and those workouts count here too.</div><div class="small">Workouts only, from the last 30 days. Steps and sleep from Apple Health can't come along yet, so tick those by hand.</div></div></div>
+  <div class="small">Only the habit result reaches the coven, never your raw data. Disconnect any time.</div></div>`+nav();
+}
+
+function viewSetup(){
+  const s=ui.setupStep;const pr=D.prof[me]||{};const b=pr.big3||{};
+  const bars=[1,2,3,4].map(i=>`<div style="flex:1;height:4px;background:${i<=s?'var(--pink)':'var(--line)'}"></div>`).join('');
+  let main='',btns='';
+  if(s===1){main=`<div class="h1">Welcome in.</div><div class="sec">What should we call you?</div><div class="field"><label for="sn">Your name</label><input id="sn" type="text" value="${esc(pr.name||me)}" data-in="sname"></div><div class="small">No photo yet? Your initial works until you add one.</div>`;btns=`<button class="pill" data-act="snext">Next</button><button class="link quiet" data-act="snext">Skip the photo</button>`;}
+  if(s===2){main=`<div class="h1">Your big 3.</div><div class="sec">Your Sun, Moon, and Rising signs shape your daily sky.</div><div class="grid2" style="grid-template-columns:repeat(3,1fr)">${['sun','moon','rising'].map(k=>`<div class="field"><label for="b-${k}">${k[0].toUpperCase()+k.slice(1)}</label><input id="b-${k}" type="text" value="${esc(b[k]||'')}" placeholder="Sign" data-in="big-${k}"></div>`).join('')}</div><div class="small">No chart yet? Skip it. You will get the general sky until you add yours.</div>`;btns=`<button class="pill" data-act="snext">Next</button><button class="link quiet" data-act="snext">Skip for now</button>`;}
+  if(s===3){main=`<div class="h1">Never miss a day.</div><div class="sec">Notifications for habit nudges, the daily brew, and news from the coven are coming to this version soon. Your current Spell Check keeps sending its usual ones.</div><div class="card"><div class="label">On iPhone, do this first</div><div style="font-size:14px;line-height:1.6">1. Tap Share in Safari.<br>2. Choose Add to Home Screen.<br>3. Open Spell Check from your Home Screen.</div></div>`;btns=`<button class="pill" data-act="snext">Next</button>`;}
+  if(s===4){main=`<div class="h1">One last thing.</div><div class="sec">Pick a habit to start with. You can add more any time.</div>`;btns=`<a class="pill" href="#add" data-act="sdone">Add your first habit</a><a class="link quiet" href="#today" data-act="sdone">Skip, take me to Today</a>`;}
+  return `<div class="top"><div class="brand">Spell Check</div><div class="small">Step ${s} of 4</div></div><div style="display:flex;gap:6px;padding:0 20px">${bars}</div><div class="center">${main}</div><div style="padding:0 28px 34px;display:flex;flex-direction:column;gap:10px">${btns}</div>`;
+}
+
+function viewSetupGateWrap(){return viewSetup();}
+
+/* ---------- router ---------- */
+function route(){
+  const h=(location.hash||'#today').slice(1);const [r,a]=h.split('/');
+  const prev=ui.route;ui.route=r||'today';ui.arg=a||null;
+  if(prev!==ui.route){ui.confirm=false;if(ui.route!=='add'&&ui.route!=='edit'&&ui.route!=='setup')ui.draft=null;if(ui.route==='edit'&&ui.draft&&ui.draft._id!==a)ui.draft=null;}
+  render();window.scrollTo(0,0);
+}
+function render(){
+  const act=document.activeElement;const keep=act&&act.dataset&&act.dataset.in?{id:act.id,s:act.selectionStart}:null;
+  let html;
+  if(!me)html=viewGate();
+  else{
+    const needSetup=!(D.prof[me]||{}).setup&&loaded&&ui.route!=='setup'&&!ui.skipSetup;
+    if(needSetup&&(ui.route==='today')){ui.route='setup';}
+    switch(ui.route){
+      case 'setup':html=viewSetup();break;
+      case 'add':html=viewAdd();break;
+      case 'habit':html=viewDetail(ui.arg);break;
+      case 'edit':html=viewEdit(ui.arg);break;
+      case 'sky':html=viewSky();break;
+      case 'coven':html=viewCoven();break;
+      case 'standings':html=viewStandings();break;
+      case 'journey':html=viewJourney();break;
+      case 'me':html=viewMe();break;
+      case 'connections':html=viewConnections();break;
+      default:html=viewToday();
+    }
+  }
+  $app.innerHTML=html;
+  if(keep&&keep.id){const el=document.getElementById(keep.id);if(el){el.focus();try{el.setSelectionRange(keep.s,keep.s);}catch(e){}}}
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const go=e.target.closest('[data-go]');if(go){location.hash='#'+go.dataset.go;return;}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,id=b.dataset.id;
+  const t=todayK();
+  switch(a){
+    case 'who':me=b.dataset.p;try{localStorage.setItem('h3-whoami',me);}catch(x){}startSyncOnce();ui.route='today';render();return;
+    case 'switch':try{localStorage.removeItem('h3-whoami');}catch(x){}me=null;render();return;
+    case 'tog':{const f=findHabit(id);if(!f)return;setVal(id,t,isDone(me,f.h,t)?0:1);break;}
+    case 'add':{const f=findHabit(id);setVal(id,t,Math.min(f.h.target,val(me,id,t)+f.h.step));break;}
+    case 'sub':{const f=findHabit(id);setVal(id,t,Math.max(0,val(me,id,t)-f.h.step));break;}
+    case 'cov':setVal(id,t,val(me,id,t)>=1?0:1);break;
+    case 'preset':{const p=ALLP.find(x=>x.id===id);const d=ui.draft;d.preset=id;d.name=p.full;d.type=p.type;if(p.target){d.target=p.target;d.unit=p.unit;d.step=p.step;d.stepTouched=true;}else{d.target=1;}break;}
+    case 'dtype':ui.draft.type=b.dataset.v;if(b.dataset.v==='number'&&ui.draft.target<2){ui.draft.target=100;ui.draft.unit='reps';ui.draft.step=10;}break;
+    case 'dday':{const d=ui.draft;d.days[+b.dataset.i]=d.days[+b.dataset.i]?0:1;break;}
+    case 'dshare':ui.draft.shared=b.dataset.v==='1';break;
+    case 'stepedit':ui.stepEdit=!ui.stepEdit;break;
+    case 'closeadd':ui.draft=null;break;
+    case 'startgroup':ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:true,preset:null,days:[1,1,1,1,1,1,1],group:true};break;
+    case 'create':{
+      const d=ui.draft;if(!d.name.trim())return;
+      const o={name:d.name.trim(),type:d.type,days:d.days.slice(),shared:d.shared,preset:d.preset||null};
+      if(d.type==='number'){o.target=Math.max(1,+d.target||1);o.unit=d.unit||'';o.step=Math.max(1,+d.step||1);}
+      let h;if(d.group){o.shared=true;}
+      h=newHabit(o);if(d.group){h.groupId=h.id;h.groupOwner=me;save('habits');}
+      ui.draft=null;location.hash='#today';return;}
+    case 'hshare':{const f=findHabit(id);f.h.shared=b.dataset.v==='1';save('habits');break;}
+    case 'pause':{const f=findHabit(id);f.h.paused=!f.h.paused;f.h.pausedAt=f.h.paused?t:null;save('habits');break;}
+    case 'saveedit':{const f=findHabit(id);const d=ui.draft;f.h.name=(d.name||f.h.name).trim();if(f.h.type==='number'){f.h.target=Math.max(1,+d.target||f.h.target);f.h.step=d.step;}f.h.days=d.days.slice();save('habits');ui.draft=null;location.hash='#habit/'+id;return;}
+    case 'cancel':ui.draft=null;break;
+    case 'stepdn':case 'stepup':{const st=[1,2,5,8,10,25,50,100];let i=st.indexOf(+ui.draft.step);if(i<0)i=2;i=Math.max(0,Math.min(st.length-1,i+(a==='stepup'?1:-1)));ui.draft.step=st[i];break;}
+    case 'askarch':ui.confirm=true;break;
+    case 'keep':ui.confirm=false;break;
+    case 'archive':{const f=findHabit(id);f.h.archived=true;save('habits');ui.confirm=false;ui.draft=null;location.hash='#today';return;}
+    case 'unarch':{const f=findHabit(id);f.h.archived=false;save('habits');break;}
+    case 'vote':{const wk=votingWeek(t);(D.vote[me]||(D.vote[me]={}))[wk]=id;save('vote');ui.voteOpen=false;break;}
+    case 'reopen':ui.voteOpen=true;break;
+    case 'rx':{const r=(D.rx[me]||(D.rx[me]={}));const o=(r[id]||(r[id]={}));o[b.dataset.k]=!o[b.dataset.k];save('rx');break;}
+    case 'join':{const src=findHabit(id);if(!src)return;if(myHabits(me).some(h=>h.groupId===src.h.groupId))return;newHabit({name:src.h.name,type:src.h.type,target:src.h.target||1,unit:src.h.unit||'',step:src.h.step||1,days:src.h.days.slice(),shared:true,preset:src.h.preset||null,groupId:src.h.groupId,groupOwner:src.h.groupOwner});break;}
+    case 'stand':ui.standMode=b.dataset.v;break;
+    case 'skywho':ui.sky=b.dataset.p;break;
+    case 'snext':ui.setupStep=Math.min(4,ui.setupStep+1);{const pr=D.prof[me]||(D.prof[me]={});if(ui.setupStep===4||true){pr.setup=true;}save('prof');}break;
+    case 'sdone':{const pr=D.prof[me]||(D.prof[me]={});pr.setup=true;save('prof');break;}
+    default:return;
+  }
+  render();
+});
+document.addEventListener('input',e=>{
+  const i=e.target.dataset&&e.target.dataset.in;if(!i)return;const v=e.target.value;
+  if(i.startsWith('big-')){const pr=D.prof[me]||(D.prof[me]={});(pr.big3||(pr.big3={}))[i.slice(4)]=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);return;}
+  if(i==='sname'){const pr=D.prof[me]||(D.prof[me]={});pr.name=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);return;}
+  const d=ui.draft;if(!d)return;
+  d[i]=v;
+  if(i==='name'&&d.preset&&ALLP.find(x=>x.id===d.preset).full!==v)d.preset=null;
+  if(i==='target'&&!d.stepTouched){d.step=suggestStep(v);}
+  if(i==='step')d.stepTouched=true;
+  if(i==='name'){const btn=document.querySelector('[data-act=create]');if(btn)btn.disabled=!v.trim();}
+});
+window.addEventListener('hashchange',route);
+let synced=false;function startSyncOnce(){if(synced)return;synced=true;startSync();}
+if(me)startSyncOnce();
+route();
+// midnight rollover and tab refocus
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+setInterval(()=>{if(!document.hidden&&!(document.activeElement&&document.activeElement.tagName==='INPUT'))render();},60000);
+if('serviceWorker' in navigator){/* intentionally none: the live sw.js caches index.html only */}
+</script>
+</body>
+</html>
