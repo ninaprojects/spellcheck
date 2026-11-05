@@ -1,7 +1,7 @@
 import json, base64, io, time, os, sys
 sys.dont_write_bytecode = True
 HERE = os.path.dirname(os.path.abspath(__file__))
-APP = os.environ.get('SPELLCHECK_APP', os.path.join(HERE, '..', 'index.html'))
+APP = os.environ.get('SPELLCHECK_APP', os.path.join(HERE, '..', 'old-app.html'))
 from playwright.sync_api import sync_playwright
 
 PNG = 'data:image/png;base64,' + base64.b64encode(bytes.fromhex(
