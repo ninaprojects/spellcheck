@@ -22,12 +22,13 @@
 :root{--bg:#FFFEFD;--text:#1A1A1A;--sec:#767066;--yellow:#FFC94F;--ytint:#FFF3D6;--pink:#FF6FA8;--ptint:#FFEEF5;--blue:#4FA8FF;--line:#E9E4DA;--line2:#D8D2C6;--plum:#6B4E8A;--ctl:#8C8578}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}
-body{min-height:100vh;display:flex;justify-content:center}
-#app{width:100%;max-width:480px;min-height:100vh;display:flex;flex-direction:column;position:relative}
+body{min-height:100vh;min-height:100dvh;display:flex;justify-content:center;-webkit-tap-highlight-color:transparent}
+button,a,.opt{touch-action:manipulation}
+#app{width:100%;max-width:480px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;position:relative}
 button,input{font-family:inherit;color:inherit}
 button{cursor:pointer}
 .serif{font-family:'Noto Serif Display',Georgia,serif;font-weight:600}
-.top{display:flex;align-items:center;justify-content:space-between;padding:22px 20px 10px}
+.top{display:flex;align-items:center;justify-content:space-between;padding:calc(22px + env(safe-area-inset-top)) 20px 10px}
 .brand{font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:22px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--ytint);border:2px solid var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
 .body{flex:1;padding:6px 20px 110px;display:flex;flex-direction:column;gap:16px}
@@ -89,7 +90,7 @@ input[type=text],input[type=number]{font-size:16px;height:48px;border:1px solid 
 .av.on{background:var(--ytint);border-color:var(--yellow);color:var(--text)}
 .rank{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .rank:last-child{border-bottom:0}
-.sync{position:fixed;top:8px;right:12px;font-size:11px;color:var(--sec)}
+.sync{position:fixed;top:calc(8px + env(safe-area-inset-top));right:12px;z-index:5;font-size:11px;color:var(--sec)}
 .center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:0 28px}
 .warn{border:1px solid var(--yellow);background:var(--ytint);padding:12px;font-size:13px}
 @media (prefers-reduced-motion:no-preference){button{transition:background .15s,border-color .15s}}
@@ -297,7 +298,7 @@ function winnerFor(wk){
   return tied[hash(wk)%tied.length]; // random tie break, stable per week
 }
 function covenHabitFor(wk){ // the habit running this week = winner of last week's vote, else the previous habit, else the first option
-  const prev=addDays(wk,-7);return winnerFor(prev)||(wk>weekStart(SEASON_START)?covenHabitFor(prev):'phone');
+  return winnerFor(wk)||(wk>weekStart(SEASON_START)?covenHabitFor(addDays(wk,-7)):'phone');
 }
 function votingWeek(k){return addDays(weekStart(k),7);} // vote is for next week
 
@@ -449,15 +450,15 @@ function buildFeed(){
   const items=[];const t=todayK();
   const wk=weekStart(t);
   // vote result for this week
-  const pw=addDays(wk,-7);const w=winnerFor(pw);
-  if(w)items.push({id:'vote:'+wk,at:wk+'a',who:'The coven',text:` has spoken. Next week is ${optName(w)}.`.replace('Next week is','This week is')});
-  else if(Object.keys(votesFor(pw)).length===0&&wk>weekStart(SEASON_START))items.push({id:'novote:'+wk,at:wk+'a',who:'The coven',text:` Nobody voted, so we are running it back. This week is ${optName(covenHabitFor(wk))} again.`});
+  const pw=wk;const w=winnerFor(pw);
+  if(w)items.push({id:'vote:'+wk,at:wk+'a',who:'The coven',text:` has spoken. This week is ${optName(w)}.`});
+  else if(Object.keys(votesFor(pw)).length===0&&wk>weekStart(SEASON_START)&&!w)items.push({id:'novote:'+wk,at:wk+'a',who:'The coven',text:` Nobody voted, so we are running it back. This week is ${optName(covenHabitFor(wk))} again.`});
   for(const p of PEOPLE){
     const logs=D.log[p]||{};
     for(const k of Object.keys(logs).sort().slice(-14)){
       for(const id of Object.keys(logs[k]||{})){
         if(!logs[k][id])continue;
-        if(id.startsWith('_spell_')){const ev=weekEvent(k);if(ev)items.push({id:'sp:'+p+k,at:k+'m',who:p,text:' '+fill(pick(L_MOON,p+k),{name:'',event:ev.name}).replace(/^\s+/,'').replace(/^(\{name\}\s*)/,'')});continue;}
+        if(id.startsWith('_spell_')){const ev=weekEvent(k);if(ev)items.push({id:'sp:'+p+k,at:k+'m',who:p,text:fill(pick(L_MOON,p+k),{name:'\u0001',event:ev.name})});continue;}
         if(id.startsWith('_'))continue;
         const f=findHabit(id);if(!f||f.p!==p||!f.h.shared)continue;
         const h=f.h;if(!isDone(p,h,k))continue;
