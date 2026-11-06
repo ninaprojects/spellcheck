@@ -13,7 +13,7 @@ def seed(page):
     page.add_init_script("""
       localStorage.setItem('h3-whoami','Nina');
       localStorage.setItem('h3c-prof-Nina',JSON.stringify({setup:true,big3:{sun:'Libra',moon:'Pisces',rising:''}}));
-      const hb={a:{id:'a',name:'Move',type:'yesno',days:[1,1,1,1,1,1,1],shared:true,created:1,createdDay:'2026-11-01'},b:{id:'b',name:'Read',type:'yesno',days:[1,1,1,1,1,1,1],shared:false,created:2,createdDay:'2026-11-01'}};
+      const hb={a:{id:'a',name:'Move',type:'yesno',days:[1,1,1,1,1,1,1],shared:true,created:1,createdDay:'2026-11-01',preset:'move'},b:{id:'b',name:'Read',type:'yesno',days:[1,1,1,1,1,1,1],shared:false,created:2,createdDay:'2026-11-01'}};
       localStorage.setItem('h3c-habits-Nina',JSON.stringify(hb));
     """)
 with sync_playwright() as pw:
@@ -30,7 +30,10 @@ with sync_playwright() as pw:
         ck(f'{w} strip shows',page.locator('.strip').count()==1)
         ck(f'{w} progress 0 of 2','0 of 2 done today' in page.inner_text('#app'))
         ck(f'{w} no all-done yet',page.locator('.alldone').count()==0)
+        ck(f'{w} every habit has an icon',page.locator('.habit .hico').count()==2)
+        ck(f'{w} preset habit gets its own drawing',page.locator('.hico.i-move').count()==1 and page.locator('.hico.i-star').count()==1)
         page.click('[data-act=tog][data-id=a]')
+        ck(f'{w} icon animates on tick',page.locator('.hico.go').count()==1)
         ck(f'{w} progress 1 of 2','1 of 2 done today' in page.inner_text('#app'))
         page.click('[data-act=tog][data-id=b]')
         ck(f'{w} all-done line',page.locator('.alldone').count()==1)
