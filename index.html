@@ -158,6 +158,11 @@ const L_MOON=['{name} cast the {event} spell. The moon is taking credit.','{name
    Add ?brew=preview to the URL to see the card with these drafts. */
 const BREW_PREVIEW=/[?&]brew=preview/.test(location.search);
 const QUESTIONS=['What did you do this week that nobody saw?','What is a tiny thing that made today better?','What are you pretending not to be excited about?','What would you do tomorrow if nobody could judge you?','What is the best thing you ate this week?','Which of us would you call first with good news?','What is a small win nobody clapped for?','What are you avoiding that would take five minutes?','What song has been on repeat?','What is something you used to love that you want back?','What is the kindest thing someone did for you lately?','What would your past self be proud of you for?','What is a hill you will die on this week?','What are you secretly good at?','What was the last thing that made you laugh out loud?','If today had a theme song, what would it be?','What is one thing you are letting go of?','What is a smell that takes you somewhere?','What is your most unhinged opinion about food?','What did you need to hear today?','What is a boundary you are proud of?','What is your comfort show right now?','What is one thing you want to do before the year ends?','What would a perfect Sunday look like?','What was the best thing you read, watched, or heard this week?','What are you grateful for that is not obvious?','What is something you are weirdly proud of?','What is one thing you would confess to the group chat?'].map(q=>({q,ok:false}));
+/* Sky tags for the brew card. Dates are Pacific, checked against two sources and an astronomy library on Nov 5 2026. Later dates need re-checking before use. */
+const SKY_DAYS={'2026-11-08':'New Moon in Scorpio','2026-11-13':'Mercury and Venus turn forward','2026-11-22':'Sun enters Sagittarius','2026-11-24':'Full Moon in Gemini','2026-12-08':'New Moon in Sagittarius','2026-12-10':'Saturn turns forward','2026-12-21':'Sun enters Capricorn','2026-12-23':'Full Moon in Cancer'};
+const SKY_Q={'2026-11-08':'Scorpio runs the steamy stuff. What are you hoping to get into this month?','2026-11-13':'Everything is moving forward again. What have you been waiting to get back to?','2026-11-22':'Sagittarius season wants a plan and a plane ticket. Where to, and who is coming?','2026-11-24':'Full moon in Gemini, the talkative sign. Whose text are you leaving on read?','2026-12-08':'What are you about to be unreasonably brave about?','2026-12-10':'What did you say you would do, and are now actually going to do?','2026-12-21':'Longest night of the year. What are you building next year, and who is on the crew?','2026-12-23':'Full moon in Cancer, the homebody sign. Who makes you feel most at home?'};
+const SKY_RX_Q='Which ex is back in your head, and is it a visit or a stay?';
+function skyTag(k){return SKY_DAYS[k]||(k>='2026-11-05'&&k<='2026-11-12'?'Mercury and Venus backing up':moonPhaseName(k));}
 const BREW_LINE='{name} answered today\'s brew. No spoilers until you do.';
 
 /* ---------- helpers ---------- */
@@ -316,6 +321,8 @@ function covenHabitFor(wk){ // the habit running this week = winner of last week
 }
 function brewQ(k){
   const i=Math.round((parse(k)-parse(SEASON_START))/86400000);if(i<0)return null;
+  if(SKY_Q[k])return BREW_PREVIEW?SKY_Q[k]:null; // drafts until Nina approves
+  if(k>='2026-11-05'&&k<='2026-11-12')return BREW_PREVIEW?SKY_RX_Q:null;
   const q=QUESTIONS[i%QUESTIONS.length];return q&&(q.ok||BREW_PREVIEW)?q.q:null;
 }
 function brewAns(p,k){return (D.qa[p]||{})[k]||null;}
@@ -396,7 +403,7 @@ function brewCard(t){
   if(ui.brewOpen){body=`<div class="field"><label for="bi" style="color:#CBBFE6">Your answer, 140 characters</label><input id="bi" type="text" maxlength="140" value="${esc(mine?mine.t:'')}" data-in="brew" autocomplete="off"></div><div style="display:flex;gap:16px;align-items:center"><button class="pill" data-act="brewsave" style="width:auto;padding:0 24px">Save</button><button class="link" data-act="brewclose" style="color:#CBBFE6;text-decoration-color:#CBBFE6">Cancel</button></div>`;}
   else if(mine){body=`<div style="font-size:16px;line-height:1.4">${esc(mine.t)}</div><div class="row"><span class="small">${wait}</span><button class="link" data-act="brewopen" style="color:#fff;text-decoration-color:#FFC94F">Edit</button></div>`;}
   else body=`<div class="row"><div style="display:flex;align-items:center;gap:12px"><span aria-hidden="true" style="display:inline-flex;padding-left:6px">${ans.map(p=>`<span class="mini">${initial(p)}</span>`).join('')}</span><span class="small">${wait}</span></div><button class="pill" data-act="brewopen" style="width:auto;padding:0 22px;min-height:44px">Spill it</button></div>`;
-  return `<div class="card sky"><div class="label">Today's brew</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;line-height:1.25">${esc(q)}</div>${body}</div>`;
+  return `<div class="card sky"><div class="label">Today's brew</div><div class="small" style="color:#FFC94F;margin-top:-4px">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;line-height:1.25">${esc(q)}</div>${body}</div>`;
 }
 function skyLine(phase){return phase==='New Moon'?'A fresh start is on the table.':phase==='Full Moon'?'Things are bright and a little loud.':'The moon is doing its thing. So are we.';}
 function list(a){return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
