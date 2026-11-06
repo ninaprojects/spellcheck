@@ -109,7 +109,7 @@ input[type=text],input[type=number]{font-size:16px;height:48px;border:1px solid 
 .con .n.on{background:#FFC94F;border-color:#FFC94F;color:#1B1630;box-shadow:0 0 12px 2px rgba(255,201,79,.5)}
 .con .ln{width:14px;height:1.5px;background:rgba(203,191,230,.3)}
 .con .ln.on{background:#FFC94F;opacity:.8}
-@media (prefers-reduced-motion:no-preference){.con .n.on.pop{animation:starpop .7s ease-out}@keyframes starpop{0%{transform:scale(.6);box-shadow:0 0 0 0 rgba(255,201,79,.9)}50%{transform:scale(1.25)}100%{transform:scale(1);box-shadow:0 0 12px 2px rgba(255,201,79,.5)}}.brewmoon{animation:moondrift 14s ease-in-out infinite alternate}@keyframes moondrift{from{transform:translate(0,0)}to{transform:translate(-4px,3px)}}.con .n.on{animation:starpulse 3.2s ease-in-out infinite}@keyframes starpulse{50%{box-shadow:0 0 16px 4px rgba(255,201,79,.65)}}}
+@media (prefers-reduced-motion:no-preference){.brewstar{animation:twinkle 4s ease-in-out infinite}@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:.95;transform:scale(1.5)}}.con .n.on.pop{animation:starpop .7s ease-out}@keyframes starpop{0%{transform:scale(.6);box-shadow:0 0 0 0 rgba(255,201,79,.9)}50%{transform:scale(1.25)}100%{transform:scale(1);box-shadow:0 0 12px 2px rgba(255,201,79,.5)}}.brewmoon{animation:moondrift 14s ease-in-out infinite alternate}@keyframes moondrift{from{transform:translate(0,0)}to{transform:translate(-4px,3px)}}.con .n.on{animation:starpulse 3.2s ease-in-out infinite}@keyframes starpulse{50%{box-shadow:0 0 16px 4px rgba(255,201,79,.65)}}}
 .sky .label,.brewcard .label{color:#CBBFE6}.sky .small,.brewcard .small{color:#CBBFE6}
 .sky .pill,.brewcard .pill{background:#FFEEF5;color:#1A1A1A;white-space:nowrap}
 .sky input,.brewcard input{background:#fff;color:#1A1A1A;border:0}
@@ -255,6 +255,7 @@ function haptic(kind){
     _hl.click();if(kind==='done')setTimeout(()=>{try{_hl.click();}catch(e){}},90);
   }catch(e){}
 }
+const BREW_STARS=[[8,14,2,0,3.4],[22,46,1.5,1.1,4.2],[41,9,2,2.2,3.8],[58,30,1.5,.6,4.6],[67,62,2,1.7,3.2],[12,78,1.5,2.6,4.4],[34,88,2,.3,3.6],[52,72,1.5,1.9,4],[78,84,2,2.9,3.4],[90,48,1.5,.9,4.8],[47,50,1,1.4,5],[86,92,1,2.4,4.1],[4,52,1,3.1,4.5]].map(([x,y,z,d,u])=>`<span class="brewstar" style="left:${x}%;top:${y}%;width:${z}px;height:${z}px;animation-delay:${d}s;animation-duration:${u}s"></span>`).join('');
 function moonFrac(k){const P=29.530588861;const jd=parse(k).getTime()/86400000+2440587.5+0.5;return (((jd-2451550.09766)%P+P)%P)/P;}
 function moonSvg(k){
   const f=moonFrac(k),wax=f<.5,ff=wax?f:1-f,kk=Math.cos(2*Math.PI*ff),r=60,rx=Math.abs(kk)*r;
@@ -433,7 +434,7 @@ function brewCard(t){
   else if(mine){body=`<div style="font-size:16px;line-height:1.4">${esc(mine.t)}</div><div class="row">${con}<button class="link" data-act="brewopen" style="color:#fff;text-decoration-color:#FFC94F">Edit</button></div>`;}
   else body=`<div class="row">${con}<button class="pill" data-act="brewopen" style="width:auto;padding:0 22px;min-height:44px;white-space:nowrap">Spill it</button></div>`;
   const m=moonSvg(t);
-  return `<div class="card brewcard"><div class="brewmoon" style="opacity:${(.35+.65*m.ill).toFixed(2)};box-shadow:0 0 30px 8px rgba(255,201,79,${(.28*m.ill).toFixed(2)})">${m.svg}</div><span class="brewstar" style="left:30px;top:150px"></span><span class="brewstar" style="left:210px;top:130px"></span><span class="brewstar" style="left:300px;top:180px;opacity:.4"></span><div class="label">Today's brew</div><div class="skytag">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:23px;line-height:1.22;margin-right:50px">${esc(q)}</div>${body}</div>`;
+  return `<div class="card brewcard"><div class="brewmoon" style="opacity:${(.35+.65*m.ill).toFixed(2)};box-shadow:0 0 30px 8px rgba(255,201,79,${(.28*m.ill).toFixed(2)})">${m.svg}</div>${BREW_STARS}<div class="label">Today's brew</div><div class="skytag">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:23px;line-height:1.22;margin-right:50px">${esc(q)}</div>${body}</div>`;
 }
 function skyLine(phase){return phase==='New Moon'?'A fresh start is on the table.':phase==='Full Moon'?'Things are bright and a little loud.':'The moon is doing its thing. So are we.';}
 function list(a){return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
