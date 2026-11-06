@@ -16,7 +16,7 @@
 <meta property="og:description" content="Small habits, shared with the coven.">
 <meta property="og:image" content="https://ninaprojects.github.io/spellcheck/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+Display:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+Display:wght@600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <style>
@@ -99,9 +99,20 @@ input[type=text],input[type=number]{font-size:16px;height:48px;border:1px solid 
 .center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:0 28px}
 .warn{border:1px solid var(--yellow);background:var(--ytint);padding:12px;font-size:13px}
 .sky{background:radial-gradient(circle at 18% 22%,rgba(255,255,255,.55) 0 1px,transparent 2px),radial-gradient(circle at 72% 30%,rgba(255,255,255,.45) 0 1px,transparent 2px),radial-gradient(circle at 44% 78%,rgba(255,255,255,.5) 0 1px,transparent 2px),radial-gradient(circle at 88% 70%,rgba(255,201,79,.7) 0 1.5px,transparent 2.5px),#1B1630;color:#fff;border:0;padding:18px;display:flex;flex-direction:column;gap:10px}
-.sky .label{color:#CBBFE6}.sky .small{color:#CBBFE6}
-.sky .pill{background:#FFEEF5;color:#1A1A1A;white-space:nowrap}
-.sky input{background:#fff;color:#1A1A1A;border:0}
+.brewcard{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 85% 0%,#4a2f78 0,transparent 55%),radial-gradient(90% 60% at 0% 100%,#2c1f52 0,transparent 60%),#1B1630;color:#fff;border:0;padding:18px;display:flex;flex-direction:column;gap:10px}
+.brewmoon{position:absolute;right:-18px;top:-18px;width:92px;height:92px;border-radius:50%;pointer-events:none}
+.brewstar{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.6;pointer-events:none}
+.brewcard>*:not(.brewmoon):not(.brewstar){position:relative}
+.skytag{display:flex;align-items:center;gap:8px;color:#FFC94F;font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-weight:400;font-size:20px;line-height:1.2;margin-top:-4px}
+.con{display:flex;align-items:center}
+.con .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;border:1.5px solid rgba(203,191,230,.5);color:#CBBFE6}
+.con .n.on{background:#FFC94F;border-color:#FFC94F;color:#1B1630;box-shadow:0 0 12px 2px rgba(255,201,79,.5)}
+.con .ln{width:14px;height:1.5px;background:rgba(203,191,230,.3)}
+.con .ln.on{background:#FFC94F;opacity:.8}
+@media (prefers-reduced-motion:no-preference){.brewstar{animation:twinkle 4s ease-in-out infinite}@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:.95;transform:scale(1.5)}}.con .n.on.pop{animation:starpop .7s ease-out}@keyframes starpop{0%{transform:scale(.6);box-shadow:0 0 0 0 rgba(255,201,79,.9)}50%{transform:scale(1.25)}100%{transform:scale(1);box-shadow:0 0 12px 2px rgba(255,201,79,.5)}}.brewmoon{animation:moondrift 14s ease-in-out infinite alternate}@keyframes moondrift{from{transform:translate(0,0)}to{transform:translate(-4px,3px)}}.con .n.on{animation:starpulse 3.2s ease-in-out infinite}@keyframes starpulse{50%{box-shadow:0 0 16px 4px rgba(255,201,79,.65)}}}
+.sky .label,.brewcard .label{color:#CBBFE6}.sky .small,.brewcard .small{color:#CBBFE6}
+.sky .pill,.brewcard .pill{background:#FFEEF5;color:#1A1A1A;white-space:nowrap}
+.sky input,.brewcard input{background:#fff;color:#1A1A1A;border:0}
 .mini{width:22px;height:22px;border-radius:50%;background:var(--ytint);border:1px solid var(--yellow);color:var(--text);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;margin-right:-6px}
 @media (prefers-reduced-motion:no-preference){button{transition:background .15s,border-color .15s}}
 </style>
@@ -158,6 +169,11 @@ const L_MOON=['{name} cast the {event} spell. The moon is taking credit.','{name
    Add ?brew=preview to the URL to see the card with these drafts. */
 const BREW_PREVIEW=/[?&]brew=preview/.test(location.search);
 const QUESTIONS=['What did you do this week that nobody saw?','What is a tiny thing that made today better?','What are you pretending not to be excited about?','What would you do tomorrow if nobody could judge you?','What is the best thing you ate this week?','Which of us would you call first with good news?','What is a small win nobody clapped for?','What are you avoiding that would take five minutes?','What song has been on repeat?','What is something you used to love that you want back?','What is the kindest thing someone did for you lately?','What would your past self be proud of you for?','What is a hill you will die on this week?','What are you secretly good at?','What was the last thing that made you laugh out loud?','If today had a theme song, what would it be?','What is one thing you are letting go of?','What is a smell that takes you somewhere?','What is your most unhinged opinion about food?','What did you need to hear today?','What is a boundary you are proud of?','What is your comfort show right now?','What is one thing you want to do before the year ends?','What would a perfect Sunday look like?','What was the best thing you read, watched, or heard this week?','What are you grateful for that is not obvious?','What is something you are weirdly proud of?','What is one thing you would confess to the group chat?'].map(q=>({q,ok:false}));
+/* Sky tags for the brew card. Dates are Pacific, checked against two sources and an astronomy library on Nov 5 2026. Later dates need re-checking before use. */
+const SKY_DAYS={'2026-11-08':'New Moon in Scorpio','2026-11-13':'Mercury and Venus turn forward','2026-11-22':'Sun enters Sagittarius','2026-11-24':'Full Moon in Gemini','2026-12-08':'New Moon in Sagittarius','2026-12-10':'Saturn turns forward','2026-12-21':'Sun enters Capricorn','2026-12-23':'Full Moon in Cancer'};
+const SKY_Q={'2026-11-08':'Scorpio runs the steamy stuff. What are you hoping to get into this month?','2026-11-13':'Everything is moving forward again. What have you been waiting to get back to?','2026-11-22':'Sagittarius season wants a plan and a plane ticket. Where to, and who is coming?','2026-11-24':'Full moon in Gemini, the talkative sign. Whose text are you leaving on read?','2026-12-08':'What are you about to be unreasonably brave about?','2026-12-10':'What did you say you would do, and are now actually going to do?','2026-12-21':'Longest night of the year. What are you building next year, and who is on the crew?','2026-12-23':'Full moon in Cancer, the homebody sign. Who makes you feel most at home?'};
+const SKY_RX_Q='Which ex is back in your head, and is it a visit or a stay?';
+function skyTag(k){return SKY_DAYS[k]||(k>='2026-11-05'&&k<='2026-11-12'?'Mercury and Venus backing up':moonPhaseName(k));}
 const BREW_LINE='{name} answered today\'s brew. No spoilers until you do.';
 
 /* ---------- helpers ---------- */
@@ -229,6 +245,24 @@ function moonEvents(fromK,toK){
   return out;
 }
 function weekEvent(k){const ws=weekStart(k);const ev=moonEvents(ws,addDays(ws,6));return ev[0]||null;}
+/* Haptics. Android uses the Vibration API. iOS Safari has none, so we click a hidden switch, which gives a light tick on iOS 17.4 and later. Both are best effort and silent when unsupported. Off for Reduce Motion. */
+let _hl=null;
+function haptic(kind){
+  try{
+    if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    if(navigator.vibrate){navigator.vibrate(kind==='done'?[12,60,24]:10);return;}
+    if(!_hl){_hl=document.createElement('label');_hl.setAttribute('aria-hidden','true');_hl.style.cssText='position:fixed;left:-99px;top:0;width:1px;height:1px;overflow:hidden;opacity:0';const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');i.tabIndex=-1;_hl.appendChild(i);document.body.appendChild(_hl);}
+    _hl.click();if(kind==='done')setTimeout(()=>{try{_hl.click();}catch(e){}},90);
+  }catch(e){}
+}
+const BREW_STARS=[[8,14,2,0,3.4],[22,46,1.5,1.1,4.2],[41,9,2,2.2,3.8],[58,30,1.5,.6,4.6],[67,62,2,1.7,3.2],[12,78,1.5,2.6,4.4],[34,88,2,.3,3.6],[52,72,1.5,1.9,4],[78,84,2,2.9,3.4],[90,48,1.5,.9,4.8],[47,50,1,1.4,5],[86,92,1,2.4,4.1],[4,52,1,3.1,4.5],[16,30,1.5,.4,3.9],[29,64,1,2.0,4.7],[46,22,1.5,2.8,3.5],[62,10,1,1.2,4.3],[74,40,1.5,3.3,3.7],[84,70,1,.8,4.9],[95,28,1.5,2.1,4.0],[20,94,1.5,1.6,3.3],[60,92,1,3.0,4.4],[38,38,1,.2,5.1],[72,55,2,2.5,3.6],[5,30,1,1.9,4.6]].map(([x,y,z,d,u])=>`<span class="brewstar" style="left:${x}%;top:${y}%;width:${z}px;height:${z}px;animation-delay:${d}s;animation-duration:${u}s"></span>`).join('');
+function moonFrac(k){const P=29.530588861;const jd=parse(k).getTime()/86400000+2440587.5+0.5;return (((jd-2451550.09766)%P+P)%P)/P;}
+function moonSvg(k){
+  const f=moonFrac(k),wax=f<.5,ff=wax?f:1-f,kk=Math.cos(2*Math.PI*ff),r=60,rx=Math.abs(kk)*r;
+  const lit=`M64 4A60 60 0 0 1 64 124A${rx.toFixed(1)} 60 0 0 ${kk>0?0:1} 64 4Z`;
+  const ill=(1-Math.cos(2*Math.PI*f))/2;
+  return {svg:`<svg viewBox="0 0 128 128" width="100%" height="100%" aria-hidden="true"><defs><radialGradient id="mg" cx="38%" cy="36%" r="75%"><stop offset="0" stop-color="#FFF3CF"/><stop offset=".55" stop-color="#FFD97A"/><stop offset="1" stop-color="#E9AE3A"/></radialGradient><clipPath id="mc"><path d="${lit}"/></clipPath></defs><circle cx="64" cy="64" r="60" fill="#2A2150" stroke="rgba(255,201,79,.35)" stroke-width="1.5"/><g transform="${wax?'':'translate(128 0) scale(-1 1)'}"><path d="${lit}" fill="url(#mg)"/><g clip-path="url(#mc)" fill="rgba(190,130,30,.28)"><circle cx="46" cy="70" r="11"/><circle cx="84" cy="46" r="7"/><circle cx="70" cy="96" r="5"/></g></g></svg>`,ill};
+}
 function moonPhaseName(k){
   const P=29.530588861;const jd=parse(k).getTime()/86400000+2440587.5+0.5;
   const age=((jd-2451550.09766)%P+P)%P;
@@ -316,6 +350,8 @@ function covenHabitFor(wk){ // the habit running this week = winner of last week
 }
 function brewQ(k){
   const i=Math.round((parse(k)-parse(SEASON_START))/86400000);if(i<0)return null;
+  if(SKY_Q[k])return BREW_PREVIEW?SKY_Q[k]:null; // drafts until Nina approves
+  if(k>='2026-11-05'&&k<='2026-11-12')return BREW_PREVIEW?SKY_RX_Q:null;
   const q=QUESTIONS[i%QUESTIONS.length];return q&&(q.ok||BREW_PREVIEW)?q.q:null;
 }
 function brewAns(p,k){return (D.qa[p]||{})[k]||null;}
@@ -392,11 +428,13 @@ function brewCard(t){
   const ans=PEOPLE.filter(p=>brewAns(p,t));const mine=brewAns(me,t);
   const others=ans.filter(p=>p!==me);
   const wait=!mine&&others.length?`${ans.length} of 4 answered. ${list(others)} already answered. No spoilers until you do.`:`${ans.length} of 4 answered`;
+  const con=`<div class="con" role="img" aria-label="${wait}">`+PEOPLE.map((p,i)=>`${i?`<span class="ln${brewAns(PEOPLE[i-1],t)&&brewAns(p,t)?' on':''}"></span>`:''}<span class="n${brewAns(p,t)?' on':''}${ui.starPop===p+t?' pop':''}">${initial(p)}</span>`).join('')+`</div>`;
   let body;
   if(ui.brewOpen){body=`<div class="field"><label for="bi" style="color:#CBBFE6">Your answer, 140 characters</label><input id="bi" type="text" maxlength="140" value="${esc(mine?mine.t:'')}" data-in="brew" autocomplete="off"></div><div style="display:flex;gap:16px;align-items:center"><button class="pill" data-act="brewsave" style="width:auto;padding:0 24px">Save</button><button class="link" data-act="brewclose" style="color:#CBBFE6;text-decoration-color:#CBBFE6">Cancel</button></div>`;}
-  else if(mine){body=`<div style="font-size:16px;line-height:1.4">${esc(mine.t)}</div><div class="row"><span class="small">${wait}</span><button class="link" data-act="brewopen" style="color:#fff;text-decoration-color:#FFC94F">Edit</button></div>`;}
-  else body=`<div class="row"><div style="display:flex;align-items:center;gap:12px"><span aria-hidden="true" style="display:inline-flex;padding-left:6px">${ans.map(p=>`<span class="mini">${initial(p)}</span>`).join('')}</span><span class="small">${wait}</span></div><button class="pill" data-act="brewopen" style="width:auto;padding:0 22px;min-height:44px">Spill it</button></div>`;
-  return `<div class="card sky"><div class="label">Today's brew</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;line-height:1.25">${esc(q)}</div>${body}</div>`;
+  else if(mine){body=`<div style="font-size:16px;line-height:1.4">${esc(mine.t)}</div><div class="row">${con}<button class="link" data-act="brewopen" style="color:#fff;text-decoration-color:#FFC94F">Edit</button></div>`;}
+  else body=`<div class="row">${con}<button class="pill" data-act="brewopen" style="width:auto;padding:0 22px;min-height:44px;white-space:nowrap">Spill it</button></div>`;
+  const m=moonSvg(t);
+  return `<div class="card brewcard"><div class="brewmoon" style="opacity:${(.35+.65*m.ill).toFixed(2)};box-shadow:0 0 30px 8px rgba(255,201,79,${(.28*m.ill).toFixed(2)})">${m.svg}</div>${BREW_STARS}<div class="label">Today's brew</div><div class="skytag">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:23px;line-height:1.22;margin-right:50px">${esc(q)}</div>${body}</div>`;
 }
 function skyLine(phase){return phase==='New Moon'?'A fresh start is on the table.':phase==='Full Moon'?'Things are bright and a little loud.':'The moon is doing its thing. So are we.';}
 function list(a){return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
@@ -675,9 +713,9 @@ document.addEventListener('click',e=>{
     case 'cov':setVal(id,t,val(me,id,t)>=1?0:1);break;
     case 'preset':{const p=ALLP.find(x=>x.id===id);const d=ui.draft;d.preset=id;d.name=p.full;d.type=p.type;if(p.target){d.target=p.target;d.unit=p.unit;d.step=p.step;d.stepTouched=true;}else{d.target=1;}break;}
     case 'dtype':ui.draft.type=b.dataset.v;if(b.dataset.v==='number'&&ui.draft.target<2){ui.draft.target=100;ui.draft.unit='reps';ui.draft.step=10;}break;
-    case 'brewopen':ui.brewOpen=true;break;
+    case 'brewopen':ui.brewOpen=true;haptic('tap');break;
     case 'brewclose':ui.brewOpen=false;break;
-    case 'brewsave':{const el=document.getElementById('bi');const v=(el?el.value:'').replace(/\s+/g,' ').trim().slice(0,140);if(v){(D.qa[me]||(D.qa[me]={}))[t]={t:v,at:Date.now()};save('qa');}ui.brewOpen=false;break;}
+    case 'brewsave':{const el=document.getElementById('bi');const v=(el?el.value:'').replace(/\s+/g,' ').trim().slice(0,140);if(v){(D.qa[me]||(D.qa[me]={}))[t]={t:v,at:Date.now()};save('qa');haptic('done');ui.starPop=me+t;setTimeout(()=>{ui.starPop=null;},900);}ui.brewOpen=false;break;}
     case 'dfreq':ui.draft.freq=b.dataset.v;break;
     case 'dweekup':ui.draft.perWeek=Math.min(7,(+ui.draft.perWeek||1)+1);break;
     case 'dweekdn':ui.draft.perWeek=Math.max(1,(+ui.draft.perWeek||1)-1);break;
