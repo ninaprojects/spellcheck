@@ -129,7 +129,7 @@ input[type=date],input[type=time]{font-size:16px;height:48px;border:1px solid va
 .moondot{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFF6D8,#F0B93F);box-shadow:0 0 10px rgba(255,201,79,.6);display:inline-block;margin-right:6px;vertical-align:-2px}
 .strip{display:flex;align-items:center;gap:12px}
 .strip .avs{display:flex}
-.strip .avs .av{width:36px;height:36px;font-size:13px;margin-right:-6px;overflow:hidden}
+.strip .avs{gap:8px}.strip .avs .av{width:32px;height:32px;font-size:12px;overflow:hidden}
 .av img,.avatar img,.phbig img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .alldone{position:relative;padding:8px 12px;background:var(--ytint);border-radius:12px;font-size:15px;font-weight:600;line-height:1.35}
 .burst{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
@@ -164,7 +164,7 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 }
 .hhead{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}
 .hhead .small{grid-column:1;margin-top:-2px}
-.hhead .link{grid-column:2;grid-row:1/3}
+.hhead .link{grid-column:2;grid-row:1/3}.hhead:not(:has(.small)) .link{grid-row:1}
 
 .hico{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:var(--ib);color:var(--ic)}
 .t-body{--ib:#FFE1DB;--ic:#B5412F}.t-mind{--ib:#E4E7FA;--ic:#4A5FB0}.t-water{--ib:#DDEEFF;--ic:#1F6FC2}.t-home{--ib:#E2F3E8;--ic:#2F7A4A}.t-money{--ib:#FFF3D6;--ic:#A06A00}
@@ -186,6 +186,19 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .go.i-call .a{animation:hring2 .7s ease-in-out}@keyframes hring2{20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(5deg)}}
 .go.i-nospend .a{animation:hflip .8s ease-in-out}@keyframes hflip{50%{transform:scaleX(-1)}}
 }
+
+.tc{--bg1:#FFF3D6;--bg2:#FFEEF5;--bd:#6B4E8A;--tag:#A06A00;--ink:#3B2A55;position:relative;overflow:hidden;padding:18px 16px 14px 44px;background:linear-gradient(180deg,var(--bg1),var(--bg2));border:1px solid var(--bd);outline:1px solid rgba(107,78,138,.35);outline-offset:-6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--ink)}
+.tc.full{--bg1:#E6EBFF;--bg2:#F4EEFF;--bd:#4A5FB0;--tag:#34489A;--ink:#27306B;outline-color:rgba(74,95,176,.35)}
+.tc .m{position:absolute;left:-18px;top:-18px;width:58px;height:58px;border-radius:50%;background:#EAD7B0;box-shadow:0 0 0 1.5px rgba(160,106,0,.7),0 0 0 6px rgba(255,255,255,.18),0 0 26px 7px rgba(255,201,79,.6);overflow:hidden}.tc .m:before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 62% 40%,#FFF6D8,#F0B93F 70%)}.tc .m:after{content:'';position:absolute;inset:0;border-radius:50%;background:#EAD7B0;clip-path:circle(50% at 18% 50%)}
+.tc.full .m{background:#C9D1F2;box-shadow:0 0 0 1.5px rgba(52,72,154,.8),0 0 0 6px rgba(255,255,255,.18),0 0 26px 7px rgba(110,130,225,.65)}.tc.full .m:before{background:radial-gradient(circle at 62% 40%,#fff,#AEBBF0 70%)}.tc.full .m:after{background:#C9D1F2}
+.tc .tag{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:18px;color:var(--tag)}
+.tc .mood{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:23px;line-height:1.15;color:var(--ink)}
+.tc .lk{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:4px;color:var(--ink);min-height:44px;display:inline-flex;align-items:center}
+.tc .para{font-size:16px;line-height:1.5;color:var(--ink);text-align:left}
+.tc .tryit{background:rgba(255,255,255,.55);border-radius:12px;padding:10px 14px;text-align:left;width:100%}
+.tc .tryit .label{color:var(--tag)}
+.cap{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--plum);margin-bottom:6px}
+@media (prefers-color-scheme:dark){.tc{--bg1:#3B3120;--bg2:#3C2133;--bd:#B79CE0;--tag:#FFC94F;--ink:#EAD7B0}.tc.full{--bg1:#252B4A;--bg2:#2B2550;--bd:#8C9BE8;--tag:#C5CCF5;--ink:#DDE3FF}.tc .tryit{background:rgba(255,255,255,.08)}.cap{color:#CBBFE6}}
 </style>
 </head>
 <body>
@@ -425,6 +438,7 @@ function moonSvg(k){
   const ill=(1-Math.cos(2*Math.PI*f))/2;
   return {svg:`<svg viewBox="0 0 128 128" width="100%" height="100%" aria-hidden="true"><defs><radialGradient id="mg" cx="38%" cy="36%" r="75%"><stop offset="0" stop-color="#FFF3CF"/><stop offset=".55" stop-color="#FFD97A"/><stop offset="1" stop-color="#E9AE3A"/></radialGradient><clipPath id="mc"><path d="${lit}"/></clipPath></defs><circle cx="64" cy="64" r="60" fill="#2A2150" stroke="rgba(255,201,79,.35)" stroke-width="1.5"/><g transform="${wax?'':'translate(128 0) scale(-1 1)'}"><path d="${lit}" fill="url(#mg)"/><g clip-path="url(#mc)" fill="rgba(190,130,30,.28)"><circle cx="46" cy="70" r="11"/><circle cx="84" cy="46" r="7"/><circle cx="70" cy="96" r="5"/></g></g></svg>`,ill};
 }
+function moonArt(k){return moonSvg(k).svg.replace(/id="mg"/g,'id="mg2"').replace(/#mg\b/g,'#mg2').replace(/id="mc"/g,'id="mc2"').replace(/#mc\b/g,'#mc2');}
 function moonPhaseName(k){
   const P=29.530588861;const jd=parse(k).getTime()/86400000+2440587.5+0.5;
   const age=((jd-2451550.09766)%P+P)%P;
@@ -609,7 +623,7 @@ function viewToday(){
   return topbar()+`<div class="body">
   <div class="date">${longDate(t)}</div>
   ${strip}
-  <div class="card skycard${phase==='Full Moon'&&moonEvents(t,t).length?' full':''}"><div class="row"><div class="label">Your sky today</div><span class="small"><i class="moondot"></i>${esc(moonTag(t,phase))}</span></div><div class="h2">${esc(fcT.headline)}</div><a class="link" href="${fcT.needsChart?'#me':'#sky'}">${fcT.needsChart?'Add your Big 3':'Read your sky'}</a></div>
+  <div><div class="cap">Your sky today</div><div class="tc${phase==='Full Moon'&&moonEvents(t,t).length?' full':''}"><span class="m" aria-hidden="true"></span><span class="tag">${esc(moonTag(t,phase))}</span><div class="mood">${esc(fcT.headline)}</div><a class="lk" href="${fcT.needsChart?'#me':'#sky'}">${fcT.needsChart?'Add your Big 3':'Read your sky'}</a></div></div>
   ${brewCard(t)}
   <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}<a class="link" href="#add">Add</a></div>
    ${pg.n&&pg.d===pg.n?`<div class="alldone">${ui.burst&&Date.now()-ui.burst<2500?'<div class="burst" aria-hidden="true">'+[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<i style="--dx:${Math.round(Math.cos(a)*60)}px;--dy:${Math.round(Math.sin(a)*40)}px"></i>`;}).join('')+'</div>':''}${esc(allDoneLine(t))}</div>`:''}
@@ -733,11 +747,8 @@ function viewSky(){
   const ev=weekEvent(t);const next=moonEvents(addDays(t,1),addDays(t,45))[0];const fcS=forecastFor(who,t);
   return sub(['#today','Back'],`<span class="small">${longDate(t)}</span>`)+`<div class="body">
   <div class="seg" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div>
-  <div class="card" style="border-color:var(--sky-line)"><div class="row"><div class="label" style="color:var(--plum)">${own?'Your sky today':esc(who)+'’s sky today'}</div><span class="small">${esc(moonTag(t,moonPhaseName(t)))}</span></div>
-   <div style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:30px;line-height:1.15;color:var(--text)">${esc(fcS.headline)}</div>
-   <div style="font-size:16px;line-height:1.5">${esc(fcS.body)}</div>
-   <div style="background:var(--ytint);border-radius:12px;padding:12px 14px"><div class="label">${esc(fcS.label)}</div><div style="font-size:16px;line-height:1.4;margin-top:2px">${esc(fcS.action)}</div></div>
-   <div class="small">${esc(moonPhaseName(t))}. ${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} The Moon sign is worked out for noon Pacific and can flip a few hours either side of a change.</div></div>
+  <div><div class="cap">${own?'Your sky today':esc(who)+'’s sky today'}</div><div class="tc${moonPhaseName(t)==='Full Moon'&&moonEvents(t,t).length?' full':''}"><span class="m" aria-hidden="true"></span><span class="tag">${esc(moonTag(t,moonPhaseName(t)))}</span><div class="mood">${esc(fcS.headline)}</div><div class="para">${esc(fcS.body)}</div><div class="tryit"><div class="label">${esc(fcS.label)}</div><div style="font-size:16px;line-height:1.4;margin-top:2px">${esc(fcS.action)}</div></div></div>
+   <div class="small" style="margin-top:8px">${esc(moonPhaseName(t))}. ${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} The Moon sign is worked out for noon Pacific and can flip a few hours either side of a change.</div></div>
   <div class="card"><div class="h2">${own?'Your big 3':esc(who)+'’s big 3'}</div><div class="b3">${['Sun','Moon','Rising'].map(k=>`<div class="b3c"><div class="label">${k}</div>${(b[k.toLowerCase()]||'').trim()?signBadge(b[k.toLowerCase()]):'<div class="b3add" style="display:flex;align-items:center;justify-content:center">?</div>'}<div class="b3n">${esc(signOf(b[k.toLowerCase()])?signOf(b[k.toLowerCase()])[0]:'Not set')}</div></div>`).join('')}</div><div class="small">${own?'Add or change these in Me.':'Set by '+esc(who)+' in her profile.'}</div></div>
   <div class="card"><div class="label">Coming up</div>${next?`<div class="h2">${longDate(next.k)}</div><div class="small">${esc(next.name)}</div>`:'<div class="small">Nothing on the calendar yet.</div>'}</div></div>`+nav();
 }
