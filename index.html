@@ -609,7 +609,7 @@ function viewToday(){
   return topbar()+`<div class="body">
   <div class="date">${longDate(t)}</div>
   ${strip}
-  <div class="card skycard${phase==='Full Moon'&&moonEvents(t,t).length?' full':''}"><div class="row"><div class="label">Your sky today</div><span class="small"><i class="moondot"></i>${esc(moonTag(t,phase))}</span></div><div class="h2">${esc(fcT.headline)}</div><div class="small">${esc(fcT.body)}</div><a class="link" href="${fcT.needsChart?'#me':'#sky'}">${fcT.needsChart?'Add your Big 3':'Read your sky'}</a></div>
+  <div class="card skycard${phase==='Full Moon'&&moonEvents(t,t).length?' full':''}"><div class="row"><div class="label">Your sky today</div><span class="small"><i class="moondot"></i>${esc(moonTag(t,phase))}</span></div><div class="h2">${esc(fcT.headline)}</div><a class="link" href="${fcT.needsChart?'#me':'#sky'}">${fcT.needsChart?'Add your Big 3':'Read your sky'}</a></div>
   ${brewCard(t)}
   <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}<a class="link" href="#add">Add</a></div>
    ${pg.n&&pg.d===pg.n?`<div class="alldone">${ui.burst&&Date.now()-ui.burst<2500?'<div class="burst" aria-hidden="true">'+[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<i style="--dx:${Math.round(Math.cos(a)*60)}px;--dy:${Math.round(Math.sin(a)*40)}px"></i>`;}).join('')+'</div>':''}${esc(allDoneLine(t))}</div>`:''}
@@ -734,11 +734,11 @@ function viewSky(){
   return sub(['#today','Back'],`<span class="small">${longDate(t)}</span>`)+`<div class="body">
   <div class="seg" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div>
   <div class="card" style="border-color:var(--sky-line)"><div class="row"><div class="label" style="color:var(--plum)">${own?'Your sky today':esc(who)+'’s sky today'}</div><span class="small">${esc(moonTag(t,moonPhaseName(t)))}</span></div>
-   <div class="h2">${esc(fcS.headline)}</div>
-   <div style="font-size:15px;line-height:1.45">${esc(fcS.body)}</div>
-   <div><div class="label">${esc(fcS.label)}</div><div style="font-size:15px;line-height:1.4">${esc(fcS.action)}</div></div>
+   <div style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:30px;line-height:1.15;color:var(--text)">${esc(fcS.headline)}</div>
+   <div style="font-size:16px;line-height:1.5">${esc(fcS.body)}</div>
+   <div style="background:var(--ytint);border-radius:12px;padding:12px 14px"><div class="label">${esc(fcS.label)}</div><div style="font-size:16px;line-height:1.4;margin-top:2px">${esc(fcS.action)}</div></div>
    <div class="small">${esc(moonPhaseName(t))}. ${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} The Moon sign is worked out for noon Pacific and can flip a few hours either side of a change.</div></div>
-  <div class="card"><div class="h2">${own?'Your big 3':esc(who)+'’s big 3'}</div><div class="grid2" style="grid-template-columns:repeat(3,1fr)">${['Sun','Moon','Rising'].map(k=>`<div><div class="label">${k}</div><div class="h2">${esc(b[k.toLowerCase()]||'Not set')}</div></div>`).join('')}</div><div class="small">${own?'Add or change these in Me.':'Set by '+esc(who)+' in her profile.'}</div></div>
+  <div class="card"><div class="h2">${own?'Your big 3':esc(who)+'’s big 3'}</div><div class="b3">${['Sun','Moon','Rising'].map(k=>`<div class="b3c"><div class="label">${k}</div>${(b[k.toLowerCase()]||'').trim()?signBadge(b[k.toLowerCase()]):'<div class="b3add" style="display:flex;align-items:center;justify-content:center">?</div>'}<div class="b3n">${esc(signOf(b[k.toLowerCase()])?signOf(b[k.toLowerCase()])[0]:'Not set')}</div></div>`).join('')}</div><div class="small">${own?'Add or change these in Me.':'Set by '+esc(who)+' in her profile.'}</div></div>
   <div class="card"><div class="label">Coming up</div>${next?`<div class="h2">${longDate(next.k)}</div><div class="small">${esc(next.name)}</div>`:'<div class="small">Nothing on the calendar yet.</div>'}</div></div>`+nav();
 }
 
