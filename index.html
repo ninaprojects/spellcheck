@@ -166,10 +166,27 @@ const L_MILE={
 };
 const L_GROUP=['{name} started {habit}. Peer pressure, but make it healthy.','{name} wants a {habit} club. Membership is free and mildly mandatory.','{name} started {habit}. Join before it gets awkward.','Group habit alert. {name} started {habit} and your presence is requested.'];
 const L_MOON=['{name} cast the {event} spell. The moon is taking credit.','{name} did the {event} spell. The tides are impressed.','{event} week. {name} cast the spell and the moon noticed.','{name} cast the {event} spell. Very lunar of them.','The moon is up to nonsense and {name} is in on it.','{name} cast the {event} spell. Feral behavior. We are proud.','{event}: everyone is acting unwell, and {name} cast the spell anyway.','{name} cast the {event} spell and did not ask anyone\'s permission.'];
-/* DRAFT brew questions. ok:false means Nina has not approved them, so the brew card stays hidden.
-   Add ?brew=preview to the URL to see the card with these drafts. */
+/* Brew questions. The 28 below were approved by Nina on Nov 5 2026. The card stays hidden until BREW_LIVE is true.
+   Add ?brew=preview to the URL to see the card early. The dated sky questions further down are still drafts and only show in preview. */
+const BREW_LIVE=false;
 const BREW_PREVIEW=/[?&]brew=preview/.test(location.search);
-const QUESTIONS=['What did you do this week that nobody saw?','What is a tiny thing that made today better?','What are you pretending not to be excited about?','What would you do tomorrow if nobody could judge you?','What is the best thing you ate this week?','Which of us would you call first with good news?','What is a small win nobody clapped for?','What are you avoiding that would take five minutes?','What song has been on repeat?','What is something you used to love that you want back?','What is the kindest thing someone did for you lately?','What would your past self be proud of you for?','What is a hill you will die on this week?','What are you secretly good at?','What was the last thing that made you laugh out loud?','If today had a theme song, what would it be?','What is one thing you are letting go of?','What is a smell that takes you somewhere?','What is your most unhinged opinion about food?','What did you need to hear today?','What is a boundary you are proud of?','What is your comfort show right now?','What is one thing you want to do before the year ends?','What would a perfect Sunday look like?','What was the best thing you read, watched, or heard this week?','What are you grateful for that is not obvious?','What is something you are weirdly proud of?','What is one thing you would confess to the group chat?'].map(q=>({q,ok:false}));
+const Q_PHASE={
+ 'New Moon':['Who or what are you entertaining this week? Names optional, details encouraged.','What is your plot twist this week, and who is in on it?'],
+ 'Waxing crescent':['What is making you glow this week? Tell us everything, or just enough.','What are you building in secret? Give us the trailer.'],
+ 'First quarter':['What did you almost bail on this week, and did you?','What is the main quest you keep dodging for a side quest?'],
+ 'Waxing gibbous':['What is 90 percent done and living rent free in your head until it is finished?','What did you eat this week that deserves a standing ovation?'],
+ 'Full Moon':['Full moon means no filter. What is the thing you would only say in this group?','What was your main character moment this week? Please include the soundtrack.'],
+ 'Waning gibbous':['Who deserves their flowers this week? Say it here, then go tell them.','What did you learn the hard way this week, so the rest of us do not have to?'],
+ 'Last quarter':['What is getting blocked, muted, or left on read this week? Habits count.','What did you outgrow this week? Pour one out.'],
+ 'Waning crescent':['Describe your perfect do-nothing day. Snacks and pajamas are mandatory.','What song has been on repeat this week? Embarrassing is welcome.']
+};
+const Q_SEASON={
+ sco:['Scorpio season loves a secret. What are you not telling anyone yet?','What are you obsessed with right now, and does it text back?','Who in your life has the best poker face?','What would you do with one day of total power? Be specific.'],
+ sag:['What is the most spontaneous thing you want to do before the year ends?','Sagittarius says what everyone is thinking. What are you thinking?','What was the funniest thing that happened to you this week? Embellish it.','What did you change your mind about this year?','What is the most unhinged thing on your bucket list?','Where would you go tomorrow if flights were free?','What is the luckiest thing that ever happened to you?','What risk are you glad you took?','What are you weirdly overconfident about?','What is one rule you are tired of following?','What could you give a surprisingly good talk on, for no reason?','What is the best advice you ignored?','What is a truth you are ready to say out loud?','What is the funniest travel disaster you have lived through?'],
+ cap:['What is the long game you are quietly playing?','What would future you thank you for starting this month?','What is your most Capricorn habit? Spreadsheets, schedules and color-coding all count.','What is the most disciplined thing you did this week, and who saw it?']
+};
+/* Sign seasons (Sun entering the sign), Pacific dates checked Nov 5 2026. After Jan 19 2027 the moon phase pool runs every day until Aquarius questions are written. */
+function brewSeason(k){return k<='2026-11-21'?'sco':k<='2026-12-20'?'sag':k<='2027-01-19'?'cap':null;}
 /* Sky tags for the brew card. Dates are Pacific, checked against two sources and an astronomy library on Nov 5 2026. Later dates need re-checking before use. */
 const SKY_DAYS={'2026-11-08':'New Moon in Scorpio','2026-11-13':'Mercury and Venus turn forward','2026-11-22':'Sun enters Sagittarius','2026-11-24':'Full Moon in Gemini','2026-12-08':'New Moon in Sagittarius','2026-12-10':'Saturn turns forward','2026-12-21':'Sun enters Capricorn','2026-12-23':'Full Moon in Cancer'};
 const SKY_Q={'2026-11-08':'Scorpio runs the steamy stuff. What are you hoping to get into this month?','2026-11-13':'Everything is moving forward again. What have you been waiting to get back to?','2026-11-22':'Sagittarius season wants a plan and a plane ticket. Where to, and who is coming?','2026-11-24':'Full moon in Gemini, the talkative sign. Whose text are you leaving on read?','2026-12-08':'What are you about to be unreasonably brave about?','2026-12-10':'What did you say you would do, and are now actually going to do?','2026-12-21':'Longest night of the year. What are you building next year, and who is on the crew?','2026-12-23':'Full moon in Cancer, the homebody sign. Who makes you feel most at home?'};
@@ -349,11 +366,24 @@ function winnerFor(wk){
 function covenHabitFor(wk){ // the habit running this week = winner of last week's vote, else the previous habit, else the first option
   return winnerFor(wk)||(wk>weekStart(SEASON_START)?covenHabitFor(addDays(wk,-7)):'phone');
 }
+const _bq={used:new Set(),at:-1,map:{}};
+function brewPick(i,k){ // walks the days from the start so a question is never used twice. Same result for everyone.
+  if(_bq.map[i]!==undefined)return _bq.map[i];
+  for(let d=_bq.at+1;d<=i;d++){
+    const dk=addDays(SEASON_START,d);const sea=brewSeason(dk);
+    const pref=(sea&&d%2===1)?Q_SEASON[sea]:Q_PHASE[moonPhaseName(dk)];
+    const fit=[].concat(Q_PHASE[moonPhaseName(dk)]||[],sea?Q_SEASON[sea]:[]); // only questions that fit this day's sky
+    const q=[].concat(pref||[],fit).find(x=>!_bq.used.has(x))||null;
+    if(q)_bq.used.add(q);_bq.map[d]=q;_bq.at=d;
+  }
+  return _bq.map[i];
+}
 function brewQ(k){
   const i=Math.round((parse(k)-parse(SEASON_START))/86400000);if(i<0)return null;
-  if(SKY_Q[k])return BREW_PREVIEW?SKY_Q[k]:null; // drafts until Nina approves
-  if(k>='2026-11-05'&&k<='2026-11-12')return BREW_PREVIEW?SKY_RX_Q:null;
-  const q=QUESTIONS[i%QUESTIONS.length];return q&&(q.ok||BREW_PREVIEW)?q.q:null;
+  if(BREW_PREVIEW&&SKY_Q[k])return SKY_Q[k]; // dated drafts show only in preview until approved
+  if(BREW_PREVIEW&&k>='2026-11-05'&&k<='2026-11-12')return SKY_RX_Q;
+  if(!(BREW_LIVE||BREW_PREVIEW))return null;
+  return brewPick(i,k); // null once all questions are used, so the card hides instead of repeating
 }
 function brewAns(p,k){return (D.qa[p]||{})[k]||null;}
 function brewRevealed(k){return !!brewAns(me,k)||k<todayK();}
