@@ -362,6 +362,38 @@ async function enableNotifs(quiet){
 function notifRowRight(){const st=notifState();return st==='on'?'<span class="done">On</span>':st==='ask'?'<span class="link" data-act="notifon" role="button">Turn on</span>':st==='ios'?'<span class="small">Add to Home Screen</span>':st==='blocked'?'<span class="small">Blocked</span>':'<span class="small">Not supported</span>';}
 function notifSub(){const st=notifState();return st==='on'?'Nudges and news from the coven land on this phone.':st==='ask'?'Get a nudge when a habit is waiting, and news from the coven.':st==='ios'?'On iPhone: tap Share in Safari, choose Add to Home Screen, then open Spell Check from there.':st==='blocked'?'Allow notifications for Spell Check in your phone or browser settings.':'This browser cannot show notifications.';}
 
+
+/* ---------- birth chart screenshot: read on this phone with OCR, nothing is uploaded or stored ---------- */
+let tessP=null;
+function loadTesseract(){if(window.Tesseract)return Promise.resolve();if(!tessP)tessP=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>{tessP=null;no(new Error('load'));};document.head.appendChild(sc);});return tessP;}
+function parseChart(text){
+  const names=SIGNS.map(x=>x[0]).join('|');const sre=new RegExp('\\b('+names+')\\b','i');
+  const kws={sun:/\bsun\b/i,moon:/\bmoon\b/i,rising:/\b(rising|ascendant|asc)\b/i};
+  const out={sun:'',moon:'',rising:''};
+  const fix=m=>m?SIGNS.find(x=>x[0].toLowerCase()===m[1].toLowerCase())[0]:'';
+  const lines=String(text).split(/\n+/).map(l=>l.trim()).filter(Boolean);
+  lines.forEach(l=>{const sm=l.match(sre);if(!sm)return;Object.keys(kws).forEach(k=>{if(!out[k]&&kws[k].test(l))out[k]=fix(sm);});});
+  Object.keys(kws).forEach(k=>{if(out[k])return;for(let i=0;i<lines.length-1;i++){if(kws[k].test(lines[i])&&!sre.test(lines[i])&&sre.test(lines[i+1])){out[k]=fix(lines[i+1].match(sre));break;}}});
+  return out;
+}
+async function readChart(file){
+  ui.chart={state:'reading',pct:0};render();
+  try{
+    await loadTesseract();
+    const {data}=await Tesseract.recognize(file,'eng',{logger:m=>{if(m.status==='recognizing text'){const el=document.getElementById('chartpct');if(el)el.textContent=Math.round((m.progress||0)*100)+'%';}}});
+    const r=parseChart((data&&data.text)||'');
+    ui.chart=(r.sun||r.moon||r.rising)?{state:'found',...r}:{state:'none'};
+  }catch(e){console.error(e);ui.chart={state:'error'};}
+  render();
+}
+function chartCard(){
+  const c=ui.chart;if(!c)return '';
+  if(c.state==='reading')return `<div class="card"><div class="h2">Reading your chart</div><div class="small">This happens on your phone and the picture is not saved. <span id="chartpct" aria-live="polite">0%</span></div></div>`;
+  if(c.state==='found'){const row=(k,v)=>`<div class="b3c"><div class="label">${k}</div>${v?signBadge(v):`<div class="b3add" style="border-style:solid;display:flex;align-items:center;justify-content:center">?</div>`}<div class="b3n">${esc(v||'Not found')}</div></div>`;
+    return `<div class="card"><div class="h2">Here is what we found</div><div class="b3">${row('Sun',c.sun)}${row('Moon',c.moon)}${row('Rising',c.rising)}</div><div class="small">Check these against your chart. Anything not found keeps what you already have.</div><div style="display:flex;gap:16px;align-items:center"><button class="pill" data-act="chartsave" style="width:auto;padding:0 24px">Save my Big 3</button><button class="link" data-act="chartclear">Cancel</button></div></div>`;}
+  return `<div class="card"><div class="h2">${c.state==='error'?'That did not load.':'We could not read the signs.'}</div><div class="small">${c.state==='error'?'Check your connection and try again.':'Try a clearer screenshot of the page that shows Sun, Moon and Rising, or type them in.'}</div><div style="display:flex;gap:16px"><label class="link" for="cf">Try another</label><button class="link" data-act="chartclear">Close</button></div></div>`;
+}
+
 /* ---------- moon (computed, approximate to within about a day) ---------- */
 function moonEvents(fromK,toK){
   const out=[];const P=29.530588861;
@@ -523,7 +555,7 @@ const HI={
  nospend:'<circle cx="12" cy="12" r="9"/><g class="a"><path d="M14.5 9c-.6-1.2-4.5-1.2-4.5 1s4.5 1.2 4.5 3.5-3.9 2.2-4.6 1M12 7v10"/></g>',
  star:'<path class="a" d="M12 3l2 6 6 3-6 3-2 6-2-6-6-3 6-3z"/>'
 };
-const HI_TONE={move:'body',sleep:'mind',water:'water',stretch:'body',read:'mind',journal:'mind',noscroll:'mind',meditate:'mind',outside:'home',tidy:'home',cook:'home',call:'home',nospend:'money',star:'money'};
+const HI_TONE={move:'body',sleep:'body',water:'body',stretch:'body',read:'mind',journal:'mind',noscroll:'mind',meditate:'mind',outside:'home',tidy:'home',cook:'home',call:'home',nospend:'money',star:'money'};
 function habitIcon(h,go){const id=HI[h.preset]?h.preset:'star';return `<div class="hico t-${HI_TONE[id]} i-${id}${go?' go':''}" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${HI[id]}</svg></div>`;}
 
 /* ---------- render ---------- */
@@ -577,7 +609,7 @@ function viewToday(){
   return topbar()+`<div class="body">
   <div class="date">${longDate(t)}</div>
   ${strip}
-  <div class="card skycard${phase==='Full Moon'&&moonEvents(t,t).length?' full':''}"><div class="row"><div class="label">Your sky today</div><span class="small"><i class="moondot"></i>${esc(phase)}</span></div><div class="h2">${skyLine(phase)}</div><a class="link" href="#sky">Read your sky</a></div>
+  <div class="card skycard${phase==='Full Moon'&&moonEvents(t,t).length?' full':''}"><div class="row"><div class="label">Your sky today</div><span class="small"><i class="moondot"></i>${esc(skyTag(t,phase))}</span></div><div class="h2">${esc(skyLine(t))}</div>${skySunLine(me)?`<div class="small">${esc(skySunLine(me))}</div>`:''}<a class="link" href="#sky">Read your sky</a></div>
   ${brewCard(t)}
   <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}<a class="link" href="#add">Add</a></div>
    ${pg.n&&pg.d===pg.n?`<div class="alldone">${ui.burst&&Date.now()-ui.burst<2500?'<div class="burst" aria-hidden="true">'+[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<i style="--dx:${Math.round(Math.cos(a)*60)}px;--dy:${Math.round(Math.sin(a)*40)}px"></i>`;}).join('')+'</div>':''}${esc(allDoneLine(t))}</div>`:''}
@@ -609,7 +641,16 @@ function brewCard(t){
   const m=moonSvg(t);
   return `<div class="card brewcard"><div class="brewmoon" style="opacity:${(.35+.65*m.ill).toFixed(2)};box-shadow:0 0 30px 8px rgba(255,201,79,${(.28*m.ill).toFixed(2)})">${m.svg}</div>${BREW_STARS}<div class="label">Today's brew</div><div class="skytag">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:23px;line-height:1.22;margin-right:50px">${esc(q)}</div>${body}</div>`;
 }
-function skyLine(phase){return phase==='New Moon'?'A fresh start is on the table.':phase==='Full Moon'?'Things are bright and a little loud.':'The moon is doing its thing. So are we.';}
+/* Moon sign at noon Pacific (20:00 UTC), from the main terms of the Moon's longitude. Checked against a published ingress table. */
+function moonLon(k){const [y,m0,d]=k.split('-').map(Number);let Y=y,m=m0;if(m<=2){Y--;m+=12;}const A=Math.floor(Y/100),B=2-A+Math.floor(A/4);const jd=Math.floor(365.25*(Y+4716))+Math.floor(30.6001*(m+1))+d+20/24+B-1524.5;const T=(jd-2451545)/36525,r=Math.PI/180,sn=x=>Math.sin(x*r);
+  const L=218.3164477+481267.88123421*T,D=297.8501921+445267.1114034*T,M=357.5291092+35999.0502909*T,P=134.9633964+477198.8675055*T,F=93.272095+483202.0175233*T;
+  return (((L+6.288774*sn(P)+1.274027*sn(2*D-P)+0.658314*sn(2*D)+0.213618*sn(2*P)-0.185116*sn(M)-0.114332*sn(2*F)+0.058793*sn(2*D-2*P)+0.057066*sn(2*D-M-P)+0.053322*sn(2*D+P)+0.045758*sn(2*D-M)-0.040923*sn(M-P)-0.03472*sn(D)-0.030383*sn(M+P))%360)+360)%360;}
+function moonSign(k){return SIGNS[Math.floor(moonLon(k)/30)][0];}
+const SKY_MOON={Aries:'Big first-move energy. Do the thing before your brain finishes the group presentation.',Taurus:'Snacks, soft fabrics, slow wins. Pleasure is officially on the to-do list.',Gemini:'Brain at 47 tabs, group chat on fire. Send the voice memo.',Cancer:'Soft day, big feelings, strong soup energy. Check on your people.',Leo:'Main character hours. Wear the thing, take the photo, own the room.',Virgo:'A tidy list is calling your name and it looks great on you. Small fixes, big payoff.',Libra:'Charm is on and everything wants to look pretty. Light a candle, answer that text, be lovely.',Scorpio:'Deep thoughts, plot twists, zero small talk. Trust the gut and keep the receipts.',Sagittarius:'Wanderlust with a side of big laughs. Take the long way and say the bold thing.',Capricorn:'CEO mode in comfy shoes. One grown-up thing handled and you are unstoppable.',Aquarius:'Weird is a feature today. Text the friend with the best ideas.',Pisces:'Dreamy, tender, a little unreachable. Music, water, a long exhale.'};
+const SKY_ELEM={fire:'you run hot today. Spend it on something that feels like you.',earth:'ground the day with one small ritual. Future you says thank you.',air:'say it out loud. The thought gets better once someone else hears it.',water:'feel all of it, then drink some water. Both count.'};
+function skyLine(k){return SKY_MOON[moonSign(k)]||'';}
+function skySunLine(who){const sg=signOf(((D.prof[who]||{}).big3||{}).sun);return sg?`For your ${sg[0]} sun: ${SKY_ELEM[sg[2]]}`:'';}
+function skyTag(k,phase){const ev=phase==='New Moon'||phase==='Full Moon';return `${ev?phase:'Moon'} in ${moonSign(k)}`;}
 function list(a){return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
 function anyShared(p,k){ // "showed up" counts shared habits, the coven habit, or the spell. Private habits never leak.
   const l=(D.log[p]||{})[k]||{};
@@ -681,9 +722,10 @@ function viewSky(){
   const ev=weekEvent(t);const next=moonEvents(addDays(t,1),addDays(t,45))[0];
   return sub(['#today','Back'],`<span class="small">${longDate(t)}</span>`)+`<div class="body">
   <div class="seg" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div>
-  <div class="card" style="border-color:var(--sky-line)"><div class="row"><div class="label" style="color:var(--plum)">${own?'Your sky today':esc(who)+'’s sky today'}</div><span class="small">${esc(moonPhaseName(t))}</span></div>
-   <div class="h2">${skyLine(moonPhaseName(t))}</div>
-   <div class="small">${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} Moon phases here are computed and can be off by about a day. Daily sign-by-sign readings are not in this version yet.</div></div>
+  <div class="card" style="border-color:var(--sky-line)"><div class="row"><div class="label" style="color:var(--plum)">${own?'Your sky today':esc(who)+'’s sky today'}</div><span class="small">${esc(skyTag(t,moonPhaseName(t)))}</span></div>
+   <div class="h2">${esc(skyLine(t))}</div>
+   ${skySunLine(who)?`<div style="font-size:15px;line-height:1.4">${esc(skySunLine(who))}</div>`:''}
+   <div class="small">${esc(moonPhaseName(t))}. ${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} The Moon sign is worked out for noon Pacific and can flip a few hours either side of a change.</div></div>
   <div class="card"><div class="h2">${own?'Your big 3':esc(who)+'’s big 3'}</div><div class="grid2" style="grid-template-columns:repeat(3,1fr)">${['Sun','Moon','Rising'].map(k=>`<div><div class="label">${k}</div><div class="h2">${esc(b[k.toLowerCase()]||'Not set')}</div></div>`).join('')}</div><div class="small">${own?'Add or change these in Me.':'Set by '+esc(who)+' in her profile.'}</div></div>
   <div class="card"><div class="label">Coming up</div>${next?`<div class="h2">${longDate(next.k)}</div><div class="small">${esc(next.name)}</div>`:'<div class="small">Nothing on the calendar yet.</div>'}</div></div>`+nav();
 }
@@ -816,8 +858,10 @@ function viewMe(){
   const birthSum=[bd.date,bd.time,bd.place].filter(Boolean).join(' · ');
   return topbar()+`<div class="body">
   <div class="mehead"><label class="phbig" for="pf" style="cursor:pointer">${avatarInner(me)}</label><input id="pf" class="vh" type="file" accept="image/*" aria-label="Change photo"><div class="h1">${esc(pr.name||me)}</div><label class="link" for="pf">Change photo</label></div>
+  ${chartCard()}
   <div class="card">${b3html}</div>
   <div class="card" style="padding:4px 16px">
+   <label class="mrow" for="cf" style="cursor:pointer"><div><div class="h2">Birth chart</div><div class="small">Upload a Co-Star screenshot and we fill in your Big 3.</div></div><span class="link" aria-hidden="true">Upload</span></label><input id="cf" class="vh" type="file" accept="image/*" aria-label="Upload a birth chart screenshot">
    <button class="mrow" data-act="birthedit" aria-expanded="${!!ui.birthOpen}"><div><div class="h2">Birth details</div><div class="small">${esc(birthSum||'Date, time and place. Makes your sky more yours.')}</div></div><span class="link" aria-hidden="true">${ui.birthOpen?'Close':(birthSum?'Edit':'Add')}</span></button>
    ${ui.birthOpen?`<div style="display:flex;flex-direction:column;gap:10px;padding:8px 0 14px"><div class="field"><label for="bd-date">Date</label><input id="bd-date" type="date" value="${esc(bd.date||'')}" data-in="birth-date"></div><div class="field"><label for="bd-time">Time, if you know it</label><input id="bd-time" type="time" value="${esc(bd.time||'')}" data-in="birth-time"></div><div class="field"><label for="bd-place">Place</label><input id="bd-place" type="text" value="${esc(bd.place||'')}" placeholder="City" data-in="birth-place" autocomplete="off"></div></div>`:''}
    <div class="mrow"><div><div class="h2">Notifications${notifNeedsAction()?'<i class="pdot" aria-label="Off"></i>':''}</div><div class="small">${esc(notifSub())}</div>${ui.notifMsg?`<div class="small" style="color:var(--text)">${esc(ui.notifMsg)}</div>`:''}</div>${notifRowRight()}</div>
@@ -895,6 +939,8 @@ document.addEventListener('click',e=>{
     case 'add':{const f=findHabit(id);ui.popId=id;setTimeout(()=>{ui.popId=null;},1300);const w=todayProgress();setVal(id,t,Math.min(f.h.target,val(me,id,t)+f.h.step));const n=todayProgress();if(n.n&&n.d===n.n&&!(w.n&&w.d===w.n)){ui.burst=Date.now();haptic('done');}break;}
     case 'notifon':enableNotifs(false);return;
     case 'b3edit':ui.b3edit=!ui.b3edit;break;
+    case 'chartclear':ui.chart=null;break;
+    case 'chartsave':{const c=ui.chart;if(!c)return;const pr=D.prof[me]||(D.prof[me]={});const bg=pr.big3||(pr.big3={});['sun','moon','rising'].forEach(k=>{if(c[k])bg[k]=c[k];});save('prof');ui.chart=null;break;}
     case 'birthedit':ui.birthOpen=!ui.birthOpen;break;
     case 'sub':{const f=findHabit(id);setVal(id,t,Math.max(0,val(me,id,t)-f.h.step));break;}
     case 'cov':setVal(id,t,val(me,id,t)>=1?0:1);break;
@@ -956,6 +1002,7 @@ document.addEventListener('input',e=>{
   if(i==='name'){const btn=document.querySelector('[data-act=create]');if(btn)btn.disabled=!v.trim();}
 });
 document.addEventListener('change',async e=>{
+  if(e.target&&e.target.id==='cf'&&me){const f=e.target.files&&e.target.files[0];e.target.value='';if(f)readChart(f);return;}
   if(!e.target||e.target.id!=='pf'||!me)return;
   const f=e.target.files&&e.target.files[0];if(!f)return;
   try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};save('photo');render();}catch(x){console.error(x);setSync('That photo would not load. Try another.');}
