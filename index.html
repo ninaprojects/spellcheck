@@ -149,6 +149,22 @@ input[type=date],input[type=time]{font-size:16px;height:48px;border:1px solid va
 nav a{position:relative}
 nav a .pdot{position:absolute;top:12px;margin-left:18px}
 @media (prefers-color-scheme:dark){.skycard{background:linear-gradient(135deg,#3B3120,#3C2133);border-color:#B79CE0;color:#EAD7B0}.skycard .h2{color:#EAD7B0}.skycard .small,.skycard .link{color:#EAD7B0}.skycard .label{color:#FFC94F}.skycard.full{background:linear-gradient(135deg,#252B4A,#2B2550);border-color:#8C9BE8}.skycard.full .label{color:#C5CCF5}.sbadge{color:#1A1A1A}.alldone{color:var(--text)}}
+
+@media (prefers-reduced-motion:no-preference){
+#app.enter .body>*{animation:rise .45s ease-out both}
+#app.enter .body>*:nth-child(2){animation-delay:.05s}#app.enter .body>*:nth-child(3){animation-delay:.1s}#app.enter .body>*:nth-child(4){animation-delay:.15s}#app.enter .body>*:nth-child(5){animation-delay:.2s}#app.enter .body>*:nth-child(6){animation-delay:.25s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.check.on.pop{animation:checkpop .55s cubic-bezier(.3,1.6,.5,1)}
+@keyframes checkpop{0%{transform:scale(.7)}60%{transform:scale(1.18);box-shadow:0 0 0 8px rgba(255,201,79,.35)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,201,79,0)}}
+.moondot{animation:moonglow 3.5s ease-in-out infinite}@keyframes moonglow{50%{box-shadow:0 0 16px 3px rgba(255,201,79,.8)}}
+.strip .av.on{animation:avglow 3s ease-in-out infinite}@keyframes avglow{50%{box-shadow:0 0 0 4px rgba(255,201,79,.3)}}
+.skycard .h2{animation:floaty 6s ease-in-out infinite alternate}@keyframes floaty{to{transform:translateY(-2px)}}
+.phbig:active,.check:active{transform:scale(.92)}
+.alldone{animation:alldone .5s cubic-bezier(.3,1.5,.5,1) both}@keyframes alldone{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+}
+.hhead{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}
+.hhead .small{grid-column:1;margin-top:-2px}
+.hhead .link{grid-column:2;grid-row:1/3}
 </style>
 </head>
 <body>
@@ -498,7 +514,7 @@ function habitRow(h){
   else if(rest)ctl=`<span class="done" style="color:var(--sec)">Rest day</span>`;
   else if(h.type==='number'){
     ctl=`<div style="display:flex;gap:8px;align-items:center"><button class="step" aria-label="Remove ${h.step} ${esc(h.unit)}" data-act="sub" data-id="${h.id}">−</button>`+(done?`<span class="done">Done</span>`:`<button class="step" aria-label="Add ${h.step} ${esc(h.unit)}" data-act="add" data-id="${h.id}">+${h.step}</button>`)+`</div>`;
-  } else ctl=`<button class="check${done?' on':''}" aria-pressed="${done}" aria-label="${esc(h.name)}, mark done" data-act="tog" data-id="${h.id}">${done?CHECK:''}</button>`;
+  } else ctl=`<button class="check${done?' on':''}${done&&ui.popId===h.id?' pop':''}" aria-pressed="${done}" aria-label="${esc(h.name)}, mark done" data-act="tog" data-id="${h.id}">${done?CHECK:''}</button>`;
   const bar=h.type==='number'?`<div class="bar6"><div style="width:${Math.min(100,Math.round(v/h.target*100))}%"></div></div>`:'';
   return `<div><div class="habit" style="border-bottom:0"><div style="min-width:0"><button class="name" data-go="habit/${h.id}">${esc(h.name)}</button><div class="tags"><span>${line}</span>${tag}</div></div>${ctl}</div>${bar}</div>`;
 }
@@ -521,7 +537,7 @@ function viewToday(){
   ${strip}
   <div class="card skycard${phase==='Full Moon'&&moonEvents(t,t).length?' full':''}"><div class="row"><div class="label">Your sky today</div><span class="small"><i class="moondot"></i>${esc(phase)}</span></div><div class="h2">${skyLine(phase)}</div><a class="link" href="#sky">Read your sky</a></div>
   ${brewCard(t)}
-  <div class="card"><div class="row"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}<a class="link" href="#add">Add</a></div>
+  <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}<a class="link" href="#add">Add</a></div>
    ${pg.n&&pg.d===pg.n?`<div class="alldone">${ui.burst&&Date.now()-ui.burst<2500?'<div class="burst" aria-hidden="true">'+[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<i style="--dx:${Math.round(Math.cos(a)*60)}px;--dy:${Math.round(Math.sin(a)*40)}px"></i>`;}).join('')+'</div>':''}${esc(allDoneLine(t))}</div>`:''}
    ${hs.length?hs.map(habitRow).join(''):`<div style="padding:8px 0"><div class="h2">Welcome to the new Spell Check.</div><div class="small" style="margin-top:4px">Add a habit and it shows up here. Share it and the coven can cheer you on.</div></div>`}
   </div>
@@ -797,7 +813,7 @@ function route(){
   const h=(location.hash||'#today').slice(1);const [r,a]=h.split('/');
   const prev=ui.route;ui.route=r||'today';ui.arg=a||null;
   if(prev!==ui.route){ui.confirm=false;if(ui.route!=='add'&&ui.route!=='edit'&&ui.route!=='setup')ui.draft=null;if(ui.route==='edit'&&ui.draft&&ui.draft._id!==a)ui.draft=null;}
-  render();window.scrollTo(0,0);
+  ui.enter=prev!==ui.route;render();window.scrollTo(0,0);
 }
 function render(){
   const act=document.activeElement;const keep=act&&act.dataset&&act.dataset.in?{id:act.id,s:act.selectionStart}:null;
@@ -820,7 +836,7 @@ function render(){
       default:html=viewToday();
     }
   }
-  $app.innerHTML=html;
+  $app.innerHTML=html;$app.classList.toggle('enter',!!ui.enter);ui.enter=false;
   if(keep&&keep.id){const el=document.getElementById(keep.id);if(el){el.focus();try{el.setSelectionRange(keep.s,keep.s);}catch(e){}}}
 }
 
@@ -833,7 +849,7 @@ document.addEventListener('click',e=>{
   switch(a){
     case 'who':me=b.dataset.p;try{localStorage.setItem('h3-whoami',me);}catch(x){}startSyncOnce();ui.route='today';render();return;
     case 'switch':try{localStorage.removeItem('h3-whoami');}catch(x){}me=null;render();return;
-    case 'tog':{const f=findHabit(id);if(!f)return;const w=todayProgress();setVal(id,t,isDone(me,f.h,t)?0:1);const n=todayProgress();if(n.n&&n.d===n.n&&!(w.n&&w.d===w.n)){ui.burst=Date.now();haptic('done');}break;}
+    case 'tog':{const f=findHabit(id);if(!f)return;ui.popId=id;setTimeout(()=>{ui.popId=null;},700);const w=todayProgress();setVal(id,t,isDone(me,f.h,t)?0:1);const n=todayProgress();if(n.n&&n.d===n.n&&!(w.n&&w.d===w.n)){ui.burst=Date.now();haptic('done');}break;}
     case 'add':{const f=findHabit(id);const w=todayProgress();setVal(id,t,Math.min(f.h.target,val(me,id,t)+f.h.step));const n=todayProgress();if(n.n&&n.d===n.n&&!(w.n&&w.d===w.n)){ui.burst=Date.now();haptic('done');}break;}
     case 'notifon':enableNotifs(false);return;
     case 'b3edit':ui.b3edit=!ui.b3edit;break;
