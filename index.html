@@ -186,6 +186,7 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .go.i-call .a{animation:hring2 .7s ease-in-out}@keyframes hring2{20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(5deg)}}
 .go.i-nospend .a{animation:hflip .8s ease-in-out}@keyframes hflip{50%{transform:scaleX(-1)}}
 }
+.wipnote{margin:0 20px 6px;padding:10px 14px;background:var(--ytint);border:1px solid var(--yellow);border-radius:12px;font-size:13px;line-height:1.4}.wipnote a{color:inherit;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:3px}
 </style>
 </head>
 <body>
@@ -563,7 +564,7 @@ function nav(){
   const t=ui.route;const on=(...r)=>r.includes(t)?' class="on"':'';
   return `<nav><a href="#today"${on('today','habit','edit','add','sky')}>Today</a><a href="#coven"${on('coven','standings')}>Coven</a><a href="#journey"${on('journey')}>Journey</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
 }
-function topbar(){return `<div class="top"><div class="brand">Spell Check</div><a class="avatar" href="#me" aria-label="${esc(me)}" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(me)}</a></div>`;}
+function topbar(){return `<div class="top"><div class="brand">Spell Check</div><a class="avatar" href="#me" aria-label="${esc(me)}" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(me)}</a></div><div class="wipnote" role="status"><b>In progress.</b> We are still polishing this one. Round 2 is safe and still here: <a href="old-app.html">open Round 2</a>.</div>`;}
 function sub(back,right){return `<div class="top"><a class="link" href="${back[0]}">${back[1]}</a>${right||''}</div>`;}
 
 function viewGate(){
