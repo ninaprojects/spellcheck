@@ -1,0 +1,57 @@
+"""New habit tracker (index.html): Today strip and progress, all-done moment, Me tab, notification row.
+Runs with Firebase blocked, so the app uses its local cache only. Never touches the real database."""
+import os, json, sys
+from playwright.sync_api import sync_playwright
+HERE=os.path.dirname(os.path.abspath(__file__))
+APP=os.environ.get('SPELLCHECK_HABITS', os.path.join(HERE,'..','index.html'))
+fails=0; checks=0
+def ck(name,ok):
+    global fails,checks
+    checks+=1
+    if not ok: fails+=1; print('FAIL',name)
+def seed(page):
+    page.add_init_script("""
+      localStorage.setItem('h3-whoami','Nina');
+      localStorage.setItem('h3c-prof-Nina',JSON.stringify({setup:true,big3:{sun:'Libra',moon:'Pisces',rising:''}}));
+      const hb={a:{id:'a',name:'Move',type:'yesno',days:[1,1,1,1,1,1,1],shared:true,created:1,createdDay:'2026-11-01'},b:{id:'b',name:'Read',type:'yesno',days:[1,1,1,1,1,1,1],shared:false,created:2,createdDay:'2026-11-01'}};
+      localStorage.setItem('h3c-habits-Nina',JSON.stringify(hb));
+    """)
+with sync_playwright() as pw:
+    b=pw.chromium.launch()
+    for w in (360,390,430):
+        ctx=b.new_context(viewport={'width':w,'height':800},device_scale_factor=1)
+        page=ctx.new_page()
+        page.route('**/*',lambda r: r.abort() if r.request.url.startswith('http') else r.continue_())
+        seed(page)
+        errs=[]
+        page.on('pageerror',lambda e: errs.append(str(e)))
+        page.goto('file://'+os.path.abspath(APP)+'#today')
+        page.wait_for_selector('.strip')
+        ck(f'{w} strip shows',page.locator('.strip').count()==1)
+        ck(f'{w} progress 0 of 2','0 of 2 done today' in page.inner_text('#app'))
+        ck(f'{w} no all-done yet',page.locator('.alldone').count()==0)
+        page.click('[data-act=tog][data-id=a]')
+        ck(f'{w} progress 1 of 2','1 of 2 done today' in page.inner_text('#app'))
+        page.click('[data-act=tog][data-id=b]')
+        ck(f'{w} all-done line',page.locator('.alldone').count()==1)
+        ck(f'{w} burst present',page.locator('.burst i').count()==8)
+        ck(f'{w} sync label not above avatar',page.evaluate("getComputedStyle(document.getElementById('sync')).bottom")!='auto')
+        ck(f'{w} Today no sideways scroll',page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
+        page.screenshot(path=f'/tmp/habits_today_{w}.png')
+        page.goto('file://'+os.path.abspath(APP)+'#me'); page.reload(); page.wait_for_selector('.b3')
+        ck(f'{w} Me has 3 columns',page.locator('.b3c').count()==3)
+        ck(f'{w} two badges one add',page.locator('.sbadge').count()==2 and page.locator('.b3add').count()==1)
+        ck(f'{w} notifications row',page.locator('.mrow:has-text("Notifications")').count()==1)
+        ck(f'{w} Me no sideways scroll',page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
+        page.click('[data-act=birthedit]')
+        small=page.evaluate("[...document.querySelectorAll('input')].filter(i=>i.type!=='file'&&parseFloat(getComputedStyle(i).fontSize)<16).length")
+        ck(f'{w} inputs 16px',small==0)
+        page.click('[data-act=birthedit]'); page.click('[data-act=b3edit]')
+        small=page.evaluate("[...document.querySelectorAll('input')].filter(i=>i.type!=='file'&&parseFloat(getComputedStyle(i).fontSize)<16).length")
+        ck(f'{w} big3 inputs 16px',small==0)
+        page.screenshot(path=f'/tmp/habits_me_{w}.png')
+        ck(f'{w} no page errors',not errs)
+        ctx.close()
+    b.close()
+print(f't_habits.py: {checks} checks, {fails} failed')
+sys.exit(1 if fails else 0)
