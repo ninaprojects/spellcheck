@@ -100,11 +100,10 @@ input[type=text],input[type=number]{font-size:16px;height:48px;border:1px solid 
 .warn{border:1px solid var(--yellow);background:var(--ytint);padding:12px;font-size:13px}
 .sky{background:radial-gradient(circle at 18% 22%,rgba(255,255,255,.55) 0 1px,transparent 2px),radial-gradient(circle at 72% 30%,rgba(255,255,255,.45) 0 1px,transparent 2px),radial-gradient(circle at 44% 78%,rgba(255,255,255,.5) 0 1px,transparent 2px),radial-gradient(circle at 88% 70%,rgba(255,201,79,.7) 0 1.5px,transparent 2.5px),#1B1630;color:#fff;border:0;padding:18px;display:flex;flex-direction:column;gap:10px}
 .brewcard{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 85% 0%,#4a2f78 0,transparent 55%),radial-gradient(90% 60% at 0% 100%,#2c1f52 0,transparent 60%),#1B1630;color:#fff;border:0;padding:18px;display:flex;flex-direction:column;gap:10px}
-.brewmoon{position:absolute;right:-26px;top:-26px;width:128px;height:128px;border-radius:50%;pointer-events:none}
+.brewmoon{position:absolute;right:-18px;top:-18px;width:92px;height:92px;border-radius:50%;pointer-events:none}
 .brewstar{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.6;pointer-events:none}
 .brewcard>*:not(.brewmoon):not(.brewstar){position:relative}
 .skytag{display:flex;align-items:center;gap:8px;color:#FFC94F;font-family:'Noto Serif Display',Georgia,serif;font-style:italic;font-weight:400;font-size:16px;line-height:1.2;margin-top:-4px}
-.skytag:before{content:"";flex:none;width:18px;height:1px;background:#FFC94F}
 .con{display:flex;align-items:center}
 .con .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;border:1.5px solid rgba(203,191,230,.5);color:#CBBFE6}
 .con .n.on{background:#FFC94F;border-color:#FFC94F;color:#1B1630;box-shadow:0 0 12px 2px rgba(255,201,79,.5)}
@@ -261,7 +260,7 @@ function moonSvg(k){
   const f=moonFrac(k),wax=f<.5,ff=wax?f:1-f,kk=Math.cos(2*Math.PI*ff),r=60,rx=Math.abs(kk)*r;
   const lit=`M64 4A60 60 0 0 1 64 124A${rx.toFixed(1)} 60 0 0 ${kk>0?0:1} 64 4Z`;
   const ill=(1-Math.cos(2*Math.PI*f))/2;
-  return {svg:`<svg viewBox="0 0 128 128" width="128" height="128" aria-hidden="true"><defs><radialGradient id="mg" cx="38%" cy="36%" r="75%"><stop offset="0" stop-color="#FFF3CF"/><stop offset=".55" stop-color="#FFD97A"/><stop offset="1" stop-color="#E9AE3A"/></radialGradient><clipPath id="mc"><path d="${lit}"/></clipPath></defs><circle cx="64" cy="64" r="60" fill="#2A2150" stroke="rgba(255,201,79,.35)" stroke-width="1.5"/><g transform="${wax?'':'translate(128 0) scale(-1 1)'}"><path d="${lit}" fill="url(#mg)"/><g clip-path="url(#mc)" fill="rgba(190,130,30,.28)"><circle cx="46" cy="70" r="11"/><circle cx="84" cy="46" r="7"/><circle cx="70" cy="96" r="5"/></g></g></svg>`,ill};
+  return {svg:`<svg viewBox="0 0 128 128" width="100%" height="100%" aria-hidden="true"><defs><radialGradient id="mg" cx="38%" cy="36%" r="75%"><stop offset="0" stop-color="#FFF3CF"/><stop offset=".55" stop-color="#FFD97A"/><stop offset="1" stop-color="#E9AE3A"/></radialGradient><clipPath id="mc"><path d="${lit}"/></clipPath></defs><circle cx="64" cy="64" r="60" fill="#2A2150" stroke="rgba(255,201,79,.35)" stroke-width="1.5"/><g transform="${wax?'':'translate(128 0) scale(-1 1)'}"><path d="${lit}" fill="url(#mg)"/><g clip-path="url(#mc)" fill="rgba(190,130,30,.28)"><circle cx="46" cy="70" r="11"/><circle cx="84" cy="46" r="7"/><circle cx="70" cy="96" r="5"/></g></g></svg>`,ill};
 }
 function moonPhaseName(k){
   const P=29.530588861;const jd=parse(k).getTime()/86400000+2440587.5+0.5;
@@ -434,7 +433,7 @@ function brewCard(t){
   else if(mine){body=`<div style="font-size:16px;line-height:1.4">${esc(mine.t)}</div><div class="row">${con}<button class="link" data-act="brewopen" style="color:#fff;text-decoration-color:#FFC94F">Edit</button></div>`;}
   else body=`<div class="row">${con}<button class="pill" data-act="brewopen" style="width:auto;padding:0 22px;min-height:44px;white-space:nowrap">Spill it</button></div>`;
   const m=moonSvg(t);
-  return `<div class="card brewcard"><div class="brewmoon" style="opacity:${(.35+.65*m.ill).toFixed(2)};box-shadow:0 0 40px 10px rgba(255,201,79,${(.28*m.ill).toFixed(2)})">${m.svg}</div><span class="brewstar" style="left:30px;top:150px"></span><span class="brewstar" style="left:210px;top:130px"></span><span class="brewstar" style="left:300px;top:180px;opacity:.4"></span><div class="label">Today's brew</div><div class="skytag">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:23px;line-height:1.22;margin-right:64px">${esc(q)}</div>${body}</div>`;
+  return `<div class="card brewcard"><div class="brewmoon" style="opacity:${(.35+.65*m.ill).toFixed(2)};box-shadow:0 0 30px 8px rgba(255,201,79,${(.28*m.ill).toFixed(2)})">${m.svg}</div><span class="brewstar" style="left:30px;top:150px"></span><span class="brewstar" style="left:210px;top:130px"></span><span class="brewstar" style="left:300px;top:180px;opacity:.4"></span><div class="label">Today's brew</div><div class="skytag">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:23px;line-height:1.22;margin-right:50px">${esc(q)}</div>${body}</div>`;
 }
 function skyLine(phase){return phase==='New Moon'?'A fresh start is on the table.':phase==='Full Moon'?'Things are bright and a little loud.':'The moon is doing its thing. So are we.';}
 function list(a){return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];}
