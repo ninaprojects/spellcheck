@@ -366,13 +366,24 @@ function winnerFor(wk){
 function covenHabitFor(wk){ // the habit running this week = winner of last week's vote, else the previous habit, else the first option
   return winnerFor(wk)||(wk>weekStart(SEASON_START)?covenHabitFor(addDays(wk,-7)):'phone');
 }
+const _bq={used:new Set(),at:-1,map:{}};
+function brewPick(i,k){ // walks the days from the start so a question is never used twice. Same result for everyone.
+  if(_bq.map[i]!==undefined)return _bq.map[i];
+  for(let d=_bq.at+1;d<=i;d++){
+    const dk=addDays(SEASON_START,d);const sea=brewSeason(dk);
+    const pref=(sea&&d%2===1)?Q_SEASON[sea]:Q_PHASE[moonPhaseName(dk)];
+    const fit=[].concat(Q_PHASE[moonPhaseName(dk)]||[],sea?Q_SEASON[sea]:[]); // only questions that fit this day's sky
+    const q=[].concat(pref||[],fit).find(x=>!_bq.used.has(x))||null;
+    if(q)_bq.used.add(q);_bq.map[d]=q;_bq.at=d;
+  }
+  return _bq.map[i];
+}
 function brewQ(k){
   const i=Math.round((parse(k)-parse(SEASON_START))/86400000);if(i<0)return null;
   if(BREW_PREVIEW&&SKY_Q[k])return SKY_Q[k]; // dated drafts show only in preview until approved
   if(BREW_PREVIEW&&k>='2026-11-05'&&k<='2026-11-12')return SKY_RX_Q;
   if(!(BREW_LIVE||BREW_PREVIEW))return null;
-  const sea=brewSeason(k);const pool=(sea&&i%2===1)?Q_SEASON[sea]:Q_PHASE[moonPhaseName(k)];
-  return pool?pool[Math.floor(i/2)%pool.length]:null; // phase and season days alternate
+  return brewPick(i,k); // null once all questions are used, so the card hides instead of repeating
 }
 function brewAns(p,k){return (D.qa[p]||{})[k]||null;}
 function brewRevealed(k){return !!brewAns(me,k)||k<todayK();}
