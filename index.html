@@ -228,6 +228,7 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 @media (prefers-reduced-motion:no-preference){.skybox{animation:skyin .3s ease-out both}.skyscrim{animation:fadein .25s ease-out both}@keyframes skyin{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}@keyframes fadein{from{opacity:0}to{opacity:1}}}
 @media (prefers-color-scheme:dark){.tc:not(.full):not(.new):not(.retro):not(.teal){--bg1:#3B3120;--bg2:#3C2133;--bd:#B79CE0;--ol:rgba(183,156,224,.4);--tag:#FFC94F;--ink:#F3E6C8;--ink2:#EAD7B0;--lk:#F3E6C8}.skybox .addbox{background:#3C2133;border-color:#6B3A55;color:#EAD7B0}.srow .chipx{border-color:#5B4A78}}
 .sbadge.pl-air{background:#BDEBEF}.sbadge.pl-sun{background:#FFE7A8}.sbadge.pl-merc{background:#D8E4FF}.sbadge.pl-ven{background:#F6D5EA}.sbadge.pl-mars{background:#FFD3B0}
+.placelist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}.placelist:empty{display:none}.popt{min-height:44px;text-align:left;padding:10px 14px;background:#fff;border:0;border-bottom:1px solid var(--line);font:inherit;font-size:16px;color:inherit;touch-action:manipulation}.popt:last-child{border-bottom:0}.popt:active{background:var(--ptint)}.pnone{padding:12px 14px}.placepill{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 14px;border-radius:999px;background:var(--ptint);font-size:15px}.placepill svg{flex:none;color:#2F6A47}.placepill span{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -963,7 +964,7 @@ function viewMe(){
   <div class="card" style="padding:4px 16px">
    <label class="mrow" for="cf" style="cursor:pointer"><div><div class="h2">Birth chart</div><div class="small">Upload a Co-Star screenshot and we fill in your Big 3.</div></div><span class="link" aria-hidden="true">Upload</span></label><input id="cf" class="vh" type="file" accept="image/*" aria-label="Upload a birth chart screenshot">
    <button class="mrow" data-act="birthedit" aria-expanded="${!!ui.birthOpen}"><div><div class="h2">Birth details</div><div class="small">${esc(birthSum||'Date, time and place. Makes your sky more yours.')}</div></div><span class="link" aria-hidden="true">${ui.birthOpen?'Close':(birthSum?'Edit':'Add')}</span></button>
-   ${ui.birthOpen?`<div style="display:flex;flex-direction:column;gap:10px;padding:8px 0 14px"><div class="field"><label for="bd-date">Date</label><input id="bd-date" type="date" value="${esc(bd.date||'')}" data-in="birth-date"></div><div class="field"><label for="bd-time">Time, if you know it</label><input id="bd-time" type="time" value="${esc(bd.time||'')}" data-in="birth-time"></div><div class="field"><label for="bd-place">Place</label><input id="bd-place" type="text" value="${esc(bd.place||'')}" placeholder="City" data-in="birth-place" autocomplete="off"></div></div>`:''}
+   ${ui.birthOpen?`<div style="display:flex;flex-direction:column;gap:10px;padding:8px 0 14px"><div class="field"><label for="bd-date">Date</label><input id="bd-date" type="date" value="${esc(bd.date||'')}" data-in="birth-date"></div><div class="field"><label for="bd-time">Time, if you know it</label><input id="bd-time" type="time" value="${esc(bd.time||'')}" data-in="birth-time"></div><div class="field"><label for="bd-place">Place of birth</label>${bd.placeLat!=null?`<div class="placepill"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>${esc(bd.place)}</span><button type="button" class="link" data-act="placechange">Change</button></div>`:`<input id="bd-place" type="text" value="${esc(bd.place||'')}" placeholder="Start typing a city" data-in="place-search" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="bd-results"><div id="bd-results" class="placelist" role="listbox"></div>${bd.place?'<div class="small">Pick a city from the list so we know exactly where.</div>':''}`}</div></div>`:''}
    <div class="mrow"><div><div class="h2">Notifications${notifNeedsAction()?'<i class="pdot" aria-label="Off"></i>':''}</div><div class="small">${esc(notifSub())}</div>${ui.notifMsg?`<div class="small" style="color:var(--text)">${esc(ui.notifMsg)}</div>`:''}</div>${notifRowRight()}</div>
    <a class="mrow" href="old-app.html"><div><div class="h2">Photos</div><div class="small">Your Round 2 photos live in the original Spell Check.</div></div><span class="link" aria-hidden="true">Open</span></a>
    <a class="mrow" href="#connections"><div><div class="h2">Connections</div><div class="small">Oura, Strava and Apple Health.</div></div><span class="link" aria-hidden="true">Open</span></a>
@@ -1000,6 +1001,23 @@ function route(){
   const prev=ui.route;ui.route=r||'today';ui.arg=a||null;
   if(prev!==ui.route){ui.confirm=false;if(ui.route!=='add'&&ui.route!=='edit'&&ui.route!=='setup')ui.draft=null;if(ui.route==='edit'&&ui.draft&&ui.draft._id!==a)ui.draft=null;}
   ui.enter=prev!==ui.route;render();window.scrollTo(0,0);
+}
+
+/* ---------- birth place search (Open-Meteo geocoding: free, no key, city level) ---------- */
+let _pq=0,_pab=null;
+async function placeSearch(q){
+  const box=document.getElementById('bd-results');if(!box)return;
+  if(_pab)_pab.abort();
+  q=(q||'').trim();
+  if(q.length<2){box.innerHTML='';ui.placeRes=[];return;}
+  const my=++_pq;_pab=new AbortController();
+  try{
+    const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=6&language=en&format=json',{signal:_pab.signal});
+    if(!r.ok)throw new Error('lookup');
+    const j=await r.json();if(my!==_pq)return;
+    ui.placeRes=(j.results||[]).map(x=>({label:[x.name,x.admin1,x.country].filter((v,i,a)=>v&&a.indexOf(v)===i).join(', '),lat:x.latitude,lon:x.longitude,tz:x.timezone||''}));
+    box.innerHTML=ui.placeRes.length?ui.placeRes.map((p,i)=>`<button type="button" role="option" class="popt" data-act="placepick" data-id="${i}">${esc(p.label)}</button>`).join(''):'<div class="small pnone">No match. Check the spelling, or add the country.</div>';
+  }catch(e){if(e&&e.name==='AbortError')return;box.innerHTML='<div class="small pnone">Search is not available right now. What you typed is saved. Come back later to pick the exact place.</div>';}
 }
 function render(){
   const act=document.activeElement;const keep=act&&act.dataset&&act.dataset.in?{id:act.id,s:act.selectionStart}:null;
@@ -1042,6 +1060,9 @@ document.addEventListener('click',e=>{
     case 'chartclear':ui.chart=null;break;
     case 'chartsave':{const c=ui.chart;if(!c)return;const pr=D.prof[me]||(D.prof[me]={});const bg=pr.big3||(pr.big3={});['sun','moon','rising'].forEach(k=>{if(c[k])bg[k]=c[k];});save('prof');ui.chart=null;break;}
     case 'birthedit':ui.birthOpen=!ui.birthOpen;break;
+    case 'placepick':{const p=(ui.placeRes||[])[+id];if(!p)return;const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});bd.place=p.label;bd.placeLat=Math.round(p.lat*100)/100;bd.placeLon=Math.round(p.lon*100)/100;bd.placeTz=p.tz;ui.placeRes=[];save('prof');break;}
+    case 'placechange':{const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});delete bd.placeLat;delete bd.placeLon;delete bd.placeTz;save('prof');setTimeout(()=>{const x=document.getElementById('bd-place');if(x){x.focus();x.select();}},0);break;}
+
     case 'sub':{const f=findHabit(id);setVal(id,t,Math.max(0,val(me,id,t)-f.h.step));break;}
     case 'cov':setVal(id,t,val(me,id,t)>=1?0:1);break;
     case 'preset':{const p=ALLP.find(x=>x.id===id);const d=ui.draft;d.preset=id;d.name=p.full;d.type=p.type;if(p.target){d.target=p.target;d.unit=p.unit;d.step=p.step;d.stepTouched=true;}else{d.target=1;}break;}
@@ -1093,6 +1114,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('input',e=>{
   const i=e.target.dataset&&e.target.dataset.in;if(!i)return;const v=e.target.value;
   if(i.startsWith('big-')){const pr=D.prof[me]||(D.prof[me]={});(pr.big3||(pr.big3={}))[i.slice(4)]=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);return;}
+  if(i==='place-search'){const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});bd.place=v;delete bd.placeLat;delete bd.placeLon;delete bd.placeTz;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);clearTimeout(window.__pt);window.__pt=setTimeout(()=>placeSearch(v),350);return;}
   if(i.startsWith('birth-')){const pr=D.prof[me]||(D.prof[me]={});(pr.birth||(pr.birth={}))[i.slice(6)]=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);return;}
   if(i==='sname'){const pr=D.prof[me]||(D.prof[me]={});pr.name=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);return;}
   if(i==='brew')return;
