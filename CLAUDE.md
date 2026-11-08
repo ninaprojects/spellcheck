@@ -50,7 +50,7 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 2. Do not change the shape of `r2:recal:<Person>` records without a migration that keeps old records working. Existing data must never be lost. Add fields, do not rename or remove them.
 3. Notifications are sent data-only (no `notification` field). iOS Safari does not reliably auto-display the standard Firebase `notification` type, so display is handled by a raw `push` listener in `sw.js`. Do not revert this.
 4. The "from Spell Check" line under a notification title is iOS appending the app name. It is not in our code and cannot be removed. Do not try to fix it.
-5. After any edit to `index.html`, run `python3 tests/run_all.py`. It includes a `node --check` on every script. This file has broken from small edits before.
+5. After any edit to `index.html`, run the tests described under Testing (the full `python3 tests/run_all.py` for bigger changes). It includes a `node --check` on every script. This file has broken from small edits before.
 6. Visual bugs can be caching. iOS Safari HTTP cache, the GitHub Pages CDN, and the service worker Cache API are three separate layers. Test in a private window before assuming a code bug.
 7. Keep these in sync by hand between the app and the push Worker: `CHALLENGE_START` in the Worker with `CHALLENGE_START` in `index.html`; the day numbers in the Worker's `SPECIAL` and `AFFIRMATIONS` with the tagged days in `DAYS`; and the Worker's `FEED_LINES`, `pickLine`, and `lineKey` with the app's feed code, so a push and its feed post read identically.
 8. The push Worker reads and writes the database over plain REST with no login. The Google token it requests is scoped to `firebase.messaging` only, and it is used for sending pushes. This only works while `recalData` rules are public. Do not tighten the rules without changing the Worker in the same release (it would need the database scope and a token on every request), or pushes and the app will break together.
@@ -84,6 +84,7 @@ Public name is always "Spell Check". "Practical Magic" is a private nickname onl
 ## Testing
 
 - `python3 tests/run_all.py` runs the syntax check, the browser tests, and the Worker test. See `tests/README.md` for setup. It needs Node 18 or newer.
+- Routine (set by Nina on Nov 8, 2026): for a small, contained change, run `node --check` on every script, the tests for the area touched, and `tests/errs.py`. Run the full suite for anything that touches several areas, shared code, the Worker, or before a release. This refines hard rule 5. Say which tests were run when reporting a merge.
 - `tests/worker_test.mjs` runs the push Worker against a fake Firebase and a fake push service. Change a push's wording or rules in the Worker and its test together.
 - The tests run Chromium at a phone viewport against an in-memory stand-in for Firebase, with mocked place lookups and a clock pinned to Oct 1, 2026. They never touch the real database.
 - Every new feature gets a test. If an intended design change breaks a test, update that test in the same pull request.
