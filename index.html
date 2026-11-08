@@ -187,6 +187,47 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .go.i-nospend .a{animation:hflip .8s ease-in-out}@keyframes hflip{50%{transform:scaleX(-1)}}
 }
 .wipnote{margin:0 20px 6px;padding:10px 14px;background:var(--ytint);border:1px solid var(--yellow);border-radius:12px;font-size:13px;line-height:1.4}.wipnote a{color:inherit;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:3px}
+
+/* Sky: Today card (calm) and the Read your sky pop-out. Colours change only on event days. */
+.skylab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--plum);margin:0 0 6px}
+.tc{--bg1:#FFF3D6;--bg2:#FFEEF5;--bd:#6B4E8A;--ol:rgba(107,78,138,.35);--tag:#A06A00;--ink:#3B2A55;--ink2:#2b2233;--halo:rgba(160,106,0,.7);--glow:rgba(255,201,79,.6);--lk:#3B2A55;
+ position:relative;overflow:hidden;padding:16px 16px 14px;background:linear-gradient(180deg,var(--bg1),var(--bg2));border:1px solid var(--bd);outline:1px solid var(--ol);outline-offset:-6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.tc.full{--bg1:#E6EBFF;--bg2:#F4EEFF;--bd:#4A5FB0;--ol:rgba(74,95,176,.35);--tag:#34489A;--ink:#27306B;--ink2:#222744;--halo:rgba(52,72,154,.8);--glow:rgba(110,130,225,.65);--lk:#27306B}
+.tc.new{--bg1:#0E2F52;--bg2:#1B4E7A;--bd:#9FD0F0;--ol:rgba(159,208,240,.4);--tag:#A9D8F5;--ink:#F1F8FF;--ink2:#D6EAF8;--halo:rgba(159,208,240,.9);--glow:rgba(110,180,230,.5);--lk:#F1F8FF}
+.tc.retro{--bg1:#FFE1D3;--bg2:#FFD0D9;--bd:#B8452F;--ol:rgba(184,69,47,.35);--tag:#A93421;--ink:#5A1F18;--ink2:#3A1914;--halo:rgba(169,52,33,.8);--glow:rgba(240,138,90,.65);--lk:#5A1F18}
+.tc.teal{--bg1:#0F3B3F;--bg2:#1D5B5B;--bd:#FFC94F;--ol:rgba(255,201,79,.4);--tag:#FFC94F;--ink:#F6F1DC;--ink2:#E4EEE6;--halo:rgba(255,201,79,.9);--glow:rgba(255,201,79,.5);--lk:#F6F1DC}
+.tc .m{position:absolute;top:-18px;width:58px;height:58px;border-radius:50%;box-shadow:0 0 0 6px rgba(255,255,255,.18),0 0 26px 7px var(--glow);pointer-events:none}
+.tc{--dark:#EAD7B0}.tc.full{--dark:#C9D1F2}.tc.new{--dark:#081C33}.tc.retro{--dark:#F2B9A6}.tc.teal{--dark:#0A2A2D}.tc .m svg>circle{fill:var(--dark);stroke:var(--halo)}.skybox .scroll>*{flex:none}
+.tc .m.l{left:-18px}.tc .m.r{right:-18px}
+.tc .tag{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:18px;line-height:1.1;color:var(--tag);max-width:70%}
+.tc .mood{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:23px;line-height:1.15;color:var(--ink)}
+.tc .para{font-size:14px;line-height:1.45;color:var(--ink2)}
+.tc .rxtag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--tag)}
+.tc .tlink{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:4px;color:var(--lk);min-height:44px;display:inline-flex;align-items:center}
+.skyscrim{position:fixed;inset:0;background:rgba(26,18,38,.58);z-index:60;border:0;padding:0;cursor:default}
+.skybox{position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top) + 40px);bottom:calc(env(safe-area-inset-bottom) + 24px);max-width:520px;margin:0 auto;z-index:61;background:var(--bg);border:1px solid var(--plum);outline:1px solid rgba(107,78,138,.3);outline-offset:-5px;box-shadow:0 24px 60px rgba(10,5,20,.45);display:flex;flex-direction:column;overflow:hidden}
+.skybox .sbh{display:flex;justify-content:space-between;align-items:center;gap:4px;padding:6px 10px 0}
+.skybox .who{display:flex;flex-wrap:nowrap;gap:0}
+.skybox .who button,.skybox .sbh .link{min-height:44px;padding:0 5px;background:none;border:0;font:inherit;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--sec);cursor:pointer;touch-action:manipulation}
+.skybox .who button.on{color:var(--text);text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:6px}
+.skybox .sbh .link{color:var(--text)}
+.skybox .scroll{overflow:auto;padding:4px 16px 20px;display:flex;flex-direction:column;gap:14px;-webkit-overflow-scrolling:touch}
+.skybox .tabs{display:flex;gap:14px;border-bottom:1px solid var(--line)}
+.skybox .tabs button{min-height:44px;background:none;border:0;padding:0;font:inherit;font-size:11px;font-weight:600;letter-spacing:.05em;white-space:nowrap;text-transform:uppercase;color:var(--sec);cursor:pointer;touch-action:manipulation}
+.skybox .tabs button.on{color:var(--plum);text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:8px}
+.srow{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.srow:first-child{border-top:0}
+.srow .sbadge{width:34px;height:34px;font-size:17px;flex:none}
+.srow .st{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--plum);margin-bottom:3px}
+.srow .sd{font-size:14px;line-height:1.4}
+.srow .chipx{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--plum);border:1px solid #D9CDE8;padding:2px 7px;margin-bottom:5px}
+.skybox .up{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.skybox .up:first-of-type{border-top:0}.skybox .up span{color:var(--sec);white-space:nowrap}
+.skybox .addbox{padding:14px;background:#FFF3F8;border:1px solid #FFD3E6;font-size:14px;line-height:1.45;display:flex;flex-direction:column;align-items:flex-start;gap:4px;color:#1A1A1A}
+.skybox .addbox .link{min-height:44px;display:inline-flex;align-items:center}
+@media (prefers-reduced-motion:no-preference){.skybox{animation:skyin .3s ease-out both}.skyscrim{animation:fadein .25s ease-out both}@keyframes skyin{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}@keyframes fadein{from{opacity:0}to{opacity:1}}}
+@media (prefers-color-scheme:dark){.tc:not(.full):not(.new):not(.retro):not(.teal){--bg1:#3B3120;--bg2:#3C2133;--bd:#B79CE0;--ol:rgba(183,156,224,.4);--tag:#FFC94F;--ink:#F3E6C8;--ink2:#EAD7B0;--lk:#F3E6C8}.skybox .addbox{background:#3C2133;border-color:#6B3A55;color:#EAD7B0}.srow .chipx{border-color:#5B4A78}}
+.sbadge.pl-air{background:#BDEBEF}.sbadge.pl-sun{background:#FFE7A8}.sbadge.pl-merc{background:#D8E4FF}.sbadge.pl-ven{background:#F6D5EA}.sbadge.pl-mars{background:#FFD3B0}
 </style>
 </head>
 <body>
@@ -606,11 +647,11 @@ function viewToday(){
   const waiting=PEOPLE.filter(p=>!anyShared(p,t));
   const showedLine=showed.length===4?'All four showed up today.':showed.length===0?'Nobody has shown up yet today. Do one thing to go first.':(showed.includes(me)?`${showed.length} of 4 showed up. Waiting on ${list(waiting)}.`:`${showed.length} of 4 showed up. Do one thing today to join ${list(showed)}.`);
   const strip=`<div class="strip" role="img" aria-label="${esc(showedLine)}"><div class="avs">${PEOPLE.map(p=>`<div class="av${showed.includes(p)?' on':''}">${avatarInner(p)}</div>`).join('')}</div><div class="small" style="flex:1">${esc(showedLine)}</div></div>`;
-  const phase=moonPhaseName(t);const fcT=forecastFor(me,t);
+  const phase=moonPhaseName(t);
   return topbar()+`<div class="body">
   <div class="date">${longDate(t)}</div>
   ${strip}
-  <div class="card skycard${phase==='Full Moon'&&moonEvents(t,t).length?' full':''}"><div class="row"><div class="label">Your sky today</div><span class="small"><i class="moondot"></i>${esc(moonTag(t,phase))}</span></div><div class="h2">${esc(fcT.headline)}</div><div class="small">${esc(fcT.body)}</div><a class="link" href="${fcT.needsChart?'#me':'#sky'}">${fcT.needsChart?'Add your Big 3':'Read your sky'}</a></div>
+  ${skyCardToday(t,phase)}
   ${brewCard(t)}
   <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}<a class="link" href="#add">Add</a></div>
    ${pg.n&&pg.d===pg.n?`<div class="alldone">${ui.burst&&Date.now()-ui.burst<2500?'<div class="burst" aria-hidden="true">'+[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<i style="--dx:${Math.round(Math.cos(a)*60)}px;--dy:${Math.round(Math.sin(a)*40)}px"></i>`;}).join('')+'</div>':''}${esc(allDoneLine(t))}</div>`:''}
@@ -729,19 +770,65 @@ function viewEdit(id){
   </div>`;
 }
 
-function viewSky(){
-  const t=todayK();const who=ui.sky||me;const own=who===me;const pr=D.prof[who]||{};const b=pr.big3||{};
-  const ev=weekEvent(t);const next=moonEvents(addDays(t,1),addDays(t,45))[0];const fcS=forecastFor(who,t);
-  return sub(['#today','Back'],`<span class="small">${longDate(t)}</span>`)+`<div class="body">
-  <div class="seg" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div>
-  <div class="card" style="border-color:var(--sky-line)"><div class="row"><div class="label" style="color:var(--plum)">${own?'Your sky today':esc(who)+'’s sky today'}</div><span class="small">${esc(moonTag(t,moonPhaseName(t)))}</span></div>
-   <div class="h2">${esc(fcS.headline)}</div>
-   <div style="font-size:15px;line-height:1.45">${esc(fcS.body)}</div>
-   <div><div class="label">${esc(fcS.label)}</div><div style="font-size:15px;line-height:1.4">${esc(fcS.action)}</div></div>
-   <div class="small">${esc(moonPhaseName(t))}. ${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} The Moon sign is worked out for noon Pacific and can flip a few hours either side of a change.</div></div>
-  <div class="card"><div class="h2">${own?'Your big 3':esc(who)+'’s big 3'}</div><div class="grid2" style="grid-template-columns:repeat(3,1fr)">${['Sun','Moon','Rising'].map(k=>`<div><div class="label">${k}</div><div class="h2">${esc(b[k.toLowerCase()]||'Not set')}</div></div>`).join('')}</div><div class="small">${own?'Add or change these in Me.':'Set by '+esc(who)+' in her profile.'}</div></div>
-  <div class="card"><div class="label">Coming up</div>${next?`<div class="h2">${longDate(next.k)}</div><div class="small">${esc(next.name)}</div>`:'<div class="small">Nothing on the calendar yet.</div>'}</div></div>`+nav();
+/* Event kind for the card colour: eclipse teal, new or full moon periwinkle, retrograde start or end coral. Ordinary days stay warm cream to pink. */
+function skyKind(k){const e=SKY_DAYS[k]||'';if(/eclipse/i.test(e))return 'teal';if(/New Moon/.test(e))return 'new';if(/Full Moon/.test(e))return 'full';if(/turn/i.test(e))return 'retro';if(!e){const ev=moonEvents(k,k)[0];if(ev)return /New/.test(ev.name)?'new':'full';}return '';}
+function skyTagToday(k){const e=SKY_DAYS[k];if(e)return e;const ev=moonEvents(k,k)[0];return ev?`${ev.name} in ${moonSign(k)}`:`Moon in ${moonSign(k)}`;}
+function skyMoonEl(k){const m=moonSvg(k);const wax=moonFrac(k)<.5;return `<span class="m ${wax?'l':'r'}" aria-hidden="true">${m.svg}</span>`;}
+function skyVibe(k){return fcPick(FC.TONE[moonSign(k)],k+'|tone');}
+function skyCardToday(t,phase){
+  const kind=skyKind(t);const rx=!SKY_DAYS[t]&&t>='2026-11-05'&&t<='2026-11-12'?'Mercury and Venus backing up':'';
+  return `<div><div class="skylab">Your sky today</div><div class="tc ${kind}">${skyMoonEl(t)}<span class="tag">${esc(skyTagToday(t))}</span>${rx?`<span class="rxtag">${esc(rx)}</span>`:''}<div class="mood">${esc(skyVibe(t))}</div><a class="tlink" href="#sky">Read your sky</a></div></div>`;
 }
+const cap1=x=>x.charAt(0).toUpperCase()+x.slice(1);
+function skyUpcoming(t){
+  const out=Object.keys(SKY_DAYS).filter(k=>k>=t).sort().map(k=>({k,name:SKY_DAYS[k]}));
+  const last=out.length?out[out.length-1].k:t;
+  if(out.length<3)moonEvents(addDays(last,1),addDays(last,75)).forEach(e=>{if(out.length<3)out.push({k:e.k,name:`${e.name} in ${moonSign(e.k)}`});});
+  return out.slice(0,3);
+}
+function fmtShort(k){return k===todayK()?'Today':parse(k).toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function skyPop(){
+  const t=todayK();const who=ui.sky||me;const own=who===me;const natal=natalOf(who);const has=Object.keys(natal).length>0;
+  const tab=ui.skyTab||'signs';const moon=moonSign(t);const kind=skyKind(t);
+  const fcS=forecastFor(who,t);
+  const poss=own?'your':esc(who)+'’s';
+  const card=`<div class="tc ${kind}">${skyMoonEl(t)}<span class="tag">${esc(skyTagToday(t))}</span><div class="mood">${esc(has?fcS.headline:skyVibe(t))}</div>${has?`<div class="para">${esc(fcS.body)}</div>`:''}</div>`;
+  let rows='';
+  if(tab==='signs'){
+    rows=['Sun','Moon','Rising'].map(pt=>{const sg=signOf(((D.prof[who]||{}).big3||{})[pt.toLowerCase()]);
+      if(!sg)return `<div class="srow"><div class="sbadge x" aria-hidden="true">?</div><div><div class="st">${pt}</div><div class="sd">${own?'Not added yet.':'Not added yet.'}</div></div></div>`;
+      return `<div class="srow">${signBadge(sg[0])}<div><div class="st">${pt==='Rising'?sg[0]+' rising':pt+' in '+sg[0]}</div><div class="sd">${cap1(FC.ELEMENT[sg[0]]||'')} sign.</div></div></div>`;}).join('');
+  }else{
+    const rr=chartRows(who,t);
+    rows=rr.length?rr.map(({pl,pt,a,txt})=>`<div class="srow"><div class="sbadge pl-${PLANET_TINT[pl]}" aria-hidden="true">${PLANET_GLYPH[pl]}</div><div><span class="chipx">${pl} · ${a} · ${own?'your':esc(who)+'’s'} ${pt}</span><div class="sd">${esc(txt)}</div></div></div>`).join(''):`<div class="srow"><div class="sd">${has?esc(fcPick(FC.QUIET,who+'|'+t+'|quietrow')):'Add the chart to see how today meets it.'}</div></div>`;
+  }
+  const up=skyUpcoming(t);
+  return `<button class="skyscrim" data-act="skyclose" aria-label="Close"></button><div class="skybox" role="dialog" aria-modal="true" aria-label="Your sky"><div class="sbh"><div class="who">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div><button class="link" data-act="skyclose">Close</button></div><div class="scroll">${card}
+   <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='signs'}" class="${tab==='signs'?'on':''}" data-act="skytab" data-v="signs">Sun, Moon, Rising</button><button role="tab" aria-selected="${tab==='chart'}" class="${tab==='chart'?'on':''}" data-act="skytab" data-v="chart">In your chart today</button></div>
+   <div>${rows}</div>
+   <div><div class="skylab">Coming up</div>${up.map(e=>`<div class="up">${esc(e.name)}<span>${fmtShort(e.k)}</span></div>`).join('')}</div>
+   ${has?'':`<div class="addbox">${own?'Your sky is built from your Sun, Moon and Rising. Add your birth details to see how today’s planets meet your chart.':esc(who)+' has not added her chart yet.'}${own?'<a class="link" href="#me">Add birth details</a>':''}</div>`}
+  </div></div>`;
+}
+/* Planet signs at noon Pacific, Nov 1 2026 to Dec 31 2027, one character per day (0 Aries to b Pisces), from an astronomy library. Checked against the station and ingress dates in SKY_DAYS. Past the end of the table the chart tab falls back to the Moon only. */
+const EPH={"start":"2026-11-01","end":"2027-12-31","Sun":"77777777777777777777788888888888888888888888888888899999999999999999999999999999aaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0000000000000000000000000000001111111111111111111111111111111222222222222222222222222222222233333333333333333333333333333333444444444444444444444444444444455555555555555555555555555555556666666666666666666666666666667777777777777777777777777777778888888888888888888888888888889999999999","Mercury":"7777777777777777777777777777777777788888888888888888889999999999999999999aaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbb000000000000000011111111111111222222222222222222233333333333333333333333333333222222222222222233333333333333333333344444444444444455555555555555555666666666666666666666666777777777777777777766666666666666666666666667777777777777777777888888888888888888899999999999999","Venus":"666666666666666666666666666666666777777777777777777777777777777777788888888888888888888888888899999999999999999999999999aaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbb000000000000000000000000011111111111111111111111122222222222222222222222223333333333333333333333334444444444444444444444445555555555555555555555555666666666666666666666666777777777777777777777777888888888888888888888888999999999999999999999999aaaaaaaaaaaaa","Mars":"444444444444444444444444455555555555555555555555555555555555555555555555555555555555555555555555555555555555555544444444444444444444444444444444444444444444444444444444444444444444444444444444445555555555555555555555555555555555555555555555555555555555555566666666666666666666666666666666666666666666666667777777777777777777777777777777777777777777788888888888888888888888888888888888888889999999999999999999999999999999999999"};
+function planetSign(pl,k){if(pl==='Moon')return moonSign(k);const row=EPH[pl];if(!row)return null;const i=Math.round((parse(k)-parse(EPH.start))/864e5);if(i<0||i>=row.length)return null;return SIGNS['0123456789ab'.indexOf(row.charAt(i))][0];}
+/* Lines for planets other than the Moon are DRAFTS until Nina approves them. They only show with ?sky=preview. Approved lines go in PLANET_LINES. */
+const PLANET_LINES={};
+const PLANET_DRAFT={"Venus":{"conjunction":"Charm is turned all the way up. Wear the good thing and let people notice.","sextile":"A little extra sweetness is on offer. Say yes to the nice thing.","trine":"Everything feels a bit prettier than it has any right to. Enjoy it.","square":"Your wants and your plans are bickering. Pick the one that makes you glow.","opposition":"Between what you want and what someone else wants. Meet in the middle, preferably over dessert."},"Mars":{"conjunction":"Your energy has an engine today. Aim it at one thing and it will be done by lunch.","sextile":"A helpful push is available. Start the thing you keep circling.","trine":"Energy and ease agree. Move your body or tackle the big list, both go well.","square":"Short fuse and a lot of drive. Eat first, then reply.","opposition":"Your push meets someone else's push. Be the calm one and you win."},"Mercury":{"conjunction":"Your mind is quick and your words land. Send the clear message you have been drafting.","sextile":"Conversation flows today. Call the person you keep meaning to call.","trine":"Thoughts line up neatly today. Write it down while it is this good.","square":"Crossed wires are possible. Reread before you send, then send.","opposition":"Two ways of seeing it. Listen to the other one all the way through before you answer."},"Sun":{"conjunction":"It is your season. Take up space, you have the sun's permission.","sextile":"A friendly light is on you this month. Say yes to invitations.","trine":"A glow-up month for the parts of you that are already working. Keep going.","square":"This month asks you to stretch a bit. The stretch is the point.","opposition":"This month is about other people. Make room for them and learn something."}};
+const SKY_PREVIEW=/[?&]sky=preview/.test(location.search);
+const PLANET_GLYPH={Sun:'☉︎',Moon:'☽︎',Mercury:'☿︎',Venus:'♀︎',Mars:'♂︎'};
+const PLANET_TINT={Sun:'sun',Moon:'air',Mercury:'merc',Venus:'ven',Mars:'mars'};
+function planetLine(pl,a,key){if(pl==='Moon')return null;const ok=PLANET_LINES[pl]&&PLANET_LINES[pl][a];if(ok)return ok;return SKY_PREVIEW&&PLANET_DRAFT[pl]?PLANET_DRAFT[pl][a]:null;}
+function chartRows(who,k){
+  const natal=natalOf(who);const out=[];
+  ['Mars','Venus','Mercury','Sun','Moon'].forEach((pl,pi)=>{const ps=planetSign(pl,k);if(!ps)return;
+    ['Sun','Moon','Rising'].forEach(pt=>{if(!natal[pt])return;const a=fcAspect(ps,natal[pt]);if(!a)return;
+      const txt=pl==='Moon'?fcPick(FC.HORO[a][pt],who+'|'+k+'|row|'+pt):planetLine(pl,a);if(!txt)return;
+      out.push({pl,pt,a,txt,rank:FC.PRIORITY.indexOf(a)*10+pi});});});
+  out.sort((x,y)=>x.rank-y.rank);const seen={};return out.filter(r=>{if(seen[r.pl])return false;seen[r.pl]=1;return true;}).slice(0,3);
+}
+function viewSky(){return viewToday()+skyPop();}
 
 /* ---------- feed ---------- */
 function buildFeed(){
@@ -995,6 +1082,8 @@ document.addEventListener('click',e=>{
     case 'join':{const src=findHabit(id);if(!src)return;if(myHabits(me).some(h=>h.groupId===src.h.groupId))return;newHabit({name:src.h.name,type:src.h.type,target:src.h.target||1,unit:src.h.unit||'',step:src.h.step||1,days:src.h.days.slice(),shared:true,preset:src.h.preset||null,groupId:src.h.groupId,groupOwner:src.h.groupOwner});break;}
     case 'stand':ui.standMode=b.dataset.v;break;
     case 'skywho':ui.sky=b.dataset.p;break;
+    case 'skytab':ui.skyTab=b.dataset.v;break;
+    case 'skyclose':location.hash='#today';return;
     case 'snext':ui.setupStep=Math.min(4,ui.setupStep+1);{const pr=D.prof[me]||(D.prof[me]={});if(ui.setupStep===4||true){pr.setup=true;}save('prof');}break;
     case 'sdone':{const pr=D.prof[me]||(D.prof[me]={});pr.setup=true;save('prof');break;}
     default:return;
@@ -1020,6 +1109,7 @@ document.addEventListener('change',async e=>{
   const f=e.target.files&&e.target.files[0];if(!f)return;
   try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};save('photo');render();}catch(x){console.error(x);setSync('That photo would not load. Try another.');}
 });
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.route==='sky')location.hash='#today';});
 window.addEventListener('hashchange',route);
 let synced=false;function startSyncOnce(){if(synced)return;synced=true;startSync();importFromRound2();}
 function importFromRound2(){ // carry over what we can so nobody has to redo anything
