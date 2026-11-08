@@ -13,7 +13,7 @@ with sync_playwright() as pw:
         c=b.new_context(viewport={'width':w,'height':800});p=c.new_page()
         p.route('**/*',lambda r: r.abort() if r.request.url.startswith('http') else r.continue_())
         p.clock.install(time=datetime.datetime.fromisoformat(date+'T12:00:00'));p.add_init_script(INIT);return p
-    for date,cls,tag in [('2026-11-06','tc','Moon in Libra'),('2026-11-08','tc full','New Moon in Scorpio'),('2026-11-13','tc retro','Mercury and Venus turn forward'),('2026-11-24','tc full','Full Moon in Gemini')]:
+    for date,cls,tag in [('2026-11-06','tc','Moon in Libra'),('2026-11-08','tc new','New Moon in Scorpio'),('2026-11-13','tc retro','Mercury and Venus turn forward'),('2026-11-24','tc full','Full Moon in Gemini')]:
         p=new(date);errs=[];p.on('pageerror',lambda e:errs.append(str(e)))
         p.goto('file://'+APP+'#today');p.wait_for_selector('.tc')
         ck(date+' class',p.get_attribute('.tc','class').strip()==cls)
