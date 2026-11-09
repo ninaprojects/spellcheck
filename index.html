@@ -200,7 +200,7 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .tc{--dark:#EAD7B0}.tc.full{--dark:#C9D1F2}.tc.new{--dark:#081C33}.tc.retro{--dark:#F2B9A6}.tc.teal{--dark:#0A2A2D}.tc .m svg>circle{fill:var(--dark);stroke:var(--halo)}.skybox .scroll>*{flex:none}
 .tc .m.l{left:-18px}.tc .m.r{right:-18px}
 .tc .tag{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:18px;line-height:1.1;color:var(--tag);max-width:70%}
-.tc .mood{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:23px;line-height:1.15;color:var(--ink)}
+.tc .mood{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:18px;line-height:1.15;color:var(--ink)}
 .tc .para{font-size:14px;line-height:1.45;color:var(--ink2)}
 .tc .rxtag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--tag)}
 .tc .tlink{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:4px;color:var(--lk);min-height:44px;display:inline-flex;align-items:center}
@@ -790,7 +790,7 @@ function skyMoonEl(k){const m=moonSvg(k);const wax=moonFrac(k)<.5;return `<span 
 function skyVibe(k){return fcPick(FC.TONE[moonSign(k)],k+'|tone');}
 function skyCardToday(t,phase){
   const kind=skyKind(t);const rx=!SKY_DAYS[t]&&t>='2026-11-05'&&t<='2026-11-12'?'Mercury and Venus backing up':'';
-  return `<div><div class="skylab">Your sky today</div><div class="tc ${kind}">${skyMoonEl(t)}<span class="tag">${esc(skyTagToday(t))}</span>${rx?`<span class="rxtag">${esc(rx)}</span>`:''}<div class="mood">${esc(skyVibe(t))}</div><a class="tlink" href="#sky">Read your sky</a></div></div>`;
+  return `<div><div class="skylab">Your sky today</div><div class="tc ${kind}">${skyMoonEl(t)}<span class="tag">${esc(skyTagToday(t))}</span>${rx?`<span class="rxtag">${esc(rx)}</span>`:''}<div class="mood">${esc(Object.keys(natalOf(me)).length?forecastFor(me,t).headline:skyVibe(t))}</div><a class="tlink" href="#sky">Read your sky</a></div></div>`;
 }
 const cap1=x=>x.charAt(0).toUpperCase()+x.slice(1);
 function skyUpcoming(t){

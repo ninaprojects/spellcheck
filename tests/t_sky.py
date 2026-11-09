@@ -18,6 +18,7 @@ with sync_playwright() as pw:
         p.goto('file://'+APP+'#today');p.wait_for_selector('.tc')
         ck(date+' class',p.get_attribute('.tc','class').strip()==cls)
         ck(date+' tag',tag in p.inner_text('.tc .tag'))
+        ck(date+' card shows her personal headline',p.evaluate("document.querySelector('.tc .mood').textContent===forecastFor('Nina',todayK()).headline"))
         ck(date+' no paragraph on card',p.locator('.tc .para').count()==0)
         ck(date+' label above card',p.locator('.skylab:has-text("Your sky today")').count()==1)
         ck(date+' no errors',not errs)
