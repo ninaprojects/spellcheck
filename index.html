@@ -23,7 +23,7 @@
 <style>
 :root{--surface:#FFFFFF;--soft:#ECE8E0;--sky-line:#E1D6EE;--bg:#FFFEFD;--text:#1A1A1A;--sec:#767066;--yellow:#FFC94F;--ytint:#FFF3D6;--pink:#FF6FA8;--ptint:#FFEEF5;--blue:#4FA8FF;--line:#E9E4DA;--line2:#D8D2C6;--plum:#6B4E8A;--ctl:#8C8578}
 @media (prefers-color-scheme:dark){:root{--bg:#15131A;--surface:#201D29;--text:#F2EFEA;--sec:#A8A2B5;--line:#34303F;--line2:#463F55;--ctl:#8F889C;--ytint:#3B3120;--ptint:#3C2133;--plum:#B79CE0;--soft:#34303F;--sky-line:#463F55;color-scheme:dark}
-.check.on svg path{stroke:#1A1A1A}}
+.check.on{background:#1C3A36;border-color:#3E8F82}.check.on svg path{stroke:#7FD6C8}}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:100dvh;display:flex;justify-content:center;-webkit-tap-highlight-color:transparent}
@@ -57,8 +57,8 @@ button{cursor:pointer}
 .habit:last-child{border-bottom:0}
 .habit .name{font-size:16px;font-weight:600;background:none;border:0;padding:0;text-align:left}
 .tags{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--sec);margin-top:2px}
-.check{width:44px;height:44px;border-radius:50%;background:var(--surface);border:2px solid var(--ctl);display:flex;align-items:center;justify-content:center;flex:none;padding:0}
-.check.on{background:var(--yellow);border-color:var(--yellow)}
+.check{width:44px;height:44px;border-radius:50%;background:var(--surface);border:1.5px solid var(--ctl);display:flex;align-items:center;justify-content:center;flex:none;padding:0}
+.check.on{background:#E3F4F1;border-color:#7CCBBE}.check.on svg path{stroke:#1F8A7C}
 .bar6{height:6px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
 .bar6>div{height:6px;background:var(--yellow)}
 .step{min-width:44px;min-height:44px;border-radius:22px;border:1px solid var(--line2);background:var(--surface);font-size:14px;font-weight:600;padding:0 12px}
@@ -155,7 +155,7 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 #app.enter .body>*:nth-child(2){animation-delay:.05s}#app.enter .body>*:nth-child(3){animation-delay:.1s}#app.enter .body>*:nth-child(4){animation-delay:.15s}#app.enter .body>*:nth-child(5){animation-delay:.2s}#app.enter .body>*:nth-child(6){animation-delay:.25s}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .check.on.pop{animation:checkpop .55s cubic-bezier(.3,1.6,.5,1)}
-@keyframes checkpop{0%{transform:scale(.7)}60%{transform:scale(1.18);box-shadow:0 0 0 8px rgba(255,201,79,.35)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,201,79,0)}}
+@keyframes checkpop{0%{transform:scale(.7)}60%{transform:scale(1.18);box-shadow:0 0 0 8px rgba(124,203,190,.35)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(124,203,190,0)}}
 .moondot{animation:moonglow 3.5s ease-in-out infinite}@keyframes moonglow{50%{box-shadow:0 0 16px 3px rgba(255,201,79,.8)}}
 .strip .av.on{animation:avglow 3s ease-in-out infinite}@keyframes avglow{50%{box-shadow:0 0 0 4px rgba(255,201,79,.3)}}
 .skycard .h2{animation:floaty 6s ease-in-out infinite alternate}@keyframes floaty{to{transform:translateY(-2px)}}
@@ -166,25 +166,25 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .hhead .small{grid-column:1;margin-top:-2px}
 .hhead .link{grid-column:2;grid-row:1/3}
 
-.hico{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:var(--ib);color:var(--ic)}
-.t-body{--ib:#FFE1DB;--ic:#B5412F}.t-mind{--ib:#E4E7FA;--ic:#4A5FB0}.t-water{--ib:#DDEEFF;--ic:#1F6FC2}.t-home{--ib:#E2F3E8;--ic:#2F7A4A}.t-money{--ib:#FFF3D6;--ic:#A06A00}
-@media (prefers-color-scheme:dark){.t-body{--ib:#4A2A27;--ic:#FFB3A8}.t-mind{--ib:#2A2D4D;--ic:#C5CCF5}.t-water{--ib:#1F3350;--ic:#9CCBFF}.t-home{--ib:#23392B;--ic:#B5DDBA}.t-money{--ib:#3B3120;--ic:#FFC94F}}
-.hico svg .a,.hico svg{transform-box:fill-box;transform-origin:center}
+.hico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:var(--bg);color:var(--text);border:1px solid #D9D3C7}
+.hico svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;transform-box:fill-box;transform-origin:center}
+.habit:has(.check.on) .hico,.opt.on .hico{background:#E3F4F1;border-color:#7CCBBE;color:#1F8A7C}
+@media (prefers-color-scheme:dark){.hico{border-color:var(--line2)}.habit:has(.check.on) .hico,.opt.on .hico{background:#1C3A36;border-color:#3E8F82;color:#7FD6C8}}
+.opt.pk{flex-direction:row;align-items:center;gap:10px}.opt.pk .pt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.iconrow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.iconrow button{background:none;border:0;padding:2px;display:flex;justify-content:center}.iconrow .on .hico{background:#E3F4F1;border-color:#7CCBBE;color:#1F8A7C}
 @media (prefers-reduced-motion:no-preference){
-.hico.go{animation:hpop .6s cubic-bezier(.3,1.6,.5,1)}@keyframes hpop{40%{transform:scale(1.18)}}
-.go.i-move .a{animation:hbounce .7s ease-out}@keyframes hbounce{30%{transform:translateY(-4px) rotate(-8deg)}60%{transform:translateY(0)}80%{transform:translateY(-1px)}}
-.go.i-sleep .a{animation:hz 1s ease-out}@keyframes hz{from{transform:translate(-3px,5px);opacity:0}50%{opacity:1}to{transform:translate(2px,-3px);opacity:1}}
-.go.i-water .a{animation:hwave .9s ease-in-out}@keyframes hwave{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
-.go.i-stretch .a{animation:hstr .8s ease-out}@keyframes hstr{40%{transform:scaleY(1.15)}}
-.go.i-read .a{animation:hpage .8s ease-in-out;transform-origin:left}@keyframes hpage{50%{transform:scaleX(-1)}}
-.go.i-journal .a{stroke-dasharray:12;animation:hwrite .9s ease-out}@keyframes hwrite{from{stroke-dashoffset:12}to{stroke-dashoffset:0}}
-.go.i-noscroll .a{stroke-dasharray:24;animation:hwrite2 .6s ease-out}@keyframes hwrite2{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
-.go.i-meditate .a{animation:hring 1s ease-out}@keyframes hring{from{transform:scale(.4);opacity:1}to{transform:scale(1.15);opacity:0}}
-.go.i-outside .a{animation:hspin 1.2s ease-in-out}@keyframes hspin{to{transform:rotate(180deg)}}
-.go.i-tidy .a,.go.i-star .a{animation:hspark .8s ease-out}@keyframes hspark{40%{transform:scale(1.3) rotate(25deg)}}
-.go.i-cook .a{animation:hsteam 1s ease-out}@keyframes hsteam{from{transform:translateY(4px);opacity:0}to{transform:translateY(-2px);opacity:1}}
-.go.i-call .a{animation:hring2 .7s ease-in-out}@keyframes hring2{20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(5deg)}}
-.go.i-nospend .a{animation:hflip .8s ease-in-out}@keyframes hflip{50%{transform:scaleX(-1)}}
+@keyframes a-bounce{25%{transform:translateY(-6px)}50%{transform:translateY(0)}75%{transform:translateY(-3px)}}
+@keyframes a-wiggle{20%{transform:rotate(-14deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(4deg)}}
+@keyframes a-pulse{40%{transform:scale(1.25)}}
+@keyframes a-float{50%{transform:translateY(-5px);opacity:.7}}
+@keyframes a-shake{20%{transform:translateX(-3px)}40%{transform:translateX(3px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+@keyframes a-flip{50%{transform:scaleX(-1)}}
+@keyframes a-pop{40%{transform:scale(1.3)}60%{transform:scale(.92)}}
+@keyframes a-drip{0%{transform:translateY(-6px);opacity:0}60%{transform:translateY(2px);opacity:1}}
+@keyframes a-stretch{40%{transform:scaleY(1.2) scaleX(.92)}}
+@keyframes a-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.go.an-bounce svg{animation:a-bounce .9s ease-in-out}.go.an-wiggle svg{animation:a-wiggle .9s ease-in-out}.go.an-pulse svg{animation:a-pulse .9s ease-in-out}.go.an-float svg{animation:a-float .9s ease-in-out}.go.an-shake svg{animation:a-shake .9s ease-in-out}.go.an-flip svg{animation:a-flip .9s ease-in-out}.go.an-pop svg{animation:a-pop .9s ease-in-out}.go.an-drip svg{animation:a-drip .9s ease-in-out}.go.an-stretch svg{animation:a-stretch .9s ease-in-out}
+.go.an-draw svg *{stroke-dasharray:1;animation:a-draw .9s ease-out}
 }
 .wipnote{margin:0 20px 6px;padding:10px 14px;background:var(--ytint);border:1px solid var(--yellow);border-radius:12px;font-size:13px;line-height:1.4}.wipnote a{color:inherit;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:3px}
 
@@ -248,7 +248,7 @@ try{firebase.initializeApp(FB);db=firebase.database();}catch(e){console.error(e)
 
 /* ---------- presets ---------- */
 const PRESETS={
- Body:[{id:'move',name:'Move',amount:'30 min',full:'Move 30 min',type:'yesno'},{id:'sleep',name:'Sleep',amount:'8 hours',full:'Sleep 8 hours',type:'number',target:8,unit:'hours',step:1},{id:'water',name:'Water',amount:'48 oz',full:'Water',type:'number',target:48,unit:'oz',step:8},{id:'stretch',name:'Stretch',amount:'5 min',full:'Stretch 5 min',type:'yesno'}],
+ Body:[{id:'move',name:'Move',amount:'30 min',full:'Move 30 min',type:'yesno'},{id:'sleep',name:'Sleep',amount:'8 hours',full:'Sleep 8 hours',type:'number',target:8,unit:'hours',step:1},{id:'water',name:'Water',amount:'48 oz',full:'Water',type:'number',target:48,unit:'oz',step:8},{id:'stretch',name:'Stretch',amount:'5 min',full:'Stretch 5 min',type:'yesno'},{id:'ootd',name:'OOTD',amount:'1 photo',full:'OOTD',type:'yesno'}],
  Mind:[{id:'read',name:'Read',amount:'10 min',full:'Read 10 min',type:'yesno'},{id:'journal',name:'Journal',amount:'15 min',full:'Journal 15 min',type:'yesno'},{id:'noscroll',name:'No scroll',amount:'1 hour',full:'No scroll, 1 hour',type:'yesno'},{id:'meditate',name:'Meditate',amount:'10 min',full:'Meditate 10 min',type:'yesno'}],
  Home:[{id:'outside',name:'Go outside',amount:'10 min',full:'Go outside 10 min',type:'yesno'},{id:'tidy',name:'Tidy',amount:'10 min',full:'Tidy 10 min',type:'yesno'},{id:'cook',name:'Cook at home',amount:'1 meal',full:'Cook at home',type:'yesno'},{id:'call',name:'Call a friend',amount:'10 min',full:'Call a friend 10 min',type:'yesno'}],
  Money:[{id:'nospend',name:'No-spend day',amount:'Fixed bills do not count',full:'No-spend day',type:'yesno'}]
@@ -583,23 +583,29 @@ function sharedHabits(p){return myHabits(p).filter(h=>h.shared);}
 
 /* ---------- habit icons: one drawing and one little animation per preset ---------- */
 const HI={
- move:'<circle cx="15" cy="4.5" r="2"/><g class="a"><path d="M13 8l-2 6 3.5 2 1 5M11 14l-3 3-3.5-.5M13 9l-4 1-2 3.5M13 9l3.5 2.5H20"/></g>',
- sleep:'<path d="M19 14.5A8 8 0 1 1 9.5 5a6.5 6.5 0 0 0 9.5 9.5z"/><path class="a" d="M15 3h4l-4 4h4"/>',
- water:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path class="a" d="M8 14c1.3-1 2.7-1 4 0s2.7 1 4 0"/>',
- stretch:'<circle cx="12" cy="4.5" r="2"/><g class="a"><path d="M12 8v7M5 4l7 4.5L19 4M9 21l3-6 3 6"/></g>',
- read:'<path d="M3 5.5C6 4 9 4.2 12 6.2c3-2 6-2.2 9-.7V19c-3-1.5-6-1.3-9 .7-3-2-6-2.2-9-.7z"/><path class="a" d="M12 6.2V19.7"/>',
- journal:'<path d="M6 3h9l4 4v14H6z"/><path class="a" d="M9 12h7M9 16h5"/>',
- noscroll:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/><path class="a" d="M4 4l16 16"/>',
- meditate:'<circle cx="12" cy="8" r="2.5"/><path d="M5 19c2-5 5-6 7-6s5 1 7 6zM12 13v3"/><circle class="a" cx="12" cy="12" r="10" fill="none"/>',
- outside:'<circle cx="12" cy="12" r="4"/><path class="a" d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
- tidy:'<path class="a" d="M12 3l2 6 6 3-6 3-2 6-2-6-6-3 6-3z"/><path d="M19 3v3M17.5 4.5h3"/>',
- cook:'<path d="M4 11h16v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><path d="M2 11h2M20 11h2"/><path class="a" d="M8 7c0-2 2-2 2-4M14 7c0-2 2-2 2-4"/>',
- call:'<g class="a"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></g>',
- nospend:'<circle cx="12" cy="12" r="9"/><g class="a"><path d="M14.5 9c-.6-1.2-4.5-1.2-4.5 1s4.5 1.2 4.5 3.5-3.9 2.2-4.6 1M12 7v10"/></g>',
- star:'<path class="a" d="M12 3l2 6 6 3-6 3-2 6-2-6-6-3 6-3z"/>'
+  move:"<circle cx=\"15\" cy=\"4.5\" r=\"2\"/><g><path d=\"M13 8l-2 6 3.5 2 1 5M11 14l-3 3-3.5-.5M13 9l-4 1-2 3.5M13 9l3.5 2.5H20\"/></g>",
+  sleep:"<path d=\"M3 19V9M3 15h18v4M21 15v-2a3 3 0 0 0-3-3h-6v5\"/><circle cx=\"7\" cy=\"12\" r=\"1.5\"/><path d=\"M13 3h4l-4 4h4M19 2h3l-3 3h3\"/>",
+  water:"<path d=\"M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z\"/><path d=\"M8 14c1.3-1 2.7-1 4 0s2.7 1 4 0\"/>",
+  stretch:"<circle cx=\"12\" cy=\"4.5\" r=\"2\"/><g><path d=\"M12 8v7M5 4l7 4.5L19 4M9 21l3-6 3 6\"/></g>",
+  read:"<path d=\"M3 5.5C6 4 9 4.2 12 6.2c3-2 6-2.2 9-.7V19c-3-1.5-6-1.3-9 .7-3-2-6-2.2-9-.7z\"/><path d=\"M12 6.2V19.7\"/>",
+  journal:"<path d=\"M4 20l1-4L17 4l3 3L8 19z\"/><path d=\"M14 7l3 3\"/>",
+  noscroll:"<rect x=\"7\" y=\"3\" width=\"10\" height=\"18\" rx=\"2\"/><path d=\"M11 18h2\"/><path d=\"M4 4l16 16\"/>",
+  meditate:"<path d=\"M12 4c2.5 2.5 3 6 0 10-3-4-2.5-7.5 0-10zM3.5 9c3.5 0 6.5 2 8.5 5-3.5 1-7.5-.5-8.5-5zM20.5 9c-3.5 0-6.5 2-8.5 5 3.5 1 7.5-.5 8.5-5zM6 18.5c4 2 8 2 12 0\"/>",
+  outside:"<circle cx=\"16.5\" cy=\"7.5\" r=\"2.6\"/><path d=\"M16.5 2v1.2M16.5 11.8V13M11 7.5h1.2M20.8 7.5H22M12.6 3.6l.9.9M19.5 10.5l.9.9M20.4 3.6l-.9.9M13.5 10.5l-.9.9\"/><path d=\"M2 21l6-10 4 7 2-3 8 6z\"/>",
+  tidy:"<path d=\"M4 12l7-6 7 6v8H4z\"/><path d=\"M9 20v-4h4v4\"/><path d=\"M19 3v3M17.5 4.5h3\"/>",
+  cook:"<path d=\"M7 14a4 4 0 1 1 2-7 4 4 0 0 1 6 0 4 4 0 1 1 2 7v6H7z\"/><path d=\"M7 17h10\"/>",
+  call:"<path d=\"M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z\"/><path d=\"M15 3.5a5.5 5.5 0 0 1 5.5 5.5M15 7a2.5 2.5 0 0 1 2.5 2.5\"/>",
+  nospend:"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M14.5 9c-.6-1.2-4.5-1.2-4.5 1s4.5 1.2 4.5 3.5-3.9 2.2-4.6 1M12 7v10\"/><path d=\"M5.5 5.5l13 13\"/>",
+  ootd:"<path d=\"M4 20V8a7 7 0 0 1 14 0v12zM2.5 20h17\"/><circle cx=\"10\" cy=\"8.5\" r=\"1.8\"/><path d=\"M6.5 17.5v-3.4a3.5 3.5 0 0 1 7 0v3.4M12.8 11.5l1.6-2\"/><rect x=\"13.7\" y=\"6.6\" width=\"2.3\" height=\"3.7\" rx=\".7\"/><path d=\"M21 3.5v3.5M19.25 5.25h3.5\"/>",
+  star:'<path d="M12 3l2 6 6 3-6 3-2 6-2-6-6-3 6-3z"/>'
 };
-const HI_TONE={move:'body',sleep:'body',water:'body',stretch:'body',read:'mind',journal:'mind',noscroll:'mind',meditate:'mind',outside:'home',tidy:'home',cook:'home',call:'home',nospend:'money',star:'money'};
-function habitIcon(h,go){const id=HI[h.preset]?h.preset:'star';return `<div class="hico t-${HI_TONE[id]} i-${id}${go?' go':''}" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${HI[id]}</svg></div>`;}
+const HI_AN={move:'bounce',sleep:'float',water:'drip',stretch:'stretch',read:'flip',journal:'draw',noscroll:'draw',meditate:'float',outside:'pulse',tidy:'pop',cook:'wiggle',call:'shake',nospend:'draw',ootd:'pop',star:'pop'};
+const ICON_KW=[[/yoga|pilates|stretch|mobility|barre/,'stretch'],[/run|walk|gym|lift|workout|swim|bike|cycl|hike|exercise|sit-?ups|push-?ups|dance|move|steps/,'move'],[/sleep|bed|nap|rest/,'sleep'],[/water|hydrat|drink/,'water'],[/read|book/,'read'],[/journal|write|diary|gratitude|note/,'journal'],[/scroll|phone|screen|social/,'noscroll'],[/meditat|breath|mindful|pray|calm/,'meditate'],[/outside|sun|nature|air|garden|park/,'outside'],[/tidy|clean|laundry|dish|declutter|organi[sz]e|chore/,'tidy'],[/cook|meal|dinner|lunch|breakfast|prep|bake/,'cook'],[/call|text|friend|family|mom|dad|check in/,'call'],[/spend|budget|save|money|shop/,'nospend'],[/outfit|ootd|dress|style|selfie/,'ootd']];
+function suggestIcon(n){const t=String(n||'').toLowerCase();for(const [re,id] of ICON_KW)if(re.test(t))return id;return 'star';}
+function iconId(h){return HI[h.icon]?h.icon:HI[h.preset]?h.preset:suggestIcon(h.name);}
+function iconSvg(id){return `<svg viewBox="0 0 24 24" aria-hidden="true">${HI[id]}</svg>`;}
+function iconEl(id,go){return `<div class="hico i-${id} an-${HI_AN[id]}${go?' go':''}" aria-hidden="true">${iconSvg(id)}</div>`;}
+function habitIcon(h,go){return iconEl(iconId(h),go);}
 
 /* ---------- render ---------- */
 function nav(){
@@ -714,10 +720,10 @@ function anyShared(p,k){ // "showed up" counts shared habits, the coven habit, o
 
 function viewAdd(){
   const d=ui.draft||(ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:false,preset:null,days:[1,1,1,1,1,1,1],freq:'days',perWeek:3});
-  const grp=(g,l)=>`<div style="display:flex;flex-direction:column;gap:8px"><div class="label">${g}</div><div class="grid2">${l.map(p=>`<button class="opt${d.preset===p.id?' on':''}" aria-pressed="${d.preset===p.id}" data-act="preset" data-id="${p.id}"><span>${p.name}</span><span>${p.amount}</span></button>`).join('')}</div></div>`;
+  const grp=(g,l)=>`<div style="display:flex;flex-direction:column;gap:8px"><div class="label">${g}</div><div class="grid2">${l.map(p=>`<button class="opt pk${d.preset===p.id?' on':''}" aria-pressed="${d.preset===p.id}" data-act="preset" data-id="${p.id}">${iconEl(p.id,d.preset===p.id&&ui.iconGo===p.id)}<span class="pt"><span>${p.name}</span><span>${p.amount}</span></span></button>`).join('')}</div></div>`;
   return `<div class="top"><div class="h2">New habit</div><a class="link" href="#today" data-act="closeadd">Close</a></div><div class="body">
   <div style="display:flex;flex-direction:column;gap:16px"><div class="label">Start from a preset</div>${Object.keys(PRESETS).map(g=>grp(g,PRESETS[g])).join('')}</div>
-  <div class="field"><label for="hn">Or name your own</label><input id="hn" type="text" value="${esc(d.name)}" placeholder="Sit-ups" data-in="name"></div>
+  <div class="field"><label for="hn">Or name your own</label><div class="row" style="justify-content:flex-start;gap:12px"><span id="hnico">${iconEl(d.preset||d.icon||suggestIcon(d.name))}</span><input id="hn" type="text" value="${esc(d.name)}" placeholder="Sit-ups" data-in="name" style="flex:1;min-width:0"></div><div class="small" id="hnsug"${d.preset?' hidden':''}>${d.icon?'Your pick.':'Icon suggested from the name.'} <button class="link" data-act="iconpick" aria-expanded="${!!ui.iconPick}">${ui.iconPick?'Done':'Change'}</button></div>${ui.iconPick&&!d.preset?`<div class="iconrow">${Object.keys(HI).map(k=>`<button aria-label="${k}" data-act="iconset" data-id="${k}" class="${(d.icon||suggestIcon(d.name))===k?'on':''}">${iconEl(k)}</button>`).join('')}</div>`:''}</div>
   <div><div class="label">How do you count it</div><div class="seg"><button class="${d.type==='yesno'?'on':''}" data-act="dtype" data-v="yesno">Yes or no</button><button class="${d.type==='number'?'on':''}" data-act="dtype" data-v="number">A number</button></div>
   ${d.type==='number'?`<div class="grid2" style="margin-top:10px"><div class="field"><label for="tg">Daily target</label><input id="tg" type="number" inputmode="numeric" value="${d.target}" data-in="target"></div><div class="field"><label for="un">Unit</label><input id="un" type="text" value="${esc(d.unit)}" data-in="unit"></div></div>
   <div class="row"><span class="small">Steps of ${d.step}.</span><button class="link" data-act="stepedit" aria-expanded="${ui.stepEdit}">${ui.stepEdit?'Done':'Change'}</button></div>${ui.stepEdit?`<div class="field"><label for="st">Step size</label><input id="st" type="number" inputmode="numeric" value="${d.step}" data-in="step"></div>`:''}`:''}</div>
@@ -1065,7 +1071,7 @@ document.addEventListener('click',e=>{
 
     case 'sub':{const f=findHabit(id);setVal(id,t,Math.max(0,val(me,id,t)-f.h.step));break;}
     case 'cov':setVal(id,t,val(me,id,t)>=1?0:1);break;
-    case 'preset':{const p=ALLP.find(x=>x.id===id);const d=ui.draft;d.preset=id;d.name=p.full;d.type=p.type;if(p.target){d.target=p.target;d.unit=p.unit;d.step=p.step;d.stepTouched=true;}else{d.target=1;}break;}
+    case 'preset':{const p=ALLP.find(x=>x.id===id);const d=ui.draft;d.preset=id;d.icon=null;ui.iconGo=id;d.name=p.full;d.type=p.type;if(p.target){d.target=p.target;d.unit=p.unit;d.step=p.step;d.stepTouched=true;}else{d.target=1;}break;}
     case 'dtype':ui.draft.type=b.dataset.v;if(b.dataset.v==='number'&&ui.draft.target<2){ui.draft.target=100;ui.draft.unit='reps';ui.draft.step=10;}break;
     case 'brewopen':ui.brewOpen=true;haptic('tap');break;
     case 'brewclose':ui.brewOpen=false;break;
@@ -1080,9 +1086,12 @@ document.addEventListener('click',e=>{
     case 'stepedit':ui.stepEdit=!ui.stepEdit;break;
     case 'closeadd':ui.draft=null;break;
     case 'startgroup':ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:true,preset:null,days:[1,1,1,1,1,1,1],freq:'days',perWeek:3,group:true};break;
+    case 'iconpick':ui.iconPick=!ui.iconPick;break;
+    case 'iconset':ui.draft.icon=id;break;
     case 'create':{
       const d=ui.draft;if(!d.name.trim())return;
       const o={name:d.name.trim(),type:d.type,days:d.freq==='week'?[1,1,1,1,1,1,1]:d.days.slice(),shared:d.shared,preset:d.preset||null};
+      if(!d.preset)o.icon=d.icon||suggestIcon(d.name);
       if(d.freq==='week')o.perWeek=Math.max(1,Math.min(7,+d.perWeek||1));
       if(d.type==='number'){o.target=Math.max(1,+d.target||1);o.unit=d.unit||'';o.step=Math.max(1,+d.step||1);}
       let h;if(d.group){o.shared=true;}
@@ -1121,6 +1130,7 @@ document.addEventListener('input',e=>{
   const d=ui.draft;if(!d)return;
   d[i]=v;
   if(i==='name'&&d.preset&&ALLP.find(x=>x.id===d.preset).full!==v)d.preset=null;
+  if(i==='name'){const ho=document.getElementById('hnico');if(ho)ho.innerHTML=iconEl(d.preset||d.icon||suggestIcon(v));const sg=document.getElementById('hnsug');if(sg)sg.hidden=!!d.preset;}
   if(i==='target'&&!d.stepTouched){d.step=suggestStep(v);}
   if(i==='step')d.stepTouched=true;
   if(i==='name'){const btn=document.querySelector('[data-act=create]');if(btn)btn.disabled=!v.trim();}
