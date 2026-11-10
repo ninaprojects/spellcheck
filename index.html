@@ -195,10 +195,11 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .tc .mood{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:23px;line-height:1.15;color:var(--ink)}
 .tc .lk{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-decoration:underline;text-decoration-color:var(--pink);text-decoration-thickness:2px;text-underline-offset:4px;color:var(--ink);min-height:44px;display:inline-flex;align-items:center}
 .tc .para{font-size:16px;line-height:1.5;color:var(--ink);text-align:left}
-.tc .tryit{background:rgba(255,255,255,.55);border-radius:12px;padding:10px 14px;text-align:left;width:100%}
+.tc .tryit{border-top:1px solid var(--bd);padding-top:12px;margin-top:14px;text-align:left;width:100%}
 .tc .tryit .label{color:var(--tag)}
+.srow{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.srow .label{color:var(--plum)}.srow .sline{font-size:16px;line-height:1.4;margin-top:2px}
 .cap{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--plum);margin-bottom:6px}
-@media (prefers-color-scheme:dark){.tc{--bg1:#3B3120;--bg2:#3C2133;--bd:#B79CE0;--tag:#FFC94F;--ink:#EAD7B0}.tc.full{--bg1:#252B4A;--bg2:#2B2550;--bd:#8C9BE8;--tag:#C5CCF5;--ink:#DDE3FF}.tc .tryit{background:rgba(255,255,255,.08)}.cap{color:#CBBFE6}}
+@media (prefers-color-scheme:dark){.tc{--bg1:#3B3120;--bg2:#3C2133;--bd:#B79CE0;--tag:#FFC94F;--ink:#EAD7B0}.tc.full{--bg1:#252B4A;--bg2:#2B2550;--bd:#8C9BE8;--tag:#C5CCF5;--ink:#DDE3FF}.cap{color:#CBBFE6}}
 </style>
 </head>
 <body>
@@ -742,15 +743,34 @@ function viewEdit(id){
   </div>`;
 }
 
+const HOUSE_TOPIC=['you','money and comfort','texts and small talk','home','fun and crushes','routines','one-on-ones','the deep stuff','plans and travel','work','friends and group chats','rest and alone time'];
+function skyRel(sign,moon){const e1=FC.ELEMENT[sign],e2=FC.ELEMENT[moon];if(e1===e2)return 'same';const f={fire:'air',air:'fire',earth:'water',water:'earth'};return f[e1]===e2?'friendly':'tense';}
+function skyRead(who,k){
+  const nat=natalOf(who),mo=moonSign(k);const o={rows:[],para:'',topic:''};
+  if(nat.Sun){const r=skyRel(nat.Sun,mo);o.rows.push(['Sun',nat.Sun,{same:'Steady today. The day matches your energy.',friendly:'The day plays nicely with you. Say yes to the plan.',tense:'The day pulls a little against you. Go slower, that is fine.'}[r]]);}
+  if(nat.Moon){const r=skyRel(nat.Moon,mo);o.rows.push(['Moon',nat.Moon,{same:'Same element as today’s Moon, so the mood is easy to read.',friendly:'Your mood and the day get along. Say the feeling out loud.',tense:'Your mood and the day talk past each other. Say it slowly.'}[r]]);}
+  if(nat.Rising){const h=(FC.SIGNS.indexOf(mo)-FC.SIGNS.indexOf(nat.Rising)+12)%12;o.topic=HOUSE_TOPIC[h];o.rows.push(['Rising',nat.Rising,'Today’s Moon lands in your '+o.topic+'.']);}
+  const p=[];
+  if(nat.Sun){const r=skyRel(nat.Sun,mo);p.push('Your '+nat.Sun+' Sun is '+{same:'steady',friendly:'up for the plan',tense:'a little pushy'}[r]);}
+  if(nat.Moon){const r=skyRel(nat.Moon,mo);p.push((p.length?'and your ':'Your ')+nat.Moon+' Moon '+{same:'likes the company',friendly:'goes along with it',tense:'would rather feel it out first'}[r]);}
+  let t=p.join(', ');if(t)t+='.';
+  if(nat.Rising)t+=(t?' ':'')+'With '+nat.Rising+' rising, it all lands in your '+o.topic+'.';
+  o.para=t;return o;
+}
 function viewSky(){
   const t=todayK();const who=ui.sky||me;const own=who===me;const pr=D.prof[who]||{};const b=pr.big3||{};
-  const ev=weekEvent(t);const next=moonEvents(addDays(t,1),addDays(t,45))[0];const fcS=forecastFor(who,t);
-  return sub(['#today','Back'],`<span class="small">${longDate(t)}</span>`)+`<div class="body">
+  const ev=weekEvent(t);const fcS=forecastFor(who,t);const rd=skyRead(who,t);
+  const ups=moonEvents(addDays(t,1),addDays(t,60)).slice(0,3);
+  const full=moonPhaseName(t)==='Full Moon'&&moonEvents(t,t).length;
+  const rows=rd.rows.map(r=>`<div class="srow">${signBadge(r[1])}<div><div class="label">${r[0]==='Rising'?esc(r[1])+' rising':r[0]+' in '+esc(r[1])}</div><div class="sline">${esc(r[2])}</div></div></div>`).join('');
+  return `<div class="top"><a class="link" href="#today">Close</a><span class="small">${longDate(t)}</span></div><div class="body">
   <div class="seg" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div>
-  <div><div class="cap">${own?'Your sky today':esc(who)+'’s sky today'}</div><div class="tc${moonPhaseName(t)==='Full Moon'&&moonEvents(t,t).length?' full':''}"><span class="m" aria-hidden="true"></span><span class="tag">${esc(moonTag(t,moonPhaseName(t)))}</span><div class="mood">${esc(fcS.headline)}</div><div class="para">${esc(fcS.body)}</div><div class="tryit"><div class="label">${esc(fcS.label)}</div><div style="font-size:16px;line-height:1.4;margin-top:2px">${esc(fcS.action)}</div></div></div>
+  <div><div class="cap">${own?'Your sky today':esc(who)+'’s sky today'}</div><div class="tc${full?' full':''}"><span class="m" aria-hidden="true"></span><span class="tag">${esc(moonTag(t,moonPhaseName(t)))}</span><div class="mood">${esc(fcS.headline)}</div>${rd.para?`<div class="para">${esc(rd.para)}</div>`:`<div class="para">${esc(fcS.body)}</div>`}</div>
    <div class="small" style="margin-top:8px">${esc(moonPhaseName(t))}. ${ev?`This week carries a ${esc(ev.name)}.`:'No New or Full Moon this week.'} The Moon sign is worked out for noon Pacific and can flip a few hours either side of a change.</div></div>
-  <div class="card"><div class="h2">${own?'Your big 3':esc(who)+'’s big 3'}</div><div class="b3">${['Sun','Moon','Rising'].map(k=>`<div class="b3c"><div class="label">${k}</div>${(b[k.toLowerCase()]||'').trim()?signBadge(b[k.toLowerCase()]):'<div class="b3add" style="display:flex;align-items:center;justify-content:center">?</div>'}<div class="b3n">${esc(signOf(b[k.toLowerCase()])?signOf(b[k.toLowerCase()])[0]:'Not set')}</div></div>`).join('')}</div><div class="small">${own?'Add or change these in Me.':'Set by '+esc(who)+' in her profile.'}</div></div>
-  <div class="card"><div class="label">Coming up</div>${next?`<div class="h2">${longDate(next.k)}</div><div class="small">${esc(next.name)}</div>`:'<div class="small">Nothing on the calendar yet.</div>'}</div></div>`+nav();
+  ${rows?`<div class="card"><div class="label">Sun, Moon, Rising</div>${rows}</div>`:''}
+  ${ups.length?`<div class="card"><div class="label">Coming up</div>${ups.map(u=>`<div class="row" style="padding:6px 0;border-top:1px solid var(--line)"><b>${esc(u.name)}</b><span class="small">${longDate(u.k)}</span></div>`).join('')}</div>`:''}
+  ${own&&(fcS.needsChart||!rd.rows.length||rd.rows.length<3)?`<div class="card" style="background:#FFEEF5;border-color:#FFC2DC"><div class="small" style="color:var(--ink)">Your sky is built from your Sun, Moon and Rising. Add what is missing and today reads against your whole chart.</div><a class="txt-link link" href="#me">Add your Big 3</a></div>`:''}
+  </div>`+nav();
 }
 
 /* ---------- feed ---------- */
