@@ -491,7 +491,11 @@ function composeActivityText(items, castTodayCount) {
 
 export default {
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(run(env, new Date()).catch(e => console.error('run failed', e && e.stack || e)));
+    ctx.waitUntil(
+      run(env, new Date()).catch(e => console.error('run failed', e && e.stack || e))
+        .then(() => habitsRun(env, new Date()))
+        .catch(e => console.error('habits run failed', e && e.stack || e))
+    );
   },
   async fetch() {
     return new Response('Spell Check push worker. Nothing to see here.', { status: 200 });
@@ -512,7 +516,7 @@ let _calls = 0;
 let _readCache = new Map();
 let _rawCache = new Map();
 let _tokenP = null;
-function resetRun() { _calls = 0; _readCache = new Map(); _rawCache = new Map(); _tokenP = null; }
+function resetRun() { _calls = 0; _readCache = new Map(); _rawCache = new Map(); _tokenP = null; _copyP = null; }
 export function callsUsed() { return _calls; }
 function bfetch(url, opts, reserved) {
   if (_calls >= (reserved ? CALL_HARD : CALL_LIMIT)) throw new Error('subrequest budget reached (' + _calls + ' calls)');
@@ -1087,6 +1091,241 @@ export async function run(env, now) {
 
   if (changed) await persist(true);
   return { sent, quiet };
+}
+
+// ---------- new habit tracker pushes (index.html, data under recalData/h3-*) ----------
+// Three scheduled pushes for the habit tracker, kept apart from the Round 2 jobs above. They share the
+// run's call counter, use their own state key, and claim each send (saved as done) BEFORE it goes out.
+//   h3morning 8am to 11:59am Pacific, every day: one approved line per person (see weekPlan). A and J lines only when a habit is open today.
+//   h3nudge   7pm to 9:59pm Pacific, every day: someone has a habit due today that is not done yet.
+//   h3vote    Sunday 6pm to 9:59pm Pacific: next week's coven habit vote is still open for her.
+//   h3result  Monday 8am to 11:59am Pacific: the coven habit for this week, if anyone voted.
+// The morning and evening wording is approved and lives in push-copy.json. The vote and result lines below are still DRAFTS.
+const H3_STATE_KEY = 'h3-push-state';
+// The Sunday vote reminder and the Monday result still use DRAFT wording that Nina has not approved, so they stay off.
+// Turn each on (true) only after its copy is approved and moved into push-copy.json.
+export const H3_JOBS_ON = { vote: false, result: false };
+export const H3_VOTE_NAMES = { phone: 'Phone-free hour', walk: '10 minute walk outside', tidy: 'Tidy 10 minutes', water: 'Drink a full glass first thing' };
+// ---------- push copy lives in the repo (push-copy.json), not in this file ----------
+// Approved wording is fetched from GitHub Pages once per run, so a wording change is a pull request and
+// never a Cloudflare paste. It counts as one outside call. If the fetch fails or a line is invalid, the
+// small built-in set below is used so a push is never lost. The database is not used for copy because
+// its rules allow public writes.
+export const COPY_URL = 'https://ninaprojects.github.io/spellcheck/push-copy.json';
+export const H3_FALLBACK = {
+  A: [{ id: 'A1', title: 'Rise and tap ✦', body: 'Today’s habits. The effort? Tiny. The cheering section? ENORMOUS.' }, { id: 'A2', title: 'Good morning, {name} ✦', body: 'Today’s habits are ready when you are.' }],
+  J: [{ id: 'J5', title: 'A way with words ✦', body: 'Putting what you feel into sentences is a real skill, and we love watching you use it, {name}.' }],
+  C: [{ id: 'C6', title: 'Daily highlight ✦', body: 'Choose one moment to look forward to and say it out loud. A reason to smile, already booked.' }],
+  E: [{ id: 'E2', title: 'Tap before the credits ✦', body: 'Whatever is still open from today is waiting, and the day deserves a proper finale, {name}.' }]
+};
+// Keeps only well-formed lines: a short id, a title ending in the star, bodies under 130 characters, no links,
+// no em or en dashes. Anything else is dropped. A group left empty falls back to the built-in lines.
+export function cleanCopy(raw, fallback = H3_FALLBACK) {
+  const out = {};
+  for (const g of Object.keys(fallback)) {
+    const list = raw && Array.isArray(raw[g]) ? raw[g] : [];
+    const ok = list.filter(l => l && typeof l.id === 'string' && /^[A-Za-z0-9_-]{1,16}$/.test(l.id)
+      && typeof l.title === 'string' && l.title.length <= 40 && l.title.endsWith('✦')
+      && typeof l.body === 'string' && l.body.length > 0 && l.body.length <= 130
+      && !/https?:|www\./i.test(l.title + l.body) && !/[–—]/.test(l.title + l.body));
+    const seen = new Set();
+    out[g] = ok.filter(l => !seen.has(l.id) && seen.add(l.id)).map(l => (Array.isArray(l.tags) && l.tags.length
+      ? { ...l, tags: l.tags.filter(t => typeof t === 'string' && /^[a-z]{2,16}$/.test(t)).slice(0, 4) } : l));
+    if (!out[g].length) out[g] = fallback[g];
+  }
+  return out;
+}
+let _copyP = null;
+async function loadCopy() {
+  if (!_copyP) _copyP = (async () => {
+    try {
+      const r = await bfetch(COPY_URL, { cf: { cacheTtl: 300 } });
+      if (!r.ok) throw new Error('copy ' + r.status);
+      return cleanCopy(await r.json());
+    } catch (e) { console.error('push copy not loaded, using the built-in lines:', e && e.message); return H3_FALLBACK; }
+  })();
+  return _copyP;
+}
+// Picks a line that was not used among the last (pool size minus 1) sends to this person, so a line only comes back
+// after the whole pool has been used. Stable for the same person, day and group.
+export function pickFresh(pool, recent, seed) {
+  const skip = new Set((recent || []).slice(-(pool.length - 1)));
+  const fresh = pool.filter(l => !skip.has(l.id));
+  const list = fresh.length ? fresh : pool;
+  return list[h3Hash(seed) % list.length];
+}
+const fillName = (m, name) => ({ title: m.title.replace(/\{name\}/g, name), body: m.body.replace(/\{name\}/g, name) });
+// Morning pushes: a shuffled mix, different for each person. Each week (Monday to Sunday) every person gets 2 ritual days (C),
+// plus 2 journaling days (J) if she tracks the Journal habit. The days are picked by a seeded shuffle, so they are stable for a person
+// and a week but differ between people, and the same kind never lands on back-to-back days (a ritual next to a journaling day can happen for people who journal). Every other day
+// is a habits line (A). A and J lines are skipped when nothing is open today. The sky (B) pushes come later.
+// A stronger string hash than h3Hash (which must match the app), so shuffles do not follow the last character.
+function h3Mix(str) { let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; h = Math.imul(h, 3266489909); h ^= h >>> 16; return h >>> 0; }
+export function weekPlan(weekStart, person, hasJournal) {
+  const kinds = hasJournal ? ['C', 'J', 'C', 'J'] : ['C', 'C'];
+  let best = null, bestScore = Infinity;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const days = [0, 1, 2, 3, 4, 5, 6].map(d => [h3Mix(d + ':' + attempt + weekStart + person), d]).sort((x, y) => x[0] - y[0]).slice(0, kinds.length).map(x => x[1]).sort((x, y) => x - y);
+    const ks = kinds.map((k, i) => [h3Mix(i + 'k' + attempt + weekStart + person), k]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+    let score = 0; // same kind on back-to-back days is worst, any special days back to back is next
+    for (let i = 1; i < days.length; i++) if (days[i] - days[i - 1] === 1) score += ks[i] === ks[i - 1] ? 10 : 1;
+    if (score < bestScore) { bestScore = score; best = { days, ks }; }
+    if (score === 0) break;
+  }
+  const plan = {};
+  best.days.forEach((d, i) => { plan[d] = best.ks[i]; });
+  return plan;
+}
+export function morningKind(date, person, hasJournal) {
+  const wd = h3Wd(date);
+  return weekPlan(h3Add(date, -wd), person, hasJournal)[wd] || 'A';
+}
+const isJournal = h => !!h && (h.preset === 'journal' || /journal/i.test(String(h.name || '')));
+// Habit tags used by the ritual lines. A habit counts by its preset id, or by its name for custom habits.
+const H3_TAG_RE = { move: /move|workout|exercise|run|walk|gym|yoga|lift/i, stretch: /stretch|mobility/i, outside: /outside|outdoor|sun|nature|walk/i,
+  call: /call|phone a|friend/i, ootd: /ootd|outfit/i, cook: /cook|meal prep/i, tidy: /tidy|clean|declutter/i, meditate: /meditat|breath/i,
+  journal: /journal/i, sleep: /sleep|bed\b|bedtime/i, noscroll: /scroll|phone/i };
+export function habitTags(habits) {
+  const t = new Set();
+  for (const h of habits) {
+    if (h.preset && H3_TAG_RE[h.preset]) t.add(h.preset);
+    for (const k of Object.keys(H3_TAG_RE)) if (H3_TAG_RE[k].test(String(h.name || ''))) t.add(k);
+  }
+  return t;
+}
+// About 2 of every 3 ritual lines match a habit she tracks (when she has a match). No line repeats within her last 8 rituals
+// (about 4 weeks), unless the pool runs out.
+export function pickRitual(pool, recent, seed, tags) {
+  const skip = new Set((recent || []).slice(-Math.min(8, pool.length - 1)));
+  const fresh = pool.filter(l => !skip.has(l.id));
+  const base = fresh.length ? fresh : pool;
+  const match = base.filter(l => (l.tags || []).some(t => tags.has(t)));
+  const other = base.filter(l => !match.includes(l));
+  const wantMatch = h3Hash(seed + 't') % 3 !== 0;
+  const list = wantMatch && match.length ? match : (other.length ? other : base);
+  return list[h3Hash(seed) % list.length];
+}
+export const H3_VOTE_PUSH = { title: 'Last call to vote \u2726', body: 'Next week\u2019s coven habit is still open. Pick one before the night is over, or we run it back.' };
+export function h3ResultPush(name) { return { title: 'This week\u2019s coven habit \u2726', body: `${name}. Everyone is in, whether they know it yet or not.` }; }
+function h3Date(now) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); }
+function h3Add(k, n) { const d = new Date(k + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function h3Wd(k) { return (new Date(k + 'T12:00:00Z').getUTCDay() + 6) % 7; } // Monday is 0
+function h3Hash(s) { let h = 0; for (const c of String(s)) { h = (h * 31 + c.charCodeAt(0)) | 0; } return Math.abs(h); } // same as the app
+function h3Done(h, log, k) { const v = (log[k] && log[k][h.id]) || 0; return h.type === 'number' ? v >= (h.target || 1) : v >= 1; }
+export function h3Due(h, log, date) {
+  if (!h || h.archived) return false;
+  if (h.paused && h.pausedAt && date >= h.pausedAt) return false;
+  if (h3Done(h, log, date)) return false;
+  const wd = h3Wd(date);
+  if (h.perWeek) {
+    const ws = h3Add(date, -wd);
+    let c = 0;
+    for (let i = 0; i <= wd; i++) if (h3Done(h, log, h3Add(ws, i))) c++;
+    if (c >= h.perWeek) return false;
+    return (h.perWeek - c) >= (7 - wd); // only nag when every remaining day is needed
+  }
+  return !!(h.days && h.days[wd]);
+}
+export function h3Winner(votes, weekKey) {
+  const t = {};
+  for (const v of Object.values(votes)) t[v] = (t[v] || 0) + 1;
+  const ids = Object.keys(t);
+  if (!ids.length) return null;
+  const max = Math.max(...ids.map(i => t[i]));
+  const tied = ids.filter(i => t[i] === max).sort();
+  return tied[h3Hash(weekKey) % tied.length];
+}
+export async function habitsRun(env, now, opts = {}) {
+  if (opts.fresh) resetRun(); // tests only. In production it shares the call counter of the run() just before it.
+  const date = h3Date(now);
+  const ptHour = pacificHour(now);
+  const dow = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short' }).format(now);
+  const jobs = [];
+  if (ptHour >= 8 && ptHour < 12) jobs.push('h3morning');
+  if (ptHour >= 19 && ptHour < 22) jobs.push('h3nudge');
+  if (H3_JOBS_ON.vote && dow === 'Sun' && ptHour >= 18 && ptHour < 22) jobs.push('h3vote');
+  if (H3_JOBS_ON.result && dow === 'Mon' && ptHour >= 8 && ptHour < 12) jobs.push('h3result');
+  const sent = [];
+  if (!jobs.length) return { sent };
+  let st;
+  try { st = (await readKey(H3_STATE_KEY)) || {}; } catch (e) { console.error('h3 state read failed, sending nothing:', e && e.message); return { sent }; }
+  st.sched = st.sched || {};
+  let changed = false;
+  let token = null;
+  for (const job of jobs) {
+    await guard(job, async () => {
+      let rec = st.sched[job];
+      if (!rec || rec.date !== date) { rec = st.sched[job] = { date, done: [] }; changed = true; }
+      const outbox = [];
+      let winner = null, weekKey = null;
+      if (job === 'h3result') {
+        weekKey = date;
+        const votes = {};
+        for (const p of PEOPLE) { const v = (await readKey('h3-vote-' + p)) || {}; if (v[weekKey]) votes[p] = v[weekKey]; }
+        winner = h3Winner(votes, weekKey);
+        if (!winner) { console.log('Nobody voted for the week of', weekKey, ', no result push.'); return; }
+      }
+      for (const person of PEOPLE) {
+        if (rec.done.includes(person)) continue;
+        const finish = () => { rec.done.push(person); changed = true; };
+        const prefs = Object.assign({ activity: true, nudge: true, morning: true }, (await readKey('recal-notif-prefs:' + person)) || {});
+        if (!(job === 'h3nudge' ? prefs.nudge : job === 'h3morning' ? prefs.morning : prefs.activity)) { finish(); continue; }
+        const habits = Object.values((await readKey('h3-habits-' + person)) || {}).filter(h => h && !h.archived);
+        if (!habits.length) { finish(); continue; } // not using the new app
+        let msg;
+        if (job === 'h3morning') {
+          const log = (await readKey('h3-log-' + person)) || {};
+          const anyOpen = habits.some(h => h3Due(h, log, date));
+          const kind = morningKind(date, person, habits.some(isJournal));
+          if (kind !== 'C' && !anyOpen) { finish(); continue; } // A and J lines need something still open
+          const copy = await loadCopy();
+          const pool = copy[kind];
+          st.morn = st.morn || {};
+          const mem = st.morn[person] = st.morn[person] || {};
+          const line = kind === 'C' ? pickRitual(pool, mem[kind], date + person + kind, habitTags(habits)) : pickFresh(pool, mem[kind], date + person + kind);
+          mem[kind] = (mem[kind] || []).concat(line.id).slice(-40);
+          changed = true;
+          msg = fillName(line, person);
+        } else if (job === 'h3nudge') {
+          const log = (await readKey('h3-log-' + person)) || {};
+          if (!habits.some(h => h3Due(h, log, date))) { finish(); continue; }
+          const copy = await loadCopy();
+          st.eve = st.eve || {};
+          const recent = st.eve[person] || [];
+          const line = pickFresh(copy.E, recent, date + person);
+          st.eve[person] = recent.concat(line.id).slice(-40);
+          changed = true;
+          msg = fillName(line, person);
+        } else if (job === 'h3vote') {
+          const nextWeek = h3Add(date, 7 - h3Wd(date));
+          const v = (await readKey('h3-vote-' + person)) || {};
+          if (v[nextWeek]) { finish(); continue; }
+          msg = { ...H3_VOTE_PUSH };
+        } else {
+          msg = h3ResultPush(H3_VOTE_NAMES[winner] || winner);
+        }
+        const tok = await readRaw('recal-fcm-token:' + person);
+        if (!tok) { finish(); continue; }
+        finish();
+        outbox.push({ person, msg, tok });
+      }
+      if (!outbox.length) return;
+      try { await writeKey(H3_STATE_KEY, st, true); changed = false; } catch (e) {
+        for (const o of outbox) rec.done = rec.done.filter(x => x !== o.person);
+        console.error(job, 'could not save state, not sending:', e && e.message);
+        return;
+      }
+      for (const { person, msg, tok } of outbox) {
+        try {
+          if (!token) token = await getAccessToken(env);
+          await sendPush(env, token, tok, msg);
+          sent.push({ owner: person, job, ...msg });
+        } catch (e) { console.error(job, 'send failed for', person, e && e.message); }
+      }
+    });
+  }
+  if (changed) { try { await writeKey(H3_STATE_KEY, st, true); } catch (e) { console.error('h3 state save failed', e && e.message); } }
+  return { sent };
 }
 
 // ---------- Google auth + FCM (data-only, same as the morning push) ----------
