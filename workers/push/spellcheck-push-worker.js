@@ -1096,7 +1096,7 @@ export async function run(env, now) {
 // ---------- new habit tracker pushes (index.html, data under recalData/h3-*) ----------
 // Three scheduled pushes for the habit tracker, kept apart from the Round 2 jobs above. They share the
 // run's call counter, use their own state key, and claim each send (saved as done) BEFORE it goes out.
-//   h3morning 8am to 11:59am Pacific, every day: one approved line per person (see morningKind). A and J lines only when a habit is open today.
+//   h3morning 8am to 11:59am Pacific, every day: one approved line per person (see weekPlan). A and J lines only when a habit is open today.
 //   h3nudge   7pm to 9:59pm Pacific, every day: someone has a habit due today that is not done yet.
 //   h3vote    Sunday 6pm to 9:59pm Pacific: next week's coven habit vote is still open for her.
 //   h3result  Monday 8am to 11:59am Pacific: the coven habit for this week, if anyone voted.
@@ -1129,7 +1129,8 @@ export function cleanCopy(raw, fallback = H3_FALLBACK) {
       && typeof l.body === 'string' && l.body.length > 0 && l.body.length <= 130
       && !/https?:|www\./i.test(l.title + l.body) && !/[–—]/.test(l.title + l.body));
     const seen = new Set();
-    out[g] = ok.filter(l => !seen.has(l.id) && seen.add(l.id));
+    out[g] = ok.filter(l => !seen.has(l.id) && seen.add(l.id)).map(l => (Array.isArray(l.tags) && l.tags.length
+      ? { ...l, tags: l.tags.filter(t => typeof t === 'string' && /^[a-z]{2,16}$/.test(t)).slice(0, 4) } : l));
     if (!out[g].length) out[g] = fallback[g];
   }
   return out;
@@ -1154,14 +1155,56 @@ export function pickFresh(pool, recent, seed) {
   return list[h3Hash(seed) % list.length];
 }
 const fillName = (m, name) => ({ title: m.title.replace(/\{name\}/g, name), body: m.body.replace(/\{name\}/g, name) });
-// Morning pushes. Mixed week (Mon is 0): Tue and Fri a small ritual (C), Wed and Sat a journaling line (J) for people who have the
-// Journal habit, every other day a habits line (A). A and J are skipped when nothing is open today. The sky (B) pushes come later.
-export function morningKind(wd, hasJournal) {
-  if (wd === 1 || wd === 4) return 'C';
-  if (hasJournal && (wd === 2 || wd === 5)) return 'J';
-  return 'A';
+// Morning pushes: a shuffled mix, different for each person. Each week (Monday to Sunday) every person gets 2 ritual days (C),
+// plus 2 journaling days (J) if she tracks the Journal habit. The days are picked by a seeded shuffle, so they are stable for a person
+// and a week but differ between people, and the same kind never lands on back-to-back days (a ritual next to a journaling day can happen for people who journal). Every other day
+// is a habits line (A). A and J lines are skipped when nothing is open today. The sky (B) pushes come later.
+// A stronger string hash than h3Hash (which must match the app), so shuffles do not follow the last character.
+function h3Mix(str) { let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; h = Math.imul(h, 3266489909); h ^= h >>> 16; return h >>> 0; }
+export function weekPlan(weekStart, person, hasJournal) {
+  const kinds = hasJournal ? ['C', 'J', 'C', 'J'] : ['C', 'C'];
+  let best = null, bestScore = Infinity;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const days = [0, 1, 2, 3, 4, 5, 6].map(d => [h3Mix(d + ':' + attempt + weekStart + person), d]).sort((x, y) => x[0] - y[0]).slice(0, kinds.length).map(x => x[1]).sort((x, y) => x - y);
+    const ks = kinds.map((k, i) => [h3Mix(i + 'k' + attempt + weekStart + person), k]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+    let score = 0; // same kind on back-to-back days is worst, any special days back to back is next
+    for (let i = 1; i < days.length; i++) if (days[i] - days[i - 1] === 1) score += ks[i] === ks[i - 1] ? 10 : 1;
+    if (score < bestScore) { bestScore = score; best = { days, ks }; }
+    if (score === 0) break;
+  }
+  const plan = {};
+  best.days.forEach((d, i) => { plan[d] = best.ks[i]; });
+  return plan;
+}
+export function morningKind(date, person, hasJournal) {
+  const wd = h3Wd(date);
+  return weekPlan(h3Add(date, -wd), person, hasJournal)[wd] || 'A';
 }
 const isJournal = h => !!h && (h.preset === 'journal' || /journal/i.test(String(h.name || '')));
+// Habit tags used by the ritual lines. A habit counts by its preset id, or by its name for custom habits.
+const H3_TAG_RE = { move: /move|workout|exercise|run|walk|gym|yoga|lift/i, stretch: /stretch|mobility/i, outside: /outside|outdoor|sun|nature|walk/i,
+  call: /call|phone a|friend/i, ootd: /ootd|outfit/i, cook: /cook|meal prep/i, tidy: /tidy|clean|declutter/i, meditate: /meditat|breath/i,
+  journal: /journal/i, sleep: /sleep|bed\b|bedtime/i, noscroll: /scroll|phone/i };
+export function habitTags(habits) {
+  const t = new Set();
+  for (const h of habits) {
+    if (h.preset && H3_TAG_RE[h.preset]) t.add(h.preset);
+    for (const k of Object.keys(H3_TAG_RE)) if (H3_TAG_RE[k].test(String(h.name || ''))) t.add(k);
+  }
+  return t;
+}
+// About 2 of every 3 ritual lines match a habit she tracks (when she has a match). No line repeats within her last 8 rituals
+// (about 4 weeks), unless the pool runs out.
+export function pickRitual(pool, recent, seed, tags) {
+  const skip = new Set((recent || []).slice(-Math.min(8, pool.length - 1)));
+  const fresh = pool.filter(l => !skip.has(l.id));
+  const base = fresh.length ? fresh : pool;
+  const match = base.filter(l => (l.tags || []).some(t => tags.has(t)));
+  const other = base.filter(l => !match.includes(l));
+  const wantMatch = h3Hash(seed + 't') % 3 !== 0;
+  const list = wantMatch && match.length ? match : (other.length ? other : base);
+  return list[h3Hash(seed) % list.length];
+}
 export const H3_VOTE_PUSH = { title: 'Last call to vote \u2726', body: 'Next week\u2019s coven habit is still open. Pick one before the night is over, or we run it back.' };
 export function h3ResultPush(name) { return { title: 'This week\u2019s coven habit \u2726', body: `${name}. Everyone is in, whether they know it yet or not.` }; }
 function h3Date(now) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); }
@@ -1233,13 +1276,13 @@ export async function habitsRun(env, now, opts = {}) {
         if (job === 'h3morning') {
           const log = (await readKey('h3-log-' + person)) || {};
           const anyOpen = habits.some(h => h3Due(h, log, date));
-          const kind = morningKind(h3Wd(date), habits.some(isJournal));
+          const kind = morningKind(date, person, habits.some(isJournal));
           if (kind !== 'C' && !anyOpen) { finish(); continue; } // A and J lines need something still open
           const copy = await loadCopy();
           const pool = copy[kind];
           st.morn = st.morn || {};
           const mem = st.morn[person] = st.morn[person] || {};
-          const line = pickFresh(pool, mem[kind], date + person + kind);
+          const line = kind === 'C' ? pickRitual(pool, mem[kind], date + person + kind, habitTags(habits)) : pickFresh(pool, mem[kind], date + person + kind);
           mem[kind] = (mem[kind] || []).concat(line.id).slice(-40);
           changed = true;
           msg = fillName(line, person);

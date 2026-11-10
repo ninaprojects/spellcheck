@@ -925,41 +925,89 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('copy file: ids are unique within each group', ['A', 'J', 'C', 'E'].every(g => new Set(COPY[g].map(l => l.id)).size === COPY[g].length));
   check('copy file: held journaling lines (J4, J9, J10) are not in it', !COPY.J.some(l => /^J(4|9|10)/.test(l.id)) && !COPY.J.some(l => /only copy|home here|Plot thickens|Gossip/.test(l.title + l.body)));
   check('copy file: cleanCopy drops lines with links, dashes or no star', (() => { const c = W.cleanCopy({ A: [{ id: 'a', title: 'Hi ✦', body: 'ok' }, { id: 'b', title: 'Hi ✦', body: 'see https://x.com' }, { id: 'c', title: 'Hi', body: 'ok' }, { id: 'd', title: 'Hi ✦', body: 'a — b' }] }); return c.A.length === 1 && c.A[0].id === 'a' && c.J === W.H3_FALLBACK.J; })());
-  check('morning kinds: Tue and Fri ritual, Wed and Sat journaling, else habits', W.morningKind(1, false) === 'C' && W.morningKind(4, true) === 'C' && W.morningKind(2, true) === 'J' && W.morningKind(5, true) === 'J' && W.morningKind(2, false) === 'A' && W.morningKind(0, true) === 'A' && W.morningKind(6, false) === 'A');
+  // Which day of the week of Nov 9 each person gets which kind (the mix is shuffled per person and week)
+  const DAYS7 = Object.keys(MORN);
+  const kindOn = (day, who, jr) => W.morningKind(MORN[day].slice(0, 10), who, jr);
+  const findDay = (pred) => DAYS7.find(pred);
+  // Weekly mix: 2 rituals, plus 2 journaling days for the Journal habit, stable, different per person, mostly not back to back
+  {
+    let ok = true, jok = true, stable = true, adjacent = 0, weeks = 0, sameAdj = 0; const sigs = new Set();
+    for (let w = 0; w < 40; w++) {
+      const ws = new Date(Date.parse('2026-11-09T12:00:00Z') + w * 7 * 86400000).toISOString().slice(0, 10);
+      for (const who of PEOPLE) {
+        const a = W.weekPlan(ws, who, false), b = W.weekPlan(ws, who, true);
+        if (Object.values(a).filter(k => k === 'C').length !== 2 || Object.values(a).some(k => k === 'J')) ok = false;
+        if (Object.values(b).filter(k => k === 'C').length !== 2 || Object.values(b).filter(k => k === 'J').length !== 2) jok = false;
+        if (JSON.stringify(a) !== JSON.stringify(W.weekPlan(ws, who, false))) stable = false;
+        const days = Object.keys(b).map(Number).sort((x, y) => x - y); weeks++;
+        if (days.some((d, i) => i && d - days[i - 1] === 1)) adjacent++;
+        for (const pl of [a, b]) for (let d = 1; d < 7; d++) if (pl[d] && pl[d] === pl[d - 1]) sameAdj++;
+        sigs.add(JSON.stringify(b));
+      }
+    }
+    check('morning mix: 2 ritual days a week, plus 2 journaling days for the Journal habit', ok && jok);
+    check('morning mix: the same person and week always get the same plan', stable);
+    check('morning mix: shuffled, many different plans across people and weeks', sigs.size > 20, sigs.size);
+    check('morning mix: the same kind is never on back-to-back days', sameAdj === 0, sameAdj);
+  }
+  check('morning mix: a person with no plan day gets a habits line', ['A', 'C'].includes(kindOn('Mon', 'Nina', false)) && W.morningKind('2026-11-09', 'Nina', false) !== 'J');
+  // Ritual lines match her habits about two times in three, and never repeat inside her last 8 rituals
+  {
+    const tidyIds = COPY.C.filter(l => (l.tags || []).includes('tidy')).map(l => l.id);
+    let tidyHits = 0;
+    for (let i = 0; i < 300; i++) { const l = W.pickRitual(COPY.C, [], 'seed' + i, new Set(['tidy'])); if (tidyIds.includes(l.id)) tidyHits++; }
+    check('ritual pick: about two in three match a habit she tracks', tidyHits > 300 * 0.5 && tidyHits < 300 * 0.8, tidyHits);
+    let noTags = 0; const ids = new Set();
+    for (let i = 0; i < 200; i++) ids.add(W.pickRitual(COPY.C, [], 'x' + i, new Set()).id);
+    check('ritual pick: with no matching habit she still gets rituals (all of them in play)', ids.size > 6, ids.size);
+    const rec = ['C1', 'C2', 'C3', 'C4', 'C6', 'C7', 'C8', 'C9'];
+    let bad = 0; for (let i = 0; i < 200; i++) if (rec.includes(W.pickRitual(COPY.C, rec, 'r' + i, new Set(['tidy', 'move'])).id)) bad++;
+    check('ritual pick: nothing from her last 8 rituals comes back', bad === 0, bad);
+    const t = W.habitTags([{ preset: 'tidy', name: 'Tidy' }, { name: 'Morning meditation' }, { preset: 'read', name: 'Read' }, { name: 'Evening Journal' }]);
+    check('habit tags: preset id and custom names both count', t.has('tidy') && t.has('meditate') && t.has('journal') && !t.has('move'), [...t]);
+    const cc = W.cleanCopy({ C: [{ id: 'z', title: 'Hi ✦', body: 'ok', tags: ['tidy', 'BAD TAG', 5] }] });
+    check('copy file: tags are kept and cleaned', JSON.stringify(cc.C[0].tags) === '["tidy"]', cc.C);
+    check('copy file: every ritual tag is a known habit tag', COPY.C.every(l => (l.tags || []).every(t => ['move', 'stretch', 'outside', 'call', 'ootd', 'cook', 'tidy', 'meditate', 'journal', 'sleep', 'noscroll'].includes(t))));
+  }
 
   // Monday: habits line, only to people with something open
   resetWorld(); copyMode = 'ok'; copyFetches = 0;
   put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
-  put('h3-habits-Kellye', { r2: habit({ id: 'r2' }) }); put('h3-log-Kellye', { '2026-11-09': { r2: 1 } }); // already done
+  const monDay = findDay(d => ['Nina', 'Kellye', 'Carolina'].every(p => kindOn(d, p, false) === 'A'));
+  check('morning: a day exists where all three get a habits line (test setup)', !!monDay);
+  put('h3-habits-Kellye', { r2: habit({ id: 'r2' }) }); put('h3-log-Kellye', { [MORN[monDay].slice(0, 10)]: { r2: 1 } }); // already done
   put('recal-notif-prefs:Carolina', { morning: false }); put('h3-habits-Carolina', { r3: habit({ id: 'r3' }) });
   // Lauren is not using the new app
-  await runH(MORN.Mon);
+  await runH(MORN[monDay]);
   check('morning: habits line goes to the person with something open', pushes.length === 1 && pushes[0].to === 'Nina' && bodiesOf('A', 'Nina').includes(pushes[0].body), pushes);
   check('morning: no push to someone already done, to the Morning switch off, or to someone not in the new app', !pushes.some(x => ['Kellye', 'Carolina', 'Lauren'].includes(x.to)), pushes);
   check('morning: the name is filled in and no placeholder leaks', pushes.every(x => !/\{|\}/.test(x.title + x.body)), pushes);
   check('morning: wording is fetched once per run', copyFetches === 1, copyFetches);
-  await runH(plus(MORN.Mon, 60));
+  await runH(plus(MORN[monDay], 60));
   check('morning: once per person per day', pushes.length === 0, pushes);
-  await runH('2026-11-09T14:00:00Z'); // 6am Pacific
+  await runH(MORN[monDay].slice(0, 10) + 'T14:00:00Z'); // 6am Pacific
   check('morning: nothing before 8am Pacific', pushes.length === 0, pushes);
 
   // Tuesday: ritual goes even to someone who is done
   resetWorld(); copyMode = 'ok';
-  put('h3-habits-Kellye', { r2: habit({ id: 'r2' }) }); put('h3-log-Kellye', { '2026-11-10': { r2: 1 } });
-  await runH(MORN.Tue);
-  check('morning: Tuesday ritual still goes to someone who finished everything', pushes.length === 1 && pushes[0].to === 'Kellye' && bodiesOf('C', 'Kellye').includes(pushes[0].body), pushes);
+  const ritDay = findDay(d => kindOn(d, 'Kellye', false) === 'C');
+  put('h3-habits-Kellye', { r2: habit({ id: 'r2' }) }); put('h3-log-Kellye', { [MORN[ritDay].slice(0, 10)]: { r2: 1 } });
+  await runH(MORN[ritDay]);
+  check('morning: a ritual day still goes to someone who finished everything', pushes.length === 1 && pushes[0].to === 'Kellye' && bodiesOf('C', 'Kellye').includes(pushes[0].body), pushes);
 
   // Wednesday: journaling line for the person with the Journal habit only
   resetWorld(); copyMode = 'ok';
+  const jDay = findDay(d => kindOn(d, 'Nina', true) === 'J' && kindOn(d, 'Kellye', false) === 'A');
+  check('morning: a journaling day exists for Nina where Kellye gets a habits line (test setup)', !!jDay);
   put('h3-habits-Nina', { j: habit({ id: 'j', name: 'Journal', preset: 'journal' }) });
   put('h3-habits-Kellye', { r: habit({ id: 'r' }) });
-  await runH(MORN.Wed);
+  await runH(MORN[jDay]);
   check('morning: journaling line goes to the person with the Journal habit', pushes.find(x => x.to === 'Nina') && bodiesOf('J', 'Nina').includes(pushes.find(x => x.to === 'Nina').body), pushes);
   check('morning: others get a habits line that day', pushes.find(x => x.to === 'Kellye') && bodiesOf('A', 'Kellye').includes(pushes.find(x => x.to === 'Kellye').body), pushes);
   // Journal habit found by name too, and a finished journal day skips the journaling line
   resetWorld();
-  put('h3-habits-Nina', { j: habit({ id: 'j', name: 'Evening journal' }) }); put('h3-log-Nina', { '2026-11-11': { j: 1 } });
-  await runH(MORN.Wed);
+  put('h3-habits-Nina', { j: habit({ id: 'j', name: 'Evening journal' }) }); put('h3-log-Nina', { [MORN[jDay].slice(0, 10)]: { j: 1 } });
+  await runH(MORN[jDay]);
   check('morning: nothing left open means no journaling line', pushes.length === 0, pushes);
 
   // Rotation: a line is not reused until the whole group has been used (28 days, then more)
@@ -972,13 +1020,16 @@ check('someone without notifications is skipped, the others still hear', sentTo(
     await runH(t.toISOString());
     for (const x of pushes) {
       const id = COPY.A.concat(COPY.C).find(l => l.title === x.title)?.id;
-      seen.push({ d, wd, id, kind: wd === 1 || wd === 4 ? 'C' : 'A' });
+      seen.push({ d, wd, id, kind: W.morningKind(t.toISOString().slice(0, 10), 'Nina', false) });
     }
   }
   const lastUse = {}; const gaps = [];
   for (const x of seen) { const key = x.kind + x.id; if (key in lastUse) gaps.push(x.d - lastUse[key]); lastUse[key] = x.d; }
   check('morning rotation: 56 days of pushes went out', seen.length === 56, seen.length);
-  check('morning rotation: no line repeats within 28 days', gaps.length === 0 || Math.min(...gaps) >= 28, Math.min(...gaps));
+  const gapsOf = k => { const lu = {}, g = []; for (const x of seen.filter(y => y.kind === k)) { if (x.id in lu) g.push(x.d - lu[x.id]); lu[x.id] = x.d; } return g; };
+  check('morning rotation: habits lines do not repeat within 28 days', Math.min(...gapsOf('A')) >= 28, Math.min(...gapsOf('A')));
+  check('morning rotation: ritual lines do not repeat within about 3 weeks (pool of 12, about 2 a week)', Math.min(...gapsOf('C')) >= 21, Math.min(...gapsOf('C')));
+  check('morning rotation: about 2 ritual days a week', seen.filter(x => x.kind === 'C').length === 16, seen.filter(x => x.kind === 'C').length);
   const stateNow = JSON.parse(store['h3-push-state']);
   check('morning rotation: memory stays small', JSON.stringify(stateNow).length < 4000, JSON.stringify(stateNow).length);
 
@@ -992,11 +1043,12 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   // The copy file is down, or junk: the built-in lines go out and nothing is lost
   resetWorld(); copyMode = 'down';
   put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
-  await runH(MORN.Mon);
+  const aDay = findDay(d => kindOn(d, 'Nina', false) === 'A');
+  await runH(MORN[aDay]);
   check('copy file down: the built-in line still goes out', pushes.length === 1 && W.H3_FALLBACK.A.some(l => l.body.replace(/\{name\}/g, 'Nina') === pushes[0].body), pushes);
   resetWorld(); copyMode = 'junk';
   put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
-  await runH(MORN.Mon);
+  await runH(MORN[aDay]);
   check('copy file junk: invalid lines are ignored, built-in line goes out', pushes.length === 1 && W.H3_FALLBACK.A.some(l => l.body.replace(/\{name\}/g, 'Nina') === pushes[0].body), pushes);
   copyMode = 'ok';
 
