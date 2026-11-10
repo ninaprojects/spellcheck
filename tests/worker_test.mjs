@@ -21,6 +21,7 @@ function check(name, ok, detail) { results.push(!!ok); console.log((ok ? 'PASS '
 
 // ---- fake world ----
 let store, pushes;
+let copyMode = 'ok', copyFetches = 0;
 function resetWorld() {
   store = {}; pushes = [];
   for (const p of PEOPLE) store['recal-fcm-token:' + p] = 'token-' + p;
@@ -31,6 +32,12 @@ globalThis.fetch = async (url, opts = {}) => {
     const key = decodeURIComponent(url.split('/recalData/')[1].replace(/\.json$/, ''));
     if ((opts.method || 'GET') === 'PUT') { store[key] = JSON.parse(opts.body); return new Response('null', { status: 200 }); }
     return new Response(JSON.stringify(key in store ? store[key] : null), { status: 200 });
+  }
+  if (url === W.COPY_URL) {
+    copyFetches++;
+    if (copyMode === 'down') return new Response('nope', { status: 503 });
+    if (copyMode === 'junk') return new Response(JSON.stringify({ A: [{ id: 'x', title: 'no star', body: 'bad' }], E: 'nope' }), { status: 200 });
+    return new Response(fs.readFileSync(path.join(HERE, '..', 'push-copy.json'), 'utf8'), { status: 200 });
   }
   if (url.startsWith('https://oauth2.googleapis.com/token')) return new Response(JSON.stringify({ access_token: 'fake-access-token' }), { status: 200 });
   if (url.includes('fcm.googleapis.com')) {
@@ -862,7 +869,9 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   // Lauren has no habits in the new app
   await runH(THU_EVE);
   check('h3 nudge: only the person with a habit still due gets it', pushes.length === 1 && pushes[0].to === 'Nina', pushes);
-  check('h3 nudge: copy is one of the drafts, no em dash', W.H3_NUDGE.includes(pushes[0].body) && !/\u2014/.test(W.H3_NUDGE.join('')));
+  const COPY = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'push-copy.json'), 'utf8'));
+  const eveBodies = COPY.E.map(l => l.body.replace(/\{name\}/g, 'Nina'));
+  check('h3 nudge: wording is one of the approved evening lines', eveBodies.includes(pushes[0].body) && /\u2726$/.test(pushes[0].title), pushes[0]);
   await runH(plus(THU_EVE, 60));
   check('h3 nudge: once per person per day', pushes.length === 0, pushes);
   await runH('2026-11-05T23:00:00Z'); // 3pm Pacific
@@ -875,8 +884,9 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   resetWorld();
   put('h3-habits-Nina', { w1: habit({ id: 'w1', perWeek: 3 }) }); put('h3-log-Nina', { '2026-11-02': { w1: 1 } });
   await runH('2026-11-09T03:30:00Z'); // Sun Nov 8, 7:30pm: 1 of 3, need 2, only 1 day left
-  check('h3 nudge: weekly habit nagged when every remaining day is needed', pushes.some(x => x.to === 'Nina' && W.H3_NUDGE.includes(x.body)), pushes);
-  // vote reminder, Sunday 6:30pm Pacific
+  check('h3 nudge: weekly habit nagged when every remaining day is needed', pushes.some(x => x.to === 'Nina' && eveBodies.includes(x.body)), pushes);
+  // vote reminder, Sunday 6:30pm Pacific (draft wording: off by default, switched on here only to test it)
+  W.H3_JOBS_ON.vote = true; W.H3_JOBS_ON.result = true;
   resetWorld();
   for (const p of ['Nina', 'Kellye', 'Lauren']) put('h3-habits-' + p, { a: habit({ id: 'a' }) });
   put('h3-vote-Nina', { '2026-11-09': 'walk' });
@@ -889,13 +899,116 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   put('h3-vote-Nina', { '2026-11-09': 'walk' }); put('h3-vote-Kellye', { '2026-11-09': 'walk' }); put('h3-vote-Lauren', { '2026-11-09': 'tidy' });
   await runH('2026-11-09T17:00:00Z');
   const res = pushes.filter(x => x.body.includes('10 minute walk outside'));
-  check('h3 result: winner announced to people using the app', res.length === 3 && pushes.length === 3, pushes);
+  check('h3 result: winner announced to people using the app', res.length === 3 && pushes.filter(x => x.title === 'This week\u2019s coven habit \u2726').length === 3, pushes);
   resetWorld();
   for (const p of PEOPLE) put('h3-habits-' + p, { a: habit({ id: 'a' }) });
   await runH('2026-11-09T17:00:00Z');
-  check('h3 result: no push when nobody voted', pushes.length === 0, pushes);
+  check('h3 result: no push when nobody voted', pushes.filter(x => x.title === 'This week\u2019s coven habit \u2726').length === 0, pushes);
   check('h3 tie break matches the app (stable per week)', W.h3Winner({ a: 'walk', b: 'tidy' }, '2026-11-09') === W.h3Winner({ c: 'tidy', d: 'walk' }, '2026-11-09'));
   check('h3 stays under the call budget', W.callsUsed() < 46, W.callsUsed());
+  W.H3_JOBS_ON.vote = false; W.H3_JOBS_ON.result = false;
+  resetWorld(); for (const p of PEOPLE) { put('h3-habits-' + p, { a: habit({ id: 'a' }) }); put('h3-vote-' + p, { '2026-11-09': 'walk' }); }
+  await runH('2026-11-09T02:30:00Z'); const v1 = pushes.filter(x => x.title === W.H3_VOTE_PUSH.title).length;
+  await runH('2026-11-09T17:00:00Z'); const r1 = pushes.filter(x => x.title === 'This week\u2019s coven habit \u2726').length;
+  check('h3 vote and result stay off until their copy is approved', v1 === 0 && r1 === 0 && W.H3_JOBS_ON.vote === false, { v1, r1 });
+}
+
+// ===== h3 morning pushes and the copy file =====
+{
+  const habit = (o) => Object.assign({ id: 'h' + Math.random().toString(36).slice(2, 7), name: 'Read', type: 'yesno', target: 1, days: [1, 1, 1, 1, 1, 1, 1], archived: false }, o);
+  const runH = async (iso) => { pushes = []; return W.habitsRun(env, at(iso), { fresh: true }); };
+  const COPY = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'push-copy.json'), 'utf8'));
+  const bodiesOf = (g, who) => COPY[g].map(l => l.body.replace(/\{name\}/g, who));
+  // 8:05am Pacific on each weekday of the week of Nov 9 2026 (Mon is Nov 9). PST = UTC-8.
+  const MORN = { Mon: '2026-11-09T16:05:00Z', Tue: '2026-11-10T16:05:00Z', Wed: '2026-11-11T16:05:00Z', Thu: '2026-11-12T16:05:00Z', Fri: '2026-11-13T16:05:00Z', Sat: '2026-11-14T16:05:00Z', Sun: '2026-11-15T16:05:00Z' };
+  check('copy file: every line is clean (star title, no dashes, no exclamation points, short)', ['A', 'J', 'C', 'E'].every(g => COPY[g].length > 0 && COPY[g].every(l => l.title.endsWith('✦') && !/[–—!]/.test(l.title + l.body) && l.body.length <= 110 && l.title.length <= 30)));
+  check('copy file: ids are unique within each group', ['A', 'J', 'C', 'E'].every(g => new Set(COPY[g].map(l => l.id)).size === COPY[g].length));
+  check('copy file: held journaling lines (J4, J9, J10) are not in it', !COPY.J.some(l => /^J(4|9|10)/.test(l.id)) && !COPY.J.some(l => /only copy|home here|Plot thickens|Gossip/.test(l.title + l.body)));
+  check('copy file: cleanCopy drops lines with links, dashes or no star', (() => { const c = W.cleanCopy({ A: [{ id: 'a', title: 'Hi ✦', body: 'ok' }, { id: 'b', title: 'Hi ✦', body: 'see https://x.com' }, { id: 'c', title: 'Hi', body: 'ok' }, { id: 'd', title: 'Hi ✦', body: 'a — b' }] }); return c.A.length === 1 && c.A[0].id === 'a' && c.J === W.H3_FALLBACK.J; })());
+  check('morning kinds: Tue and Fri ritual, Wed and Sat journaling, else habits', W.morningKind(1, false) === 'C' && W.morningKind(4, true) === 'C' && W.morningKind(2, true) === 'J' && W.morningKind(5, true) === 'J' && W.morningKind(2, false) === 'A' && W.morningKind(0, true) === 'A' && W.morningKind(6, false) === 'A');
+
+  // Monday: habits line, only to people with something open
+  resetWorld(); copyMode = 'ok'; copyFetches = 0;
+  put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
+  put('h3-habits-Kellye', { r2: habit({ id: 'r2' }) }); put('h3-log-Kellye', { '2026-11-09': { r2: 1 } }); // already done
+  put('recal-notif-prefs:Carolina', { morning: false }); put('h3-habits-Carolina', { r3: habit({ id: 'r3' }) });
+  // Lauren is not using the new app
+  await runH(MORN.Mon);
+  check('morning: habits line goes to the person with something open', pushes.length === 1 && pushes[0].to === 'Nina' && bodiesOf('A', 'Nina').includes(pushes[0].body), pushes);
+  check('morning: no push to someone already done, to the Morning switch off, or to someone not in the new app', !pushes.some(x => ['Kellye', 'Carolina', 'Lauren'].includes(x.to)), pushes);
+  check('morning: the name is filled in and no placeholder leaks', pushes.every(x => !/\{|\}/.test(x.title + x.body)), pushes);
+  check('morning: wording is fetched once per run', copyFetches === 1, copyFetches);
+  await runH(plus(MORN.Mon, 60));
+  check('morning: once per person per day', pushes.length === 0, pushes);
+  await runH('2026-11-09T14:00:00Z'); // 6am Pacific
+  check('morning: nothing before 8am Pacific', pushes.length === 0, pushes);
+
+  // Tuesday: ritual goes even to someone who is done
+  resetWorld(); copyMode = 'ok';
+  put('h3-habits-Kellye', { r2: habit({ id: 'r2' }) }); put('h3-log-Kellye', { '2026-11-10': { r2: 1 } });
+  await runH(MORN.Tue);
+  check('morning: Tuesday ritual still goes to someone who finished everything', pushes.length === 1 && pushes[0].to === 'Kellye' && bodiesOf('C', 'Kellye').includes(pushes[0].body), pushes);
+
+  // Wednesday: journaling line for the person with the Journal habit only
+  resetWorld(); copyMode = 'ok';
+  put('h3-habits-Nina', { j: habit({ id: 'j', name: 'Journal', preset: 'journal' }) });
+  put('h3-habits-Kellye', { r: habit({ id: 'r' }) });
+  await runH(MORN.Wed);
+  check('morning: journaling line goes to the person with the Journal habit', pushes.find(x => x.to === 'Nina') && bodiesOf('J', 'Nina').includes(pushes.find(x => x.to === 'Nina').body), pushes);
+  check('morning: others get a habits line that day', pushes.find(x => x.to === 'Kellye') && bodiesOf('A', 'Kellye').includes(pushes.find(x => x.to === 'Kellye').body), pushes);
+  // Journal habit found by name too, and a finished journal day skips the journaling line
+  resetWorld();
+  put('h3-habits-Nina', { j: habit({ id: 'j', name: 'Evening journal' }) }); put('h3-log-Nina', { '2026-11-11': { j: 1 } });
+  await runH(MORN.Wed);
+  check('morning: nothing left open means no journaling line', pushes.length === 0, pushes);
+
+  // Rotation: a line is not reused until the whole group has been used (28 days, then more)
+  resetWorld(); copyMode = 'ok';
+  put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
+  const seen = []; let repeatWithin28 = false;
+  for (let d = 0; d < 56; d++) {
+    const t = new Date(Date.parse('2026-11-16T16:05:00Z') + d * 86400000); // from Mon Nov 16
+    const wd = (t.getUTCDay() + 6) % 7;
+    await runH(t.toISOString());
+    for (const x of pushes) {
+      const id = COPY.A.concat(COPY.C).find(l => l.title === x.title)?.id;
+      seen.push({ d, wd, id, kind: wd === 1 || wd === 4 ? 'C' : 'A' });
+    }
+  }
+  const lastUse = {}; const gaps = [];
+  for (const x of seen) { const key = x.kind + x.id; if (key in lastUse) gaps.push(x.d - lastUse[key]); lastUse[key] = x.d; }
+  check('morning rotation: 56 days of pushes went out', seen.length === 56, seen.length);
+  check('morning rotation: no line repeats within 28 days', gaps.length === 0 || Math.min(...gaps) >= 28, Math.min(...gaps));
+  const stateNow = JSON.parse(store['h3-push-state']);
+  check('morning rotation: memory stays small', JSON.stringify(stateNow).length < 4000, JSON.stringify(stateNow).length);
+
+  // Evening rotation cycles through the whole group before repeating
+  resetWorld(); copyMode = 'ok';
+  put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
+  const eve = [];
+  for (let d = 0; d < 9; d++) { await runH(new Date(Date.parse('2026-11-16T03:30:00Z') + d * 86400000).toISOString()); eve.push(...pushes.filter(x => COPY.E.some(l => l.title === x.title)).map(x => x.title + x.body)); }
+  check('evening rotation: nine nights, nine different lines', eve.length === 9 && new Set(eve).size === 9, eve.length);
+
+  // The copy file is down, or junk: the built-in lines go out and nothing is lost
+  resetWorld(); copyMode = 'down';
+  put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
+  await runH(MORN.Mon);
+  check('copy file down: the built-in line still goes out', pushes.length === 1 && W.H3_FALLBACK.A.some(l => l.body.replace(/\{name\}/g, 'Nina') === pushes[0].body), pushes);
+  resetWorld(); copyMode = 'junk';
+  put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
+  await runH(MORN.Mon);
+  check('copy file junk: invalid lines are ignored, built-in line goes out', pushes.length === 1 && W.H3_FALLBACK.A.some(l => l.body.replace(/\{name\}/g, 'Nina') === pushes[0].body), pushes);
+  copyMode = 'ok';
+
+  // Budget: a Monday 8am run with everything on (Round 2 run first, then the habit jobs) stays under the limit
+  resetWorld();
+  W.H3_JOBS_ON.result = true;
+  for (const p of PEOPLE) { put('h3-habits-' + p, { r1: habit({ id: 'r1' }), j: habit({ id: 'j', name: 'Journal', preset: 'journal' }) }); put('h3-vote-' + p, { '2026-11-09': 'walk' }); }
+  pushes = [];
+  await W.run(env, at(MORN.Mon)); await W.habitsRun(env, at(MORN.Mon));
+  W.H3_JOBS_ON.result = false;
+  check('morning: Monday 8am (morning plus coven habit result) stays under the call budget', W.callsUsed() < 46, W.callsUsed());
+  check('morning: Monday sends a habits line and the result to each person', PEOPLE.every(p => pushes.filter(x => x.to === p).length === 2), pushes.map(x => x.to + ':' + x.title));
 }
 
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');

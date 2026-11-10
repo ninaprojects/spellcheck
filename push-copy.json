@@ -1,0 +1,271 @@
+{
+ "_note": "Approved push wording. The push Worker fetches this file from GitHub Pages. Edit through a pull request only. Titles end with the star, no em dashes, no links. Groups: A habits push, J journaling push (people with the Journal habit), C small ritual, E evening nudge. Source of truth for wording: the Spell Check copy library.",
+ "A": [
+  {
+   "id": "A1",
+   "title": "Rise and tap ✦",
+   "body": "Today's habits. The effort? Tiny. The cheering section? ENORMOUS."
+  },
+  {
+   "id": "A2",
+   "title": "Good morning, {name} ✦",
+   "body": "Today's habits are ready when you are."
+  },
+  {
+   "id": "A5a1",
+   "title": "Glow incoming ✦",
+   "body": "Today's habits are warmed up and ready to make your whole morning shimmer. Tap through when you like."
+  },
+  {
+   "id": "A5a2",
+   "title": "Glow season ✦",
+   "body": "Today's habits are lined up, and every tap makes the morning shine brighter, {name}."
+  },
+  {
+   "id": "A5b1",
+   "title": "Glow loading ✦",
+   "body": "Today's habits are ready to go, and the rest of your morning is about to look radiant."
+  },
+  {
+   "id": "A5b2",
+   "title": "Glow-up in progress ✦",
+   "body": "Each habit you tap through today adds a shine you can feel all day, {name}."
+  },
+  {
+   "id": "Q2",
+   "title": "Low-key a legend ✦",
+   "body": "Doing right by yourself looks great on you, and we are fully obsessed, {name}."
+  },
+  {
+   "id": "Q3",
+   "title": "Level unlocked ✦",
+   "body": "Step by step, you became someone we cannot stop talking about. Keep going, {name}, the confetti is ready."
+  },
+  {
+   "id": "Q4",
+   "title": "Follow-through era ✦",
+   "body": "Doing what you said you would suits you, {name}. We are bragging about you in every conversation."
+  },
+  {
+   "id": "Q5",
+   "title": "Certified finisher ✦",
+   "body": "You say you will and then you do, and that is just who you are now, {name}. We adore it."
+  },
+  {
+   "id": "Q61",
+   "title": "Pure follow-through ✦",
+   "body": "You said you would, and then you did, with style and everything. We are SCREAMING about you, {name}."
+  },
+  {
+   "id": "Q62",
+   "title": "Chef's kiss ✦",
+   "body": "You said you would, did it, and the results speak for themselves. We are LOSING it over you, {name}."
+  },
+  {
+   "id": "Q71",
+   "title": "The receipts are in ✦",
+   "body": "Again and again, you did what you said you would. The proof is stacking up, and we adore it."
+  },
+  {
+   "id": "L1",
+   "title": "Look at you ✦",
+   "body": "Somebody built a whole routine from nothing, and it fits you perfectly. Take a bow, {name}."
+  },
+  {
+   "id": "L2",
+   "title": "Built different ✦",
+   "body": "You made a routine out of nothing and now it runs on your charm. We are taking notes, {name}."
+  },
+  {
+   "id": "N1",
+   "title": "We noticed ✦",
+   "body": "The way you show up for yourself is a whole mood, {name}. We are proud and LOUD about it."
+  },
+  {
+   "id": "K41",
+   "title": "Your own best friend ✦",
+   "body": "You showed up for the person who needs it most, and that person is you. We love watching, {name}."
+  },
+  {
+   "id": "K7",
+   "title": "Gentle brag ✦",
+   "body": "Showing up for yourself is a low-key flex, and we love it when you do, {name}."
+  },
+  {
+   "id": "W1",
+   "title": "A toast to the morning ✦",
+   "body": "Cheers, {name}. Your habits are ready, and so is a whole lot of warmth from us."
+  },
+  {
+   "id": "S1",
+   "title": "Roll call ✦",
+   "body": "Today's habits arrived early and they are VERY excited to see you. Be nice, they got dressed up."
+  },
+  {
+   "id": "S2",
+   "title": "Backstage buzz ✦",
+   "body": "Your habits have been up since midnight rehearsing their entrance. Make them feel welcome, {name}."
+  },
+  {
+   "id": "S4s",
+   "title": "Deeply satisfying ✦",
+   "body": "Today's habits are known to leave people glowing and grinning. Go on, get your hands on them, {name}."
+  },
+  {
+   "id": "S4m",
+   "title": "Results guaranteed ✦",
+   "body": "Today's habits deliver every single time. Go on, take a look, {name}."
+  }
+ ],
+ "J": [
+  {
+   "id": "J5",
+   "title": "A way with words ✦",
+   "body": "Putting what you feel into sentences is a real skill, and we love watching you use it, {name}."
+  },
+  {
+   "id": "J6",
+   "title": "Brave and tender ✦",
+   "body": "It takes guts to be honest with yourself, and you do it with style. We admire you, {name}."
+  },
+  {
+   "id": "J7",
+   "title": "Thoughts, sorted ✦",
+   "body": "Turning a swirl of thoughts into clear sentences is a gift you keep giving yourself. We love that, {name}."
+  },
+  {
+   "id": "J8",
+   "title": "Low-key a poet ✦",
+   "body": "Making sense of your day in sentences is so you, and we are your biggest fans, {name}."
+  },
+  {
+   "id": "J11a",
+   "title": "Rant permit ✦",
+   "body": "Ramble, gush, or write the same sentence twice, {name}. The only rule is that you enjoy it."
+  },
+  {
+   "id": "J11b",
+   "title": "Ramble all you like ✦",
+   "body": "Gush, daydream, or write the same sentence twice. Every word is yours, {name}."
+  },
+  {
+   "id": "J12s",
+   "title": "Bare it all ✦",
+   "body": "Full honesty, no filter, zero editing. It is a private show with one seat, and it is yours."
+  },
+  {
+   "id": "J12m",
+   "title": "Full honesty hour ✦",
+   "body": "No filter, no editing, no audience. Just you and a very trustworthy vault, {name}."
+  }
+ ],
+ "C": [
+  {
+   "id": "C1",
+   "title": "Sink-side workout ✦",
+   "body": "Rise onto your toes ten times while you brush your teeth. Strong legs, and your day starts with a win."
+  },
+  {
+   "id": "C2",
+   "title": "Sun-up stance ✦",
+   "body": "Find the brightest spot for two minutes, face tilted up. Daylight is free and it feels great."
+  },
+  {
+   "id": "C3",
+   "title": "Be someone's morning ✦",
+   "body": "Text a friend one specific thing you love about them. Specific hits HARDER, and it makes their day."
+  },
+  {
+   "id": "C4",
+   "title": "Movie star mode ✦",
+   "body": "Put on sunglasses on your way out, rain or shine. The street is your premiere."
+  },
+  {
+   "id": "C5",
+   "title": "Texture matters ✦",
+   "body": "Grab something crisp, like an apple or a carrot, and bite loudly. Crunch is a free mood boost."
+  },
+  {
+   "id": "C6",
+   "title": "Daily highlight ✦",
+   "body": "Choose one moment to look forward to and say it out loud. A reason to smile, already booked."
+  },
+  {
+   "id": "C7",
+   "title": "Hotel mode ✦",
+   "body": "Straighten the pillows and the blanket on your bed or couch. Thirty seconds, and the room looks staged."
+  },
+  {
+   "id": "C8",
+   "title": "Inner narrator ✦",
+   "body": "Say one kind thing to yourself on your way out the door, in the tone you would use with a best friend."
+  },
+  {
+   "id": "C9",
+   "title": "Tonight is ready ✦",
+   "body": "Set out your pajamas or a favorite blanket now. Tonight you get a warm welcome home."
+  },
+  {
+   "id": "C10",
+   "title": "Mini trip ✦",
+   "body": "Take a different route somewhere today, even just around the block. Every new corner is a free surprise."
+  },
+  {
+   "id": "C11",
+   "title": "Phone-down window ✦",
+   "body": "Sit still for three minutes before the screen comes out. The day sounds better after."
+  },
+  {
+   "id": "C12",
+   "title": "Better than a feed ✦",
+   "body": "Look at the actual sky for ten seconds. Great view, no refresh needed."
+  }
+ ],
+ "E": [
+  {
+   "id": "E1",
+   "title": "The night shift ✦",
+   "body": "Whatever is still open from today is ready for a tap, and the evening feels better for it, {name}."
+  },
+  {
+   "id": "E2",
+   "title": "Tap before the credits ✦",
+   "body": "Whatever is still open from today is waiting, and the day deserves a proper finale, {name}."
+  },
+  {
+   "id": "E4",
+   "title": "Bedtime brag material ✦",
+   "body": "Whatever is still open from today is waiting, and closing it out gives you something good to say tomorrow."
+  },
+  {
+   "id": "E7",
+   "title": "Proud of you ✦",
+   "body": "However the day went, whatever is still open is a nice way to close it, and we are cheering, {name}."
+  },
+  {
+   "id": "E8",
+   "title": "Be good to tomorrow ✦",
+   "body": "Whatever is still open is a gift to tomorrow's you, and tonight is a lovely time to give it, {name}."
+  },
+  {
+   "id": "E9",
+   "title": "Knock, knock ✦",
+   "body": "Whatever is still open from today is outside holding a bouquet, and it has been rehearsing all day."
+  },
+  {
+   "id": "E10s",
+   "title": "We love a big finish ✦",
+   "body": "Whatever is still open is hoping for a satisfying finale, and the night is yours to give it, {name}."
+  },
+  {
+   "id": "E10m",
+   "title": "We love a big finish ✦",
+   "body": "Whatever is still open is hoping for a big finale, and the night is yours to give it, {name}."
+  },
+  {
+   "id": "E12",
+   "title": "Standing ovation pending ✦",
+   "body": "Whatever is still open from today is waiting backstage, and we are already on our feet, {name}."
+  }
+ ]
+}

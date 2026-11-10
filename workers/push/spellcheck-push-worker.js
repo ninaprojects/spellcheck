@@ -516,7 +516,7 @@ let _calls = 0;
 let _readCache = new Map();
 let _rawCache = new Map();
 let _tokenP = null;
-function resetRun() { _calls = 0; _readCache = new Map(); _rawCache = new Map(); _tokenP = null; }
+function resetRun() { _calls = 0; _readCache = new Map(); _rawCache = new Map(); _tokenP = null; _copyP = null; }
 export function callsUsed() { return _calls; }
 function bfetch(url, opts, reserved) {
   if (_calls >= (reserved ? CALL_HARD : CALL_LIMIT)) throw new Error('subrequest budget reached (' + _calls + ' calls)');
@@ -1096,17 +1096,72 @@ export async function run(env, now) {
 // ---------- new habit tracker pushes (index.html, data under recalData/h3-*) ----------
 // Three scheduled pushes for the habit tracker, kept apart from the Round 2 jobs above. They share the
 // run's call counter, use their own state key, and claim each send (saved as done) BEFORE it goes out.
+//   h3morning 8am to 11:59am Pacific, every day: one approved line per person (see morningKind). A and J lines only when a habit is open today.
 //   h3nudge   7pm to 9:59pm Pacific, every day: someone has a habit due today that is not done yet.
 //   h3vote    Sunday 6pm to 9:59pm Pacific: next week's coven habit vote is still open for her.
 //   h3result  Monday 8am to 11:59am Pacific: the coven habit for this week, if anyone voted.
-// ALL THREE LINES OF COPY BELOW ARE DRAFTS AND NEED NINA'S APPROVAL BEFORE THIS IS PASTED INTO CLOUDFLARE.
+// The morning and evening wording is approved and lives in push-copy.json. The vote and result lines below are still DRAFTS.
 const H3_STATE_KEY = 'h3-push-state';
+// The Sunday vote reminder and the Monday result still use DRAFT wording that Nina has not approved, so they stay off.
+// Turn each on (true) only after its copy is approved and moved into push-copy.json.
+export const H3_JOBS_ON = { vote: false, result: false };
 export const H3_VOTE_NAMES = { phone: 'Phone-free hour', walk: '10 minute walk outside', tidy: 'Tidy 10 minutes', water: 'Drink a full glass first thing' };
-export const H3_NUDGE = [
-  'One small thing counts. We will be here when you do it.',
-  'Your habits are waiting. One small thing and you are in.',
-  'The day is not over. One small thing and you join the coven.',
-];
+// ---------- push copy lives in the repo (push-copy.json), not in this file ----------
+// Approved wording is fetched from GitHub Pages once per run, so a wording change is a pull request and
+// never a Cloudflare paste. It counts as one outside call. If the fetch fails or a line is invalid, the
+// small built-in set below is used so a push is never lost. The database is not used for copy because
+// its rules allow public writes.
+export const COPY_URL = 'https://ninaprojects.github.io/spellcheck/push-copy.json';
+export const H3_FALLBACK = {
+  A: [{ id: 'A1', title: 'Rise and tap ✦', body: 'Today’s habits. The effort? Tiny. The cheering section? ENORMOUS.' }, { id: 'A2', title: 'Good morning, {name} ✦', body: 'Today’s habits are ready when you are.' }],
+  J: [{ id: 'J5', title: 'A way with words ✦', body: 'Putting what you feel into sentences is a real skill, and we love watching you use it, {name}.' }],
+  C: [{ id: 'C6', title: 'Daily highlight ✦', body: 'Choose one moment to look forward to and say it out loud. A reason to smile, already booked.' }],
+  E: [{ id: 'E2', title: 'Tap before the credits ✦', body: 'Whatever is still open from today is waiting, and the day deserves a proper finale, {name}.' }]
+};
+// Keeps only well-formed lines: a short id, a title ending in the star, bodies under 130 characters, no links,
+// no em or en dashes. Anything else is dropped. A group left empty falls back to the built-in lines.
+export function cleanCopy(raw, fallback = H3_FALLBACK) {
+  const out = {};
+  for (const g of Object.keys(fallback)) {
+    const list = raw && Array.isArray(raw[g]) ? raw[g] : [];
+    const ok = list.filter(l => l && typeof l.id === 'string' && /^[A-Za-z0-9_-]{1,16}$/.test(l.id)
+      && typeof l.title === 'string' && l.title.length <= 40 && l.title.endsWith('✦')
+      && typeof l.body === 'string' && l.body.length > 0 && l.body.length <= 130
+      && !/https?:|www\./i.test(l.title + l.body) && !/[–—]/.test(l.title + l.body));
+    const seen = new Set();
+    out[g] = ok.filter(l => !seen.has(l.id) && seen.add(l.id));
+    if (!out[g].length) out[g] = fallback[g];
+  }
+  return out;
+}
+let _copyP = null;
+async function loadCopy() {
+  if (!_copyP) _copyP = (async () => {
+    try {
+      const r = await bfetch(COPY_URL, { cf: { cacheTtl: 300 } });
+      if (!r.ok) throw new Error('copy ' + r.status);
+      return cleanCopy(await r.json());
+    } catch (e) { console.error('push copy not loaded, using the built-in lines:', e && e.message); return H3_FALLBACK; }
+  })();
+  return _copyP;
+}
+// Picks a line that was not used among the last (pool size minus 1) sends to this person, so a line only comes back
+// after the whole pool has been used. Stable for the same person, day and group.
+export function pickFresh(pool, recent, seed) {
+  const skip = new Set((recent || []).slice(-(pool.length - 1)));
+  const fresh = pool.filter(l => !skip.has(l.id));
+  const list = fresh.length ? fresh : pool;
+  return list[h3Hash(seed) % list.length];
+}
+const fillName = (m, name) => ({ title: m.title.replace(/\{name\}/g, name), body: m.body.replace(/\{name\}/g, name) });
+// Morning pushes. Mixed week (Mon is 0): Tue and Fri a small ritual (C), Wed and Sat a journaling line (J) for people who have the
+// Journal habit, every other day a habits line (A). A and J are skipped when nothing is open today. The sky (B) pushes come later.
+export function morningKind(wd, hasJournal) {
+  if (wd === 1 || wd === 4) return 'C';
+  if (hasJournal && (wd === 2 || wd === 5)) return 'J';
+  return 'A';
+}
+const isJournal = h => !!h && (h.preset === 'journal' || /journal/i.test(String(h.name || '')));
 export const H3_VOTE_PUSH = { title: 'Last call to vote \u2726', body: 'Next week\u2019s coven habit is still open. Pick one before the night is over, or we run it back.' };
 export function h3ResultPush(name) { return { title: 'This week\u2019s coven habit \u2726', body: `${name}. Everyone is in, whether they know it yet or not.` }; }
 function h3Date(now) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); }
@@ -1143,9 +1198,10 @@ export async function habitsRun(env, now, opts = {}) {
   const ptHour = pacificHour(now);
   const dow = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short' }).format(now);
   const jobs = [];
+  if (ptHour >= 8 && ptHour < 12) jobs.push('h3morning');
   if (ptHour >= 19 && ptHour < 22) jobs.push('h3nudge');
-  if (dow === 'Sun' && ptHour >= 18 && ptHour < 22) jobs.push('h3vote');
-  if (dow === 'Mon' && ptHour >= 8 && ptHour < 12) jobs.push('h3result');
+  if (H3_JOBS_ON.vote && dow === 'Sun' && ptHour >= 18 && ptHour < 22) jobs.push('h3vote');
+  if (H3_JOBS_ON.result && dow === 'Mon' && ptHour >= 8 && ptHour < 12) jobs.push('h3result');
   const sent = [];
   if (!jobs.length) return { sent };
   let st;
@@ -1169,15 +1225,34 @@ export async function habitsRun(env, now, opts = {}) {
       for (const person of PEOPLE) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
-        const prefs = Object.assign({ activity: true, nudge: true }, (await readKey('recal-notif-prefs:' + person)) || {});
-        if (!(job === 'h3nudge' ? prefs.nudge : prefs.activity)) { finish(); continue; }
+        const prefs = Object.assign({ activity: true, nudge: true, morning: true }, (await readKey('recal-notif-prefs:' + person)) || {});
+        if (!(job === 'h3nudge' ? prefs.nudge : job === 'h3morning' ? prefs.morning : prefs.activity)) { finish(); continue; }
         const habits = Object.values((await readKey('h3-habits-' + person)) || {}).filter(h => h && !h.archived);
         if (!habits.length) { finish(); continue; } // not using the new app
         let msg;
-        if (job === 'h3nudge') {
+        if (job === 'h3morning') {
+          const log = (await readKey('h3-log-' + person)) || {};
+          const anyOpen = habits.some(h => h3Due(h, log, date));
+          const kind = morningKind(h3Wd(date), habits.some(isJournal));
+          if (kind !== 'C' && !anyOpen) { finish(); continue; } // A and J lines need something still open
+          const copy = await loadCopy();
+          const pool = copy[kind];
+          st.morn = st.morn || {};
+          const mem = st.morn[person] = st.morn[person] || {};
+          const line = pickFresh(pool, mem[kind], date + person + kind);
+          mem[kind] = (mem[kind] || []).concat(line.id).slice(-40);
+          changed = true;
+          msg = fillName(line, person);
+        } else if (job === 'h3nudge') {
           const log = (await readKey('h3-log-' + person)) || {};
           if (!habits.some(h => h3Due(h, log, date))) { finish(); continue; }
-          msg = { title: 'Still time today \u2726', body: H3_NUDGE[h3Hash(date + person) % H3_NUDGE.length] };
+          const copy = await loadCopy();
+          st.eve = st.eve || {};
+          const recent = st.eve[person] || [];
+          const line = pickFresh(copy.E, recent, date + person);
+          st.eve[person] = recent.concat(line.id).slice(-40);
+          changed = true;
+          msg = fillName(line, person);
         } else if (job === 'h3vote') {
           const nextWeek = h3Add(date, 7 - h3Wd(date));
           const v = (await readKey('h3-vote-' + person)) || {};
