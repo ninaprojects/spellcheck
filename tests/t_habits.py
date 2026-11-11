@@ -34,7 +34,7 @@ with sync_playwright() as pw:
         ck(f'{w} preset habit gets its own drawing',page.locator('.hico.i-move').count()==1 and page.locator('.hico.i-read').count()==1)
         ck(f'{w} custom habit named Read gets the read icon from its name',page.evaluate("suggestIcon('Read a chapter')==='read'&&suggestIcon('Pilates')==='stretch'&&suggestIcon('zzz qqq')==='star'"))
         ck(f'{w} every preset has a drawing and an animation',page.evaluate("ALLP.every(p=>HI[p.id]&&HI_AN[p.id])&&ALLP.length===15"))
-        ck(f'{w} OOTD is in Body',page.evaluate("PRESETS.Body.some(p=>p.id==='ootd')"))
+        ck(f'{w} OOTD and No-spend are in Extras, not Body',page.evaluate("PRESETS.Extras.some(p=>p.id==='ootd')&&PRESETS.Extras.some(p=>p.id==='nospend')&&!PRESETS.Body.some(p=>p.id==='ootd')&&!PRESETS.Money"))
         page.click('[data-act=tog][data-id=a]')
         ck(f'{w} done check is teal',page.evaluate("getComputedStyle(document.querySelector('.check.on')).backgroundColor")=='rgb(227, 244, 241)')
         ck(f'{w} done icon circle stays teal',page.evaluate("getComputedStyle(document.querySelector('.habit:has(.check.on) .hico')).backgroundColor")=='rgb(227, 244, 241)')

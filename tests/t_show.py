@@ -45,6 +45,7 @@ with sync_playwright() as pw:
         page.click('#addhabit'); page.wait_for_timeout(300)
         ck(f'{w} Add a habit opens the New habit screen',page.locator('.opt.pk').count()>0 and page.evaluate("location.hash")=='#add')
         page.goto('file://'+os.path.abspath(APP)+'#today'); page.wait_for_selector('.strip')
+        ck(f'{w} the small corner Add link is gone from the habits card',page.locator('.hhead a[href="#add"]').count()==0)
         # row link
         ck(f'{w} row shows Take the stage on the show habit only',page.locator('.showlink').count()==1)
         ck(f'{w} show habit has its own icon',page.locator('.hico.i-show').count()==1)

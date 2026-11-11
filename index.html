@@ -301,10 +301,10 @@ try{firebase.initializeApp(FB);db=firebase.database();}catch(e){console.error(e)
 
 /* ---------- presets ---------- */
 const PRESETS={
- Body:[{id:'move',name:'Move',amount:'30 min',full:'Move 30 min',type:'yesno'},{id:'sleep',name:'Sleep',amount:'8 hours',full:'Sleep 8 hours',type:'number',target:8,unit:'hours',step:1},{id:'water',name:'Water',amount:'48 oz',full:'Water',type:'number',target:48,unit:'oz',step:8},{id:'stretch',name:'Stretch',amount:'5 min',full:'Stretch 5 min',type:'yesno'},{id:'show',name:'Morning Show',amount:'8 min',full:'The Morning Show 8 min',type:'yesno'},{id:'ootd',name:'OOTD',amount:'1 photo',full:'OOTD',type:'yesno'}],
+ Body:[{id:'move',name:'Move',amount:'30 min',full:'Move 30 min',type:'yesno'},{id:'sleep',name:'Sleep',amount:'8 hours',full:'Sleep 8 hours',type:'number',target:8,unit:'hours',step:1},{id:'water',name:'Water',amount:'48 oz',full:'Water',type:'number',target:48,unit:'oz',step:8},{id:'stretch',name:'Stretch',amount:'5 min',full:'Stretch 5 min',type:'yesno'},{id:'show',name:'Morning Show',amount:'8 min',full:'The Morning Show 8 min',type:'yesno'}],
  Mind:[{id:'read',name:'Read',amount:'10 min',full:'Read 10 min',type:'yesno'},{id:'journal',name:'Journal',amount:'15 min',full:'Journal 15 min',type:'yesno'},{id:'noscroll',name:'No scroll',amount:'1 hour',full:'No scroll, 1 hour',type:'yesno'},{id:'meditate',name:'Meditate',amount:'10 min',full:'Meditate 10 min',type:'yesno'}],
  Home:[{id:'outside',name:'Go outside',amount:'10 min',full:'Go outside 10 min',type:'yesno'},{id:'tidy',name:'Tidy',amount:'10 min',full:'Tidy 10 min',type:'yesno'},{id:'cook',name:'Cook at home',amount:'1 meal',full:'Cook at home',type:'yesno'},{id:'call',name:'Call a friend',amount:'10 min',full:'Call a friend 10 min',type:'yesno'}],
- Money:[{id:'nospend',name:'No-spend day',amount:'Fixed bills do not count',full:'No-spend day',type:'yesno'}]
+ Extras:[{id:'ootd',name:'OOTD',amount:'1 photo',full:'OOTD',type:'yesno'},{id:'nospend',name:'No-spend day',amount:'Fixed bills do not count',full:'No-spend day',type:'yesno'}]
 };
 const ALLP=Object.values(PRESETS).flat();
 
@@ -728,7 +728,7 @@ function viewToday(){
   ${skyCardToday(t,phase)}
   ${birthHintCard()}
   ${brewCard(t)}
-  <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}<a class="link" href="#add">Add</a></div>
+  <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}</div>
    ${pg.n&&pg.d===pg.n?`<div class="alldone">${ui.burst&&Date.now()-ui.burst<2500?'<div class="burst" aria-hidden="true">'+[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<i style="--dx:${Math.round(Math.cos(a)*60)}px;--dy:${Math.round(Math.sin(a)*40)}px"></i>`;}).join('')+'</div>':''}${esc(allDoneLine(t))}</div>`:''}
    ${hs.length?hs.map(habitRow).join(''):`<div style="padding:8px 0"><div class="h2">Welcome to the new Spell Check.</div><div class="small" style="margin-top:4px">Add a habit and it shows up here. Share it and the coven can cheer you on.</div></div>`}
    <a class="pill" href="#add" id="addhabit">Add a habit</a>
