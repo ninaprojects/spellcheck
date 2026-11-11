@@ -964,10 +964,11 @@ check('someone without notifications is skipped, the others still hear', sentTo(
     let bad = 0; for (let i = 0; i < 200; i++) if (rec.includes(W.pickRitual(COPY.C, rec, 'r' + i, new Set(['tidy', 'move'])).id)) bad++;
     check('ritual pick: nothing from her last 8 rituals comes back', bad === 0, bad);
     const t = W.habitTags([{ preset: 'tidy', name: 'Tidy' }, { name: 'Morning meditation' }, { preset: 'read', name: 'Read' }, { name: 'Evening Journal' }]);
+    check('habit tags: the Morning Show counts by preset and by name', W.habitTags([{ preset: 'show', name: 'The Morning Show 8 min' }]).has('show') && W.habitTags([{ name: 'morning show' }]).has('show'));
     check('habit tags: preset id and custom names both count', t.has('tidy') && t.has('meditate') && t.has('journal') && !t.has('move'), [...t]);
     const cc = W.cleanCopy({ C: [{ id: 'z', title: 'Hi ✦', body: 'ok', tags: ['tidy', 'BAD TAG', 5] }] });
     check('copy file: tags are kept and cleaned', JSON.stringify(cc.C[0].tags) === '["tidy"]', cc.C);
-    check('copy file: every ritual tag is a known habit tag', COPY.C.every(l => (l.tags || []).every(t => ['move', 'stretch', 'outside', 'call', 'ootd', 'cook', 'tidy', 'meditate', 'journal', 'sleep', 'noscroll'].includes(t))));
+    check('copy file: every ritual tag is a known habit tag', COPY.C.every(l => (l.tags || []).every(t => ['move', 'stretch', 'outside', 'call', 'ootd', 'cook', 'tidy', 'meditate', 'journal', 'sleep', 'noscroll', 'show'].includes(t))));
   }
 
   // Monday: habits line, only to people with something open
