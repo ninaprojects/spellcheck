@@ -1184,7 +1184,7 @@ const isJournal = h => !!h && (h.preset === 'journal' || /journal/i.test(String(
 // Habit tags used by the ritual lines. A habit counts by its preset id, or by its name for custom habits.
 const H3_TAG_RE = { move: /move|workout|exercise|run|walk|gym|yoga|lift/i, stretch: /stretch|mobility/i, outside: /outside|outdoor|sun|nature|walk/i,
   call: /call|phone a|friend/i, ootd: /ootd|outfit/i, cook: /cook|meal prep/i, tidy: /tidy|clean|declutter/i, meditate: /meditat|breath/i,
-  journal: /journal/i, sleep: /sleep|bed\b|bedtime/i, noscroll: /scroll|phone/i };
+  journal: /journal/i, sleep: /sleep|bed\b|bedtime/i, noscroll: /scroll|phone/i, show: /morning show/i };
 export function habitTags(habits) {
   const t = new Set();
   for (const h of habits) {
