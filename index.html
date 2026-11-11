@@ -731,6 +731,7 @@ function viewToday(){
   <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}<a class="link" href="#add">Add</a></div>
    ${pg.n&&pg.d===pg.n?`<div class="alldone">${ui.burst&&Date.now()-ui.burst<2500?'<div class="burst" aria-hidden="true">'+[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<i style="--dx:${Math.round(Math.cos(a)*60)}px;--dy:${Math.round(Math.sin(a)*40)}px"></i>`;}).join('')+'</div>':''}${esc(allDoneLine(t))}</div>`:''}
    ${hs.length?hs.map(habitRow).join(''):`<div style="padding:8px 0"><div class="h2">Welcome to the new Spell Check.</div><div class="small" style="margin-top:4px">Add a habit and it shows up here. Share it and the coven can cheer you on.</div></div>`}
+   <a class="pill" href="#add" id="addhabit">Add a habit</a>
   </div>
   <div class="card bar"><div class="label">The coven, this week</div>
    <div class="row"><div><div class="label">This week's habit</div><div class="h2">${esc(optName(ch))}</div></div><div class="small">${nDone} of 4 done today</div></div>

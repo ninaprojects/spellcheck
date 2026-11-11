@@ -39,6 +39,12 @@ with sync_playwright() as pw:
         page.on('pageerror',lambda e: errs.append(str(e)) if 'Access is denied' not in str(e) else None)
         page.goto('file://'+os.path.abspath(APP)+'#today')
         page.wait_for_selector('.strip')
+        # add a habit button at the bottom of the habits card
+        ck(f'{w} Add a habit button sits at the bottom of the habits card',page.evaluate("(()=>{const c=document.querySelector('#addhabit');return !!c&&c.textContent.trim()==='Add a habit'&&c.parentElement.querySelector('.hhead')!==null&&c.parentElement.lastElementChild===c;})()"))
+        ck(f'{w} Add a habit button is a full tap target',page.evaluate("document.getElementById('addhabit').getBoundingClientRect().height")>=44)
+        page.click('#addhabit'); page.wait_for_timeout(300)
+        ck(f'{w} Add a habit opens the New habit screen',page.locator('.opt.pk').count()>0 and page.evaluate("location.hash")=='#add')
+        page.goto('file://'+os.path.abspath(APP)+'#today'); page.wait_for_selector('.strip')
         # row link
         ck(f'{w} row shows Take the stage on the show habit only',page.locator('.showlink').count()==1)
         ck(f'{w} show habit has its own icon',page.locator('.hico.i-show').count()==1)
