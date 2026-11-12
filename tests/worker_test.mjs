@@ -21,13 +21,22 @@ function check(name, ok, detail) { results.push(!!ok); console.log((ok ? 'PASS '
 
 // ---- fake world ----
 let store, pushes;
-let copyMode = 'ok', copyFetches = 0;
+let copyMode = 'ok', copyFetches = 0, prefetches = 0, prefetchDown = false;
 function resetWorld() {
   store = {}; pushes = [];
   for (const p of PEOPLE) store['recal-fcm-token:' + p] = 'token-' + p;
 }
 globalThis.fetch = async (url, opts = {}) => {
   url = String(url);
+  if (url.startsWith('https://cast-and-check-default-rtdb.firebaseio.com/recalData.json?')) { // key range read (orderBy $key)
+    prefetches++;
+    if (prefetchDown) return new Response('down', { status: 503 });
+    const q = new URL(url).searchParams;
+    const a = JSON.parse(q.get('startAt')), b = JSON.parse(q.get('endAt'));
+    const out = {};
+    for (const k of Object.keys(store).sort()) if (k >= a && k <= b) out[k] = store[k];
+    return new Response(JSON.stringify(out), { status: 200 });
+  }
   if (url.startsWith('https://cast-and-check-default-rtdb.firebaseio.com/recalData/')) {
     const key = decodeURIComponent(url.split('/recalData/')[1].replace(/\.json$/, ''));
     if ((opts.method || 'GET') === 'PUT') { store[key] = JSON.parse(opts.body); return new Response('null', { status: 200 }); }
@@ -885,32 +894,30 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   put('h3-habits-Nina', { w1: habit({ id: 'w1', perWeek: 3 }) }); put('h3-log-Nina', { '2026-11-02': { w1: 1 } });
   await runH('2026-11-09T03:30:00Z'); // Sun Nov 8, 7:30pm: 1 of 3, need 2, only 1 day left
   check('h3 nudge: weekly habit nagged when every remaining day is needed', pushes.some(x => x.to === 'Nina' && eveBodies.includes(x.body)), pushes);
-  // vote reminder, Sunday 6:30pm Pacific (draft wording: off by default, switched on here only to test it)
-  W.H3_JOBS_ON.vote = true; W.H3_JOBS_ON.result = true;
+  // vote reminder, Sunday 6:30pm Pacific
   resetWorld();
   for (const p of ['Nina', 'Kellye', 'Lauren']) put('h3-habits-' + p, { a: habit({ id: 'a' }) });
   put('h3-vote-Nina', { '2026-11-09': 'walk' });
   await runH('2026-11-09T02:30:00Z');
-  const votePush = pushes.filter(x => x.title === W.H3_VOTE_PUSH.title);
+  const VT = COPY.V.map(l => l.title), RT = COPY.R.map(l => l.title);
+  const votePush = pushes.filter(x => VT.includes(x.title));
   check('h3 vote reminder: skips people who already voted', votePush.length === 2 && !votePush.some(x => x.to === 'Nina'), pushes);
+  check('h3 vote reminder: wording is an approved vote line', votePush.every(x => COPY.V.some(l => l.title === x.title && l.body === x.body)), votePush);
   // result, Monday 9am Pacific
   resetWorld();
   for (const p of ['Nina', 'Kellye', 'Lauren']) put('h3-habits-' + p, { a: habit({ id: 'a' }) });
   put('h3-vote-Nina', { '2026-11-09': 'walk' }); put('h3-vote-Kellye', { '2026-11-09': 'walk' }); put('h3-vote-Lauren', { '2026-11-09': 'tidy' });
   await runH('2026-11-09T17:00:00Z');
   const res = pushes.filter(x => x.body.includes('10 minute walk outside'));
-  check('h3 result: winner announced to people using the app', res.length === 3 && pushes.filter(x => x.title === 'This week\u2019s coven habit \u2726').length === 3, pushes);
+  check('h3 result: winner announced to people using the app', res.length === 3 && pushes.filter(x => RT.includes(x.title)).length === 3, pushes);
+  check('h3 result: wording is an approved result line', res.every(x => COPY.R.some(l => l.title === x.title && l.body.replace('{habit}', '10 minute walk outside') === x.body)), res);
   resetWorld();
   for (const p of PEOPLE) put('h3-habits-' + p, { a: habit({ id: 'a' }) });
   await runH('2026-11-09T17:00:00Z');
-  check('h3 result: no push when nobody voted', pushes.filter(x => x.title === 'This week\u2019s coven habit \u2726').length === 0, pushes);
+  check('h3 result: no push when nobody voted', pushes.filter(x => RT.includes(x.title)).length === 0, pushes);
   check('h3 tie break matches the app (stable per week)', W.h3Winner({ a: 'walk', b: 'tidy' }, '2026-11-09') === W.h3Winner({ c: 'tidy', d: 'walk' }, '2026-11-09'));
   check('h3 stays under the call budget', W.callsUsed() < 46, W.callsUsed());
-  W.H3_JOBS_ON.vote = false; W.H3_JOBS_ON.result = false;
-  resetWorld(); for (const p of PEOPLE) { put('h3-habits-' + p, { a: habit({ id: 'a' }) }); put('h3-vote-' + p, { '2026-11-09': 'walk' }); }
-  await runH('2026-11-09T02:30:00Z'); const v1 = pushes.filter(x => x.title === W.H3_VOTE_PUSH.title).length;
-  await runH('2026-11-09T17:00:00Z'); const r1 = pushes.filter(x => x.title === 'This week\u2019s coven habit \u2726').length;
-  check('h3 vote and result stay off until their copy is approved', v1 === 0 && r1 === 0 && W.H3_JOBS_ON.vote === false, { v1, r1 });
+  check('h3 vote and result are switched on (copy approved Nov 11)', W.H3_JOBS_ON.vote === true && W.H3_JOBS_ON.result === true);
 }
 
 // ===== h3 morning pushes and the copy file =====
@@ -924,7 +931,7 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('copy file: every line is clean (star title, no dashes, no exclamation points, short)', ['A', 'J', 'C', 'E'].every(g => COPY[g].length > 0 && COPY[g].every(l => l.title.endsWith('✦') && !/[–—!]/.test(l.title + l.body) && l.body.length <= 110 && l.title.length <= 30)));
   check('copy file: ids are unique within each group', ['A', 'J', 'C', 'E'].every(g => new Set(COPY[g].map(l => l.id)).size === COPY[g].length));
   check('copy file: held journaling lines (J4, J9, J10) are not in it', !COPY.J.some(l => /^J(4|9|10)/.test(l.id)) && !COPY.J.some(l => /only copy|home here|Plot thickens|Gossip/.test(l.title + l.body)));
-  check('copy file: cleanCopy drops lines with links, dashes or no star', (() => { const c = W.cleanCopy({ A: [{ id: 'a', title: 'Hi ✦', body: 'ok' }, { id: 'b', title: 'Hi ✦', body: 'see https://x.com' }, { id: 'c', title: 'Hi', body: 'ok' }, { id: 'd', title: 'Hi ✦', body: 'a — b' }] }); return c.A.length === 1 && c.A[0].id === 'a' && c.J === W.H3_FALLBACK.J; })());
+  check('copy file: cleanCopy drops lines with links, dashes or no star', (() => { const c = W.cleanCopy({ A: [{ id: 'a', title: 'Hi ✦', body: 'ok' }, { id: 'b', title: 'Hi ✦', body: 'see https://x.com' }, { id: 'c', title: 'Hi', body: 'ok' }, { id: 'd', title: 'Hi ✦', body: 'a — b' }] }); return c.A.length === 1 && c.A[0].id === 'a' && JSON.stringify(c.J.map(l => l.id)) === JSON.stringify(W.H3_FALLBACK.J.map(l => l.id)); })());
   // Which day of the week of Nov 9 each person gets which kind (the mix is shuffled per person and week)
   const DAYS7 = Object.keys(MORN);
   const kindOn = (day, who, jr) => W.morningKind(MORN[day].slice(0, 10), who, jr);
@@ -1020,7 +1027,7 @@ check('someone without notifications is skipped, the others still hear', sentTo(
     const wd = (t.getUTCDay() + 6) % 7;
     await runH(t.toISOString());
     for (const x of pushes) {
-      const id = COPY.A.concat(COPY.C).find(l => l.title === x.title)?.id;
+      const id = COPY.A.concat(COPY.C).find(l => (l.titles || [l.title]).includes(x.title) && l.body.replace(/\{name\}/g, 'Nina') === x.body)?.id;
       seen.push({ d, wd, id, kind: W.morningKind(t.toISOString().slice(0, 10), 'Nina', false) });
     }
   }
@@ -1038,7 +1045,7 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   resetWorld(); copyMode = 'ok';
   put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
   const eve = [];
-  for (let d = 0; d < 9; d++) { await runH(new Date(Date.parse('2026-11-16T03:30:00Z') + d * 86400000).toISOString()); eve.push(...pushes.filter(x => COPY.E.some(l => l.title === x.title)).map(x => x.title + x.body)); }
+  for (let d = 0; d < 9; d++) { await runH(new Date(Date.parse('2026-11-16T03:30:00Z') + d * 86400000).toISOString()); eve.push(...pushes.filter(x => COPY.E.some(l => (l.titles || [l.title]).includes(x.title))).map(x => x.body)); }
   check('evening rotation: nine nights, nine different lines', eve.length === 9 && new Set(eve).size === 9, eve.length);
 
   // The copy file is down, or junk: the built-in lines go out and nothing is lost
@@ -1059,9 +1066,174 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   for (const p of PEOPLE) { put('h3-habits-' + p, { r1: habit({ id: 'r1' }), j: habit({ id: 'j', name: 'Journal', preset: 'journal' }) }); put('h3-vote-' + p, { '2026-11-09': 'walk' }); }
   pushes = [];
   await W.run(env, at(MORN.Mon)); await W.habitsRun(env, at(MORN.Mon));
-  W.H3_JOBS_ON.result = false;
   check('morning: Monday 8am (morning plus coven habit result) stays under the call budget', W.callsUsed() < 46, W.callsUsed());
   check('morning: Monday sends a habits line and the result to each person', PEOPLE.every(p => pushes.filter(x => x.to === p).length === 2), pushes.map(x => x.to + ':' + x.title));
+}
+
+// ===== h3 refresh (Nov 2026): sky, brew, streaks, comeback and the social pushes =====
+{
+  const COPY = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'push-copy.json'), 'utf8'));
+  const html = fs.readFileSync(path.join(HERE, '..', 'index.html'), 'utf8');
+  const grab = (name) => { const m = html.match(new RegExp('const ' + name + '=([\\s\\S]*?);\\n')); return new Function('return ' + m[1])(); };
+  const appHash = s => { let h = 0; for (const c of String(s)) { h = (h * 31 + c.charCodeAt(0)) | 0; } return Math.abs(h); };
+  const appPick = (arr, seed) => arr[appHash(seed) % arr.length];
+  const L_GROUP = grab('L_GROUP'), L_MILE = grab('L_MILE'), CUR_LINES = grab('CUR_LINES');
+  const toWho = t => t.replace(/\{name\}/g, '{who}');
+  const titlesOf = l => l.titles || [l.title];
+  const fillIn = (t, o) => t.replace(/\{(\w+)\}/g, (m, k) => o[k] != null ? o[k] : m);
+  check('copy sync: GH matches the app L_GROUP word for word, in order', JSON.stringify(COPY.GH.map(l => l.body)) === JSON.stringify(L_GROUP.map(toWho)));
+  check('copy sync: CM matches the app L_MILE word for word, in order', [7, 14, 30].every(n => JSON.stringify(COPY.CM.filter(l => l.tags.includes('d' + n)).map(l => l.body)) === JSON.stringify(L_MILE[n].map(toWho))));
+  check('copy sync: CU matches the app CUR_LINES word for word, in order', ['reading', 'watching', 'listening'].every(f => JSON.stringify(COPY.CU.filter(l => l.tags.includes(f)).map(l => l.title)) === JSON.stringify(CUR_LINES[f].map(t => toWho(t) + ' ✦'))));
+  const groups = Object.keys(COPY).filter(k => k !== '_note');
+  check('copy file: every group the Worker knows is in the file', Object.keys(W.H3_FALLBACK).every(g => groups.includes(g) && COPY[g].length));
+  check('copy file: every line survives cleanCopy', (() => { const c = W.cleanCopy(COPY); return groups.every(g => c[g].length === COPY[g].length); })());
+  check('copy file: multi-title lines keep the first title in title, for the Worker version still deployed', groups.every(g => COPY[g].every(l => !l.titles || l.title === l.titles[0])));
+  check('copy file: no em or en dashes anywhere', !/[–—]/.test(JSON.stringify(COPY)));
+
+  const habit = (o) => Object.assign({ id: 'h' + Math.random().toString(36).slice(2, 7), name: 'Read', type: 'yesno', target: 1, days: [1, 1, 1, 1, 1, 1, 1], archived: false, shared: false }, o);
+  const runH = async (iso) => { pushes = []; return W.habitsRun(env, at(iso), { fresh: true }); };
+  W.H3_JOBS_ON.vote = true; W.H3_JOBS_ON.result = true;
+  const TUE = '2026-11-17', TUE_2PM = '2026-11-17T22:00:00Z';
+  const dayBack = (n) => new Date(Date.parse(TUE + 'T12:00:00Z') - n * 86400000).toISOString().slice(0, 10);
+
+  // --- sky push on her sky day, morning line waits until 9 ---
+  resetWorld();
+  for (const p of ['Nina', 'Kellye']) put('h3-habits-' + p, { r1: habit({ id: 'r1' }) });
+  put('h3-sched-Nina', { brew: {}, sky: { '2026-11-18': { h: 'Your timing is sharp today. Say the bold thing first.', ev: '' } } });
+  await runH('2026-11-18T16:05:00Z'); // Wed 8:05am Pacific
+  const sky = pushes.filter(x => x.to === 'Nina');
+  check('sky: her sky headline goes out at 8 with an approved sky title', sky.length === 1 && sky[0].body === 'Your timing is sharp today. Say the bold thing first.' && COPY.B.some(l => l.title === sky[0].title), pushes);
+  check('sky: people without a sky day get the usual morning line at 8', pushes.filter(x => x.to === 'Kellye').length === 1, pushes);
+  await runH('2026-11-18T16:35:00Z');
+  check('sky: her morning line does not go out before 9', pushes.length === 0, pushes);
+  await runH('2026-11-18T17:05:00Z');
+  check('sky: her morning line goes out at 9', pushes.length === 1 && pushes[0].to === 'Nina' && !COPY.B.some(l => l.title === pushes[0].title), pushes);
+  check('sky: B26 (needs an upbeat headline) is held out of the rotation', !COPY.B.some(l => l.id === 'B26'));
+
+  // --- brew push ---
+  resetWorld();
+  for (const p of PEOPLE) put('h3-habits-' + p, { r1: habit({ id: 'r1' }) });
+  put('h3-sched-Kellye', { brew: { [TUE]: 'Who in your life has the best poker face?' }, sky: {} });
+  put('h3-qa-Kellye', { [TUE]: { t: 'my mom', at: 1 } });
+  await runH('2026-11-17T20:05:00Z'); // noon Pacific
+  const brew = pushes.filter(x => x.body === 'Who in your life has the best poker face?');
+  check('brew: the day’s question goes to everyone who has not answered', brew.length === 3 && !brew.some(x => x.to === 'Kellye') && brew.every(x => titlesOf(COPY.BT[0]).includes(x.title)), pushes);
+  await runH('2026-11-17T20:35:00Z');
+  check('brew: once a day', pushes.filter(x => x.body.includes('poker face')).length === 0, pushes);
+  resetWorld(); for (const p of PEOPLE) put('h3-habits-' + p, { r1: habit({ id: 'r1' }) });
+  await runH('2026-11-17T20:05:00Z');
+  check('brew: no question known (nobody has opened the app this week), no push', pushes.length === 0, pushes);
+
+  // --- streak at risk replaces the evening nudge ---
+  resetWorld();
+  const log4 = {}; for (let i = 1; i <= 4; i++) log4[dayBack(i)] = { r1: 1 };
+  put('h3-habits-Nina', { r1: habit({ id: 'r1' }) }); put('h3-log-Nina', log4);
+  put('h3-habits-Kellye', { r1: habit({ id: 'r1' }) });
+  await runH('2026-11-18T03:30:00Z'); // Tue 7:30pm Pacific
+  const st = pushes.find(x => x.to === 'Nina');
+  check('streak at risk: one push, the streak line instead of the nudge', pushes.filter(x => x.to === 'Nina').length === 1 && st.title === 'Your streak is glowing ✦' && COPY.ST.some(l => fillIn(l.body, { n: 4, n1: 5 }) === st.body), pushes);
+  check('streak at risk: no streak means the usual nudge', pushes.some(x => x.to === 'Kellye' && COPY.E.some(l => titlesOf(l).includes(x.title))), pushes);
+
+  // --- comeback replaces the morning line once ---
+  resetWorld();
+  put('h3-habits-Nina', { r1: habit({ id: 'r1' }) }); put('h3-log-Nina', { [dayBack(3)]: { r1: 1 } });
+  await runH('2026-11-17T16:05:00Z'); // Tue 8:05am
+  check('comeback: after two days with nothing done, the comeback line goes out', pushes.length === 1 && COPY.CB.some(l => titlesOf(l).includes(pushes[0].title) && fillIn(l.body, { name: 'Nina' }) === pushes[0].body), pushes);
+  await runH('2026-11-18T16:05:00Z');
+  check('comeback: not again until she does something', pushes.length <= 1 && !pushes.some(x => COPY.CB.some(l => titlesOf(l).includes(x.title))), pushes);
+
+  // --- social ---
+  resetWorld();
+  const shared = (id, name) => habit({ id, name, shared: true });
+  put('h3-habits-Nina', { m: shared('m', 'Move'), p: habit({ id: 'p', name: 'Secret thing' }) });
+  put('h3-habits-Kellye', { k: shared('k', 'Cook at home') });
+  put('h3-habits-Lauren', { l: shared('l', 'Stretch') });
+  put('h3-habits-Carolina', { c: shared('c', 'Read') });
+  put('h3-qa-Nina', { [TUE]: { t: 'my dog', at: 1 } });
+  await runH(TUE_2PM);
+  check('social: first run sends nothing (marks what exists as seen)', pushes.length === 0, pushes);
+  put('h3-log-Nina', { [TUE]: { p: 1 } });
+  await runH(plus(TUE_2PM, 60));
+  check('social: a private habit never reaches the coven', pushes.length === 0, pushes);
+  put('h3-log-Nina', { [TUE]: { p: 1, m: 1 } });
+  await runH(plus(TUE_2PM, 120));
+  check('social: friend showed up goes to the other three', pushes.length === 3 && pushes.every(x => x.to !== 'Nina' && x.title === 'Nina is in ✦' && x.body.includes('Move') && !x.body.includes('Secret')), pushes);
+  check('social: friend showed up uses approved wording', pushes.every(x => COPY.IN.some(l => fillIn(l.body, { who: 'Nina', habit: 'Move' }) === x.body)), pushes);
+  await runH(plus(TUE_2PM, 180));
+  check('social: friend showed up is once a day', pushes.length === 0, pushes);
+  put('h3-log-Kellye', { [TUE]: { k: 1 } }); put('h3-log-Lauren', { [TUE]: { l: 1 } });
+  await runH(plus(TUE_2PM, 240));
+  check('social: two friends at once, each to her three', pushes.length === 6, pushes.map(x => x.to + ':' + x.title));
+  put('h3-log-Carolina', { [TUE]: { c: 1 } });
+  await runH(plus(TUE_2PM, 300));
+  check('social: all four showed up goes to all four, and replaces the last one in', pushes.length === 4 && pushes.every(x => COPY.ALL.some(l => l.title === x.title && l.body === x.body)), pushes);
+  await runH(plus(TUE_2PM, 360));
+  check('social: all four is once a day', pushes.length === 0, pushes);
+
+  // brew answers: to people who answered earlier, with her answer (or the teaser)
+  put('h3-qa-Kellye', { [TUE]: { t: 'my sister, by a mile', at: 2 } });
+  await runH(plus(TUE_2PM, 420));
+  check('brew answers: only people who already answered get it', pushes.length === 1 && pushes[0].to === 'Nina', pushes);
+  check('brew answers: approved title, her answer or the teaser', pushes.length === 1 && titlesOf(COPY.QA[0]).map(t => t.replace('{who}', 'Kellye')).includes(pushes[0].title) && ['my sister, by a mile', COPY.QA[1].body].includes(pushes[0].body), pushes);
+
+  // reactions: held about a minute, then to the post owner with the approved line
+  const post = 'f:Nina:m:' + TUE;
+  put('h3-rx-Kellye', { [post]: { heart: true } });
+  put('h3-rx-Nina', { [post]: { spell: true } }); // her own post: never pushed
+  await runH(plus(TUE_2PM, 480));
+  check('reactions: held on the first run', pushes.length === 0, pushes);
+  await runH(plus(TUE_2PM, 540));
+  check('reactions: Kellye’s heart reaches Nina with the approved line', pushes.length === 1 && pushes[0].to === 'Nina' && pushes[0].title === 'Kellye\'s heart is swelling ♡' && pushes[0].body === 'On your Move. We\'d ask you to stay humble, but we\'ve met you.', pushes);
+  check('reactions: the push points at the post', pushes[0] && pushes[0].target === 'post:' + post.replace(/[.#$\[\]\/]/g, '_'), pushes);
+  await runH(plus(TUE_2PM, 600));
+  check('reactions: once per reaction', pushes.length === 0, pushes);
+  put('h3-rx-Lauren', { [post]: { moon: true } });
+  await runH(plus(TUE_2PM, 610)); put('h3-rx-Lauren', {}); await runH(plus(TUE_2PM, 680));
+  check('reactions: a quick tap and untap never sends', pushes.length === 0, pushes);
+
+  // shared read, Currently, group habit
+  const at1 = '2026-11-17T22:15:00.000Z';
+  put('h3-shr-Lauren', [{ id: 's1', u: 'https://example.com/a', l: 'The best essay on naps', at: at1 }]);
+  put('h3-cur-Carolina', { reading: { t: 'Dune' }, hist: [{ f: 'reading', t: 'Dune', u: '', at: at1 }] });
+  put('h3-habits-Lauren', { l: shared('l', 'Stretch'), g1: Object.assign(shared('g1', 'Sunday reset'), { groupOwner: 'Lauren', groupId: 'g1' }) });
+  await runH(plus(TUE_2PM, 900));
+  const sr = pushes.filter(x => x.body === 'The best essay on naps');
+  check('shared read: to the other three with an approved title', sr.length === 3 && !sr.some(x => x.to === 'Lauren') && sr.every(x => COPY.SR.some(l => l.title.replace('{who}', 'Lauren') === x.title)), pushes);
+  const cu = pushes.filter(x => x.body === 'Dune');
+  const cuId = 'cur:Carolina:' + at1;
+  const cuTitle = toWho(appPick(CUR_LINES.reading, cuId)).replace('{who}', 'Carolina') + ' ✦';
+  check('Currently: to the other three, same line the Tea post shows', cu.length === 3 && cu.every(x => x.title === cuTitle), { cu, cuTitle });
+  const gh = pushes.filter(x => x.title === 'New group habit ✦');
+  check('group habit: to the other three, same line the Tea post shows', gh.length === 3 && gh.every(x => x.body === fillIn(toWho(appPick(L_GROUP, 'g1')), { who: 'Lauren', habit: 'Sunday reset' })), gh);
+  check('social: a busy minute stays under the call budget', W.callsUsed() < 46, W.callsUsed());
+
+  // milestones: private line to her, Tea line to the coven (shared habits only)
+  resetWorld();
+  const six = {}; for (let i = 1; i <= 6; i++) six[dayBack(i)] = { k: 1, q: 1 };
+  put('h3-habits-Kellye', { k: shared('k', 'Cook at home'), q: habit({ id: 'q', name: 'Quiet hour' }) }); put('h3-log-Kellye', six);
+  for (const p of ['Nina', 'Lauren', 'Carolina']) put('h3-habits-' + p, { x: habit({ id: 'x' }) });
+  await runH(TUE_2PM);
+  put('h3-log-Kellye', Object.assign({}, six, { [TUE]: { k: 1, q: 1 } }));
+  await runH(plus(TUE_2PM, 60));
+  const mine = pushes.filter(x => x.to === 'Kellye');
+  check('milestone: private seven-day line for each of her habits, shared or not', mine.length === 2 && mine.every(x => COPY.MP.some(l => l.tags.includes('d7') && titlesOf(l).some(t => fillIn(t, { habit: 'Cook at home' }) === x.title || fillIn(t, { habit: 'Quiet hour' }) === x.title))), mine);
+  const cov = pushes.filter(x => x.to !== 'Kellye' && x.body !== '' && COPY.CM.some(l => titlesOf(l).includes(x.title)));
+  const tea = fillIn(toWho(appPick(L_MILE[7], 'Kellye' + 'k' + 7)), { who: 'Kellye', habit: 'Cook at home', n: 7 });
+  check('milestone: coven gets the same line as the Tea post, shared habit only', cov.length === 3 && cov.every(x => x.body === tea) && !pushes.some(x => x.body.includes('Quiet hour') && x.to !== 'Kellye'), { cov, tea });
+
+  // the social job sits out when the bulk read fails, scheduled pushes still go
+  resetWorld(); prefetchDown = true;
+  put('h3-habits-Nina', { r1: habit({ id: 'r1' }) });
+  await runH('2026-11-17T16:05:00Z');
+  prefetchDown = false;
+  check('bulk read down: the morning push still goes out', pushes.length === 1 && pushes[0].to === 'Nina', pushes);
+
+  // Round 2 is skipped after Oct 31: no r2: reads at all
+  resetWorld(); let r2reads = 0; const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { if (String(u).includes('/recalData/r2')) r2reads++; return realFetch(u, o); };
+  let p = null; await W.default.scheduled({}, env, { waitUntil: x => { p = x; } }); await p;
+  globalThis.fetch = realFetch;
+  check('Round 2 jobs are skipped after Oct 31', r2reads === 0, r2reads);
 }
 
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');

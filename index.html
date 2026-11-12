@@ -388,6 +388,8 @@ const L_MILE={
  14:['Fourteen days of {habit}. {name} is a menace and we love it.','Two weeks of {habit} for {name}. The rest of us are taking notes.','{name} is 14 days in on {habit}. This is becoming a pattern.','Fourteen days. {name} and {habit} are basically a couple.'],
  30:['Thirty days of {habit}. {name} has entered a whole era.','{name} just hit 30 days on {habit}. We are not worthy.','Thirty days of {habit}. {name} has made it a personality.','A full month of {habit} for {name}. Someone get this person a trophy.']
 };
+/* Currently posts in The Tea. Round 2 wording, approved again Nov 11 2026. The push Worker sends the same line (push-copy.json group CU), so keep both word for word and in this order. */
+const CUR_LINES={reading:['{name} opened a new chapter','{name} turned a new page','{name} is deep in a new one'],watching:['{name} hit play on something new','{name} is on the couch with a new one','{name} queued up something new'],listening:['{name}\'s soundtrack just changed','{name} has a new one on repeat','{name} is setting the mood']};
 const L_GROUP=['{name} started {habit}. Peer pressure, but make it healthy.','{name} wants a {habit} club. Membership is free and mildly mandatory.','{name} started {habit}. Join before it gets awkward.','Group habit alert. {name} started {habit} and your presence is requested.'];
 const L_MOON=['{name} cast the {event} spell. The moon is taking credit.','{name} did the {event} spell. The tides are impressed.','{event} week. {name} cast the spell and the moon noticed.','{name} cast the {event} spell. Very lunar of them.','The moon is up to nonsense and {name} is in on it.','{name} cast the {event} spell. Feral behavior. We are proud.','{event}: everyone is acting unwell, and {name} cast the spell anyway.','{name} cast the {event} spell and did not ask anyone\'s permission.'];
 /* Brew questions. The 28 below were approved by Nina on Nov 5 2026. The card shows now that BREW_LIVE is true (turned on Nov 10 2026).
@@ -1070,6 +1072,8 @@ function buildFeed(){
     else body=ans.map(p=>`<div style="margin-top:4px">${esc(fill(BREW_LINE,{name:p}))}</div>`).join('');
     items.push({id:'qa:'+k,at:k+'q',who:'',body});
   }
+  for(const p of PEOPLE){const hs=((D.cur[p]||{}).hist)||[];for(const h of hs){const k=h&&h.at?dkey(new Date(h.at)):'';if(!k||k<addDays(t,-13)||!CUR_LINES[h.f]||!h.t)continue;
+    const id='cur:'+p+':'+h.at;items.push({id,at:k+'c',who:p,text:fill(pick(CUR_LINES[h.f],id),{name:'\u0001'})+': '+h.t});}}
   for(const p of PEOPLE){for(const s of shrOf(p)){const k=s.at?dkey(new Date(s.at)):'';if(!k||k<addDays(t,-13))continue;
     items.push({id:'sh:'+p+':'+s.id,at:k+'s',who:p,body:`<a href="${p===me?'#me':'#person/'+p}" style="color:inherit;text-decoration:none"><b>${esc(p)}</b></a> shared a read.${shrLink(s)}`});}}
   for(const p of PEOPLE){const ix=D.pic[p]||{};for(const id in ix){const m=ix[id];if(!m||!m.sh||!m.day||m.day<addDays(t,-13))continue;
@@ -1584,7 +1588,7 @@ function viewSetup(){
   let main='',btns='';
   if(s===1){main=`<div class="h1">Welcome in.</div><div class="sec">What should we call you?</div><div class="field"><label for="sn">Your name</label><input id="sn" type="text" value="${esc(pr.name||me)}" data-in="sname"></div><div class="small">No photo yet? Your initial works until you add one.</div>`;btns=`<button class="pill" data-act="snext">Next</button><button class="link quiet" data-act="snext">Skip the photo</button>`;}
   if(s===2){main=`<div class="h1">Your big 3.</div><div class="sec">Your Sun, Moon, and Rising signs shape your daily sky.</div><div class="grid2" style="grid-template-columns:repeat(3,1fr)">${['sun','moon','rising'].map(k=>`<div class="field"><label for="b-${k}">${k[0].toUpperCase()+k.slice(1)}</label><input id="b-${k}" type="text" value="${esc(b[k]||'')}" placeholder="Sign" data-in="big-${k}"></div>`).join('')}</div><div class="small">No chart yet? Skip it. You will get the general sky until you add yours.</div>`;btns=`<button class="pill" data-act="snext">Next</button><button class="link quiet" data-act="snext">Skip for now</button>`;}
-  if(s===3){const st=notifState();main=`<div class="h1">Never miss a day.</div><div class="sec">Turn on notifications to get a nudge when a habit is waiting, and news from the coven. Your current Spell Check keeps sending its usual ones too.</div>${st==='ios'?`<div class="card"><div class="label">On iPhone, do this first</div><div style="font-size:14px;line-height:1.6">1. Tap Share in Safari.<br>2. Choose Add to Home Screen.<br>3. Open Spell Check from your Home Screen.</div></div>`:st==='on'?`<div class="card"><div class="h2">Notifications are on.</div></div>`:st==='blocked'?`<div class="small">Notifications are blocked for this site. You can allow them in your phone or browser settings.</div>`:''}${ui.notifMsg?`<div class="small" style="color:var(--text)">${esc(ui.notifMsg)}</div>`:''}`;btns=(st==='ask'?`<button class="pill" data-act="notifon">Turn on notifications</button><button class="link quiet" data-act="snext">Not now</button>`:`<button class="pill" data-act="snext">Next</button>`);}
+  if(s===3){const st=notifState();main=`<div class="h1">Never miss a day.</div><div class="sec">Turn on notifications for habit nudges, the daily brew, and live updates on everything the coven gets up to. Nosy is a love language.</div>${st==='ios'?`<div class="card"><div class="label">On iPhone, do this first</div><div style="font-size:14px;line-height:1.6">1. Tap Share in Safari.<br>2. Choose Add to Home Screen.<br>3. Open Spell Check from your Home Screen.</div></div>`:st==='on'?`<div class="card"><div class="h2">Notifications are on.</div></div>`:st==='blocked'?`<div class="small">Notifications are blocked for this site. You can allow them in your phone or browser settings.</div>`:''}${ui.notifMsg?`<div class="small" style="color:var(--text)">${esc(ui.notifMsg)}</div>`:''}`;btns=(st==='ask'?`<button class="pill" data-act="notifon">Turn on notifications</button><button class="link quiet" data-act="snext">Not now</button>`:`<button class="pill" data-act="snext">Next</button>`);}
   if(s===4){main=`<div class="h1">One last thing.</div><div class="sec">Pick a habit to start with. You can add more any time.</div>`;btns=`<a class="pill" href="#add" data-act="sdone">Add your first habit</a><a class="link quiet" href="#today" data-act="sdone">Skip, take me to Today</a>`;}
   return `<div class="top"><div class="brand">Spell Check</div><div class="small">Step ${s} of 4</div></div><div style="display:flex;gap:6px;padding:0 20px">${bars}</div><div class="center">${main}</div><div style="padding:0 28px 34px;display:flex;flex-direction:column;gap:10px">${btns}</div>`;
 }
@@ -1621,7 +1625,22 @@ async function placeSearch(q){
     box.innerHTML=ui.placeRes.length?ui.placeRes.map((p,i)=>`<button type="button" role="option" class="popt" data-act="placepick" data-id="${i}">${esc(p.label)}</button>`).join(''):'<div class="small pnone">No match. Check the spelling, or add the country.</div>';
   }catch(e){if(e&&e.name==='AbortError')return;box.innerHTML='<div class="small pnone">Search is not available right now. What you typed is saved. Come back later to pick the exact place.</div>';}
 }
+/* Tells the push Worker what is coming: the brew question for the next 7 days and this person's sky days for the next 14
+   (New and Full Moons, the big sky days in SKY_DAYS, and every Wednesday) with her own sky headline. The Worker has no copy
+   of the questions or the sky lines, so it can never drift from the app. Each person writes only her own record, quietly. */
+let _schedAt=0,_schedLast='';
+function writeSched(){
+  if(!me||!loaded||!db||BREW_PREVIEW||Date.now()-_schedAt<60000)return;_schedAt=Date.now();
+  try{const t=todayK(),o={brew:{},sky:{}};
+    for(let i=0;i<7;i++){const k=addDays(t,i);const q=brewQ(k);if(q)o.brew[k]=q;}
+    for(let i=0;i<14;i++){const k=addDays(t,i);const ev=SKY_DAYS[k]||((moonEvents(k,k)[0]||{}).name)||'';if(!ev&&wd(k)!==2)continue;
+      const f=forecastFor(me,k);if(f.needsChart||!f.headline)continue;o.sky[k]={h:f.headline,ev};}
+    const s=JSON.stringify(o);if(s===_schedLast)return;
+    db.ref(keyFor('sched',me)).set(s).then(()=>{_schedLast=s;}).catch(e=>console.error(e));
+  }catch(e){console.error('sched',e);}
+}
 function render(){
+  setTimeout(writeSched,0);
   if(ui.picking&&Date.now()-ui.picking<120000){ui.dirty=true;return;}
   const act=document.activeElement;const keep=act&&act.dataset&&act.dataset.in?{id:act.id,s:act.selectionStart}:null;
   let html;

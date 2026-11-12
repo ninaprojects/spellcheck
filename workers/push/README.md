@@ -4,7 +4,26 @@ This is the Cloudflare Worker that sends every Spell Check notification. It repl
 
 The file here, `spellcheck-push-worker.js`, is a copy of what is deployed. If the two ever differ, the deployed version is what runs. Check before you edit.
 
-## What it sends
+## Habit tracker pushes (Nov 2026 on, index.html)
+
+Round 2 ended Oct 31. From Nov 1 the Round 2 jobs below are skipped entirely (`scheduled` checks the day), and every run goes to `habitsRun`. All wording is in `push-copy.json` at the repo root, fetched from GitHub Pages each run, so a wording change is a pull request, not a Cloudflare paste. Approved Nov 11 2026, see the project doc `claude/push-refresh-plan-nov11.md`.
+
+- 8:00am Pacific, sky push (group B) on her sky days: New and Full Moons, the app's `SKY_DAYS`, and every Wednesday. The body is her own sky headline from Read your sky. On those days her usual morning line waits until 9:00.
+- 8:00am Pacific, morning line (A habits, J journaling, C ritual). C13 and C14 go only to people tracking The Morning Show. After two days with nothing done, the comeback line (CB) goes out instead, once, until she does something again.
+- Noon to 9:59pm Pacific, the brew question (titles BT), skipped once she has answered.
+- 7:00pm Pacific, evening nudge (E) when a habit due today is open. If one of those has a streak of 3 or more, the streak line (ST) replaces it.
+- Sunday 6pm, vote reminder (V) if she has not voted. Monday 8am, the result (R) if anyone voted.
+- Every run (the social job): friend showed up (IN, once per friend per day, shared habits, the coven habit or the moon spell only, never private habits); all four showed up (ALL, once a day, replaces the last friend's push); milestones at 7, 14 and 30 days (MP to her for any daily habit, CM to the coven for shared ones, the same line as the Tea post); reactions (RX, held about a minute, to the post's owner); brew answers (QA, to people who answered earlier); shared reads (SR); Currently updates (CU, same line as the Tea post); new group habits (GH, same line as the Tea post).
+
+How it reads data: two key-range reads (`orderBy="$key"`) fetch every `h3-*` record except photos and avatars, so the jobs never read inside a per-person loop. If that read fails, the social job sits the run out and the scheduled jobs fall back to single reads.
+
+The Worker holds no copy of the brew questions or the sky lines. The app writes `h3-sched-<Name>` (each person her own): the brew question for the next 7 days and her sky days for the next 14, with her headline. If nobody has opened the app in a week, there is no brew push; if she has not opened it in two weeks, or has no Sun sign, there is no sky push.
+
+State: `h3-push-state` (`sched` per job and day, `morn`/`eve` line memory, `setLast` for keeping near-duplicate sets apart, `come` for comeback, `soc` for what the social job has already seen). The first run after this version deploys marks everything that already exists as seen and sends nothing from the social job.
+
+GH, CM and CU in `push-copy.json` must match `L_GROUP`, `L_MILE` and `CUR_LINES` in `index.html` word for word and in order. `tests/worker_test.mjs` checks this.
+
+## What it sent in Round 2 (Oct 2026, now skipped)
 
 - Morning spell, 8:00am Pacific. Only sent between 8:00 and 11:59am.
 - Evening nudge, 7:00pm Pacific. Only sent between 7:00 and 9:59pm.

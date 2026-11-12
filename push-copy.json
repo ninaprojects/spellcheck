@@ -1,5 +1,5 @@
 {
-  "_note": "Approved push wording. The push Worker fetches this file from GitHub Pages. Edit through a pull request only. Titles end with the star, no em dashes, no links. Groups: A habits push, J journaling push (people with the Journal habit), C small ritual, E evening nudge. Source of truth for wording: the Spell Check copy library.",
+  "_note": "Approved push wording. The push Worker fetches this file from GitHub Pages. Edit through a pull request only. Titles end with the star (reactions may end with their own symbol), no em dashes, no links. Placeholders: {name} is the person getting the push, {who} the friend it is about, plus {habit}, {n}, {n1}, {post}, {q}, {sky}, {answer}, {label}, {value}. A line can have several titles (titles, the first also kept in title for older Worker versions) that rotate. Lines with the same set are kept apart. rare: N means about 1 in N sends. only: tag means only people tracking that habit. Groups: A habits morning, J journaling morning, C small ritual, E evening nudge, BT brew titles, V Sunday vote, R Monday result, B sky titles, IN friend showed up, ALL all four showed up, RX reactions (tag is the reaction), QA brew answers, SR shared reads, CU Currently (tag is the field), GH new group habit, CM coven milestone (must match L_MILE in index.html), MP private milestone, ST streak at risk, CB comeback. GH, CM and CU must stay word for word and in the same order as L_GROUP, L_MILE and CUR_LINES in index.html (with {who} for {name}); tests check this. Source of truth for wording: the Spell Check copy library.",
   "A": [
     {
       "id": "A1",
@@ -14,22 +14,26 @@
     {
       "id": "A5a1",
       "title": "Glow incoming ✦",
-      "body": "Today's habits are warmed up and ready to make your whole morning shimmer. Tap through when you like."
+      "body": "Today's habits are warmed up and ready to make your whole morning shimmer. Tap through when you like.",
+      "set": "glow"
     },
     {
       "id": "A5a2",
       "title": "Glow season ✦",
-      "body": "Today's habits are lined up, and every tap makes the morning shine brighter, {name}."
+      "body": "Today's habits are lined up, and every tap makes the morning shine brighter, {name}.",
+      "set": "glow"
     },
     {
       "id": "A5b1",
       "title": "Glow loading ✦",
-      "body": "Today's habits are ready to go, and the rest of your morning is about to look radiant."
+      "body": "Today's habits are ready to go, and the rest of your morning is about to look radiant.",
+      "set": "glow"
     },
     {
       "id": "A5b2",
       "title": "Glow-up in progress ✦",
-      "body": "Each habit you tap through today adds a shine you can feel all day, {name}."
+      "body": "Each habit you tap through today adds a shine you can feel all day, {name}.",
+      "set": "glow"
     },
     {
       "id": "Q2",
@@ -44,7 +48,12 @@
     {
       "id": "Q4",
       "title": "Follow-through era ✦",
-      "body": "Doing what you said you would suits you, {name}. We are bragging about you in every conversation."
+      "body": "Doing what you said you would suits you, {name}. We are bragging about you in every conversation.",
+      "titles": [
+        "Follow-through era ✦",
+        "Reputation: immaculate ✦",
+        "Main character behavior ✦"
+      ]
     },
     {
       "id": "Q5",
@@ -54,17 +63,27 @@
     {
       "id": "Q61",
       "title": "Pure follow-through ✦",
-      "body": "You said you would, and then you did, with style and everything. We are SCREAMING about you, {name}."
+      "body": "You said you would, and then you did, with style and everything. We are SCREAMING about you, {name}.",
+      "titles": [
+        "Pure follow-through ✦",
+        "Iconic, honestly ✦",
+        "Somebody hold us back ✦",
+        "Mic drop ✦",
+        "Not to be dramatic ✦"
+      ],
+      "set": "q6"
     },
     {
       "id": "Q62",
       "title": "Chef's kiss ✦",
-      "body": "You said you would, did it, and the results speak for themselves. We are LOSING it over you, {name}."
+      "body": "You said you would, did it, and the results speak for themselves. We are LOSING it over you, {name}.",
+      "set": "q6"
     },
     {
       "id": "Q71",
       "title": "The receipts are in ✦",
-      "body": "Again and again, you did what you said you would. The proof is stacking up, and we adore it."
+      "body": "Again and again, you did what you said you would. The proof is stacking up, and we adore it.",
+      "set": "q6"
     },
     {
       "id": "L1",
@@ -109,12 +128,14 @@
     {
       "id": "S4s",
       "title": "Deeply satisfying ✦",
-      "body": "Today's habits are known to leave people glowing and grinning. Go on, get your hands on them, {name}."
+      "body": "Today's habits are known to leave people glowing and grinning. Go on, get your hands on them, {name}.",
+      "set": "s4"
     },
     {
       "id": "S4m",
       "title": "Results guaranteed ✦",
-      "body": "Today's habits deliver every single time. Go on, take a look, {name}."
+      "body": "Today's habits deliver every single time. Go on, take a look, {name}.",
+      "set": "s4"
     }
   ],
   "J": [
@@ -141,22 +162,26 @@
     {
       "id": "J11a",
       "title": "Rant permit ✦",
-      "body": "Ramble, gush, or write the same sentence twice, {name}. The only rule is that you enjoy it."
+      "body": "Ramble, gush, or write the same sentence twice, {name}. The only rule is that you enjoy it.",
+      "set": "j11"
     },
     {
       "id": "J11b",
       "title": "Ramble all you like ✦",
-      "body": "Gush, daydream, or write the same sentence twice. Every word is yours, {name}."
+      "body": "Gush, daydream, or write the same sentence twice. Every word is yours, {name}.",
+      "set": "j11"
     },
     {
       "id": "J12s",
       "title": "Bare it all ✦",
-      "body": "Full honesty, no filter, zero editing. It is a private show with one seat, and it is yours."
+      "body": "Full honesty, no filter, zero editing. It is a private show with one seat, and it is yours.",
+      "set": "j12"
     },
     {
       "id": "J12m",
       "title": "Full honesty hour ✦",
-      "body": "No filter, no editing, no audience. Just you and a very trustworthy vault, {name}."
+      "body": "No filter, no editing, no audience. Just you and a very trustworthy vault, {name}.",
+      "set": "j12"
     }
   ],
   "C": [
@@ -256,6 +281,24 @@
         "noscroll",
         "outside"
       ]
+    },
+    {
+      "id": "C13",
+      "title": "Curtain's up ✦",
+      "body": "The Morning Show starts whenever you hit play. Eight minutes, standing ovation included.",
+      "tags": [
+        "show"
+      ],
+      "only": "show"
+    },
+    {
+      "id": "C14",
+      "title": "Places, please ✦",
+      "body": "Eight minutes of The Morning Show and you get to call yourself a performer all day.",
+      "tags": [
+        "show"
+      ],
+      "only": "show"
     }
   ],
   "E": [
@@ -267,12 +310,18 @@
     {
       "id": "E2",
       "title": "Tap before the credits ✦",
-      "body": "Whatever is still open from today is waiting, and the day deserves a proper finale, {name}."
+      "body": "Whatever is still open from today is waiting, and the day deserves a proper finale, {name}.",
+      "titles": [
+        "Tap before the credits ✦",
+        "Nightcap ✦",
+        "Evening plans ✦",
+        "One more for the road ✦"
+      ]
     },
     {
       "id": "E4",
       "title": "Bedtime brag material ✦",
-      "body": "Whatever is still open from today is waiting, and closing it out gives you something good to say tomorrow."
+      "body": "A tap or two before bed, and tomorrow you get to be insufferable about it."
     },
     {
       "id": "E7",
@@ -280,29 +329,723 @@
       "body": "However the day went, whatever is still open is a nice way to close it, and we are cheering, {name}."
     },
     {
-      "id": "E8",
+      "id": "E8a",
       "title": "Be good to tomorrow ✦",
-      "body": "Whatever is still open is a gift to tomorrow's you, and tonight is a lovely time to give it, {name}."
+      "body": "Future you sent a wishlist, and one more tap tonight is on it, {name}.",
+      "set": "e8"
+    },
+    {
+      "id": "E8b",
+      "title": "Be good to tomorrow ✦",
+      "body": "Morning you is going to be so smug about this. One more tap tonight, {name}.",
+      "set": "e8"
     },
     {
       "id": "E9",
       "title": "Knock, knock ✦",
-      "body": "Whatever is still open from today is outside holding a bouquet, and it has been rehearsing all day."
+      "body": "One of today's habits is outside holding a bouquet, and it has been rehearsing all day."
     },
     {
       "id": "E10s",
       "title": "We love a big finish ✦",
-      "body": "Whatever is still open is hoping for a satisfying finale, and the night is yours to give it, {name}."
+      "body": "Whatever is still open is hoping for a satisfying finale, and the night is yours to give it, {name}.",
+      "titles": [
+        "We love a big finish ✦",
+        "Happy endings only ✦",
+        "Save the best for last ✦",
+        "Dessert course ✦",
+        "Last call, gorgeous ✦"
+      ],
+      "set": "e10"
     },
     {
       "id": "E10m",
       "title": "We love a big finish ✦",
-      "body": "Whatever is still open is hoping for a big finale, and the night is yours to give it, {name}."
+      "body": "Whatever is still open is hoping for a big finale, and the night is yours to give it, {name}.",
+      "titles": [
+        "We love a big finish ✦",
+        "Happy endings only ✦",
+        "Save the best for last ✦",
+        "Dessert course ✦",
+        "Last call, gorgeous ✦"
+      ],
+      "set": "e10"
     },
     {
       "id": "E12",
       "title": "Standing ovation pending ✦",
-      "body": "Whatever is still open from today is waiting backstage, and we are already on our feet, {name}."
+      "body": "Today's last act is waiting backstage, and we are already on our feet, {name}."
+    }
+  ],
+  "BT": [
+    {
+      "id": "BT1",
+      "title": "The coven wants to know ✦",
+      "titles": [
+        "The coven wants to know ✦",
+        "Pop quiz, no wrong answers ✦"
+      ],
+      "body": "{q}"
+    }
+  ],
+  "V": [
+    {
+      "id": "V1",
+      "title": "Last call to vote ✦",
+      "body": "Next week's coven habit is still open. Pick one before the night is over, or we run it back."
+    },
+    {
+      "id": "V2",
+      "title": "Campaign season ✦",
+      "body": "Next week's coven habit needs your vote. Lobbying the group chat is encouraged."
+    },
+    {
+      "id": "V3",
+      "title": "Vote early, vote cute ✦",
+      "body": "Next week's coven habit is still up for grabs. Pick one before bed."
+    }
+  ],
+  "R": [
+    {
+      "id": "R1",
+      "title": "The people have spoken ✦",
+      "body": "{habit} it is. Everyone is in, whether they know it yet or not."
+    },
+    {
+      "id": "R2",
+      "title": "And the winner is ✦",
+      "body": "{habit}. This week we all do it together, no take-backs."
+    },
+    {
+      "id": "R3",
+      "title": "Ballots counted ✦",
+      "body": "{habit} won. Clear your schedules, it is a group project now."
+    }
+  ],
+  "B": [
+    {
+      "id": "B14",
+      "title": "Psst, gossip for you ✦",
+      "body": "{sky}"
+    },
+    {
+      "id": "B15",
+      "title": "You have an admirer up there ✦",
+      "body": "{sky}",
+      "set": "upthere"
+    },
+    {
+      "id": "B17",
+      "title": "Somebody got a shout-out ✦",
+      "body": "{sky}"
+    },
+    {
+      "id": "B18",
+      "title": "You have fans up there ✦",
+      "body": "{sky}",
+      "set": "upthere"
+    },
+    {
+      "id": "B20",
+      "title": "Made with you in mind ✦",
+      "body": "{sky}"
+    },
+    {
+      "id": "B21",
+      "title": "This suits you ✦",
+      "body": "{sky}"
+    },
+    {
+      "id": "B23",
+      "title": "A DM from the universe ✦",
+      "body": "{sky}"
+    }
+  ],
+  "IN": [
+    {
+      "id": "IN1",
+      "title": "{who} is in ✦",
+      "body": "{who} just finished {habit}. Your turn, no pressure, slight pressure."
+    },
+    {
+      "id": "IN2",
+      "title": "{who} is in ✦",
+      "body": "{who} did {habit} and is being cute about it. Catch up."
+    },
+    {
+      "id": "IN3",
+      "title": "{who} is in ✦",
+      "body": "{who} finished {habit}. The bar is on the floor and you can clear it."
+    },
+    {
+      "id": "IN4",
+      "title": "{who} is in ✦",
+      "body": "{who} is locked in and {habit} is done. Your move."
+    },
+    {
+      "id": "IN5",
+      "title": "{who} is in ✦",
+      "body": "Plot twist: {who} already did {habit}. Catch up, bestie."
+    },
+    {
+      "id": "IN6",
+      "title": "{who} is in ✦",
+      "body": "{who} finished {habit} and the vibes are immaculate. Do not be the last one."
+    },
+    {
+      "id": "IN7",
+      "title": "{who} is in ✦",
+      "body": "Breaking news: {who} finished {habit}. More at 11, depending on you."
+    },
+    {
+      "id": "IN8",
+      "title": "{who} is in ✦",
+      "body": "{who} did {habit}. Girl get yours."
+    },
+    {
+      "id": "IN9",
+      "title": "{who} is in ✦",
+      "body": "{who} finished {habit}. Loooove that for her. Your turn."
+    },
+    {
+      "id": "IN10",
+      "title": "{who} is in ✦",
+      "body": "{who} did {habit}. APPROVED. Who is next?"
+    },
+    {
+      "id": "IN11",
+      "title": "{who} is in ✦",
+      "body": "{who} finished {habit} and left nothing on the table. Go get some."
+    },
+    {
+      "id": "IN12",
+      "title": "{who} is in ✦",
+      "body": "{who} did {habit}. Would hit again. Your turn."
+    },
+    {
+      "id": "IN13",
+      "title": "{who} is in ✦",
+      "body": "{who} did {habit}. Blessings. Now you."
+    },
+    {
+      "id": "IN14",
+      "title": "{who} is in ✦",
+      "body": "{who} finished {habit}. Who gon' check her, boo? You, ideally."
+    },
+    {
+      "id": "IN15",
+      "title": "{who} is in ✦",
+      "body": "{who} finished {habit} before you finished your coffee. Rude, honestly. Inspiring, also."
+    },
+    {
+      "id": "IN16",
+      "title": "{who} is in ✦",
+      "body": "{who} did {habit}. She is glowing and frankly showing off. Match her energy."
+    }
+  ],
+  "ALL": [
+    {
+      "id": "ALL1",
+      "title": "All four showed up ✦",
+      "body": "Everyone did something today. The coven is undefeated."
+    },
+    {
+      "id": "ALL2",
+      "title": "All four showed up ✦",
+      "body": "Full coven today. Everyone showed up and showed out."
+    },
+    {
+      "id": "ALL3",
+      "title": "Perfect attendance ✦",
+      "body": "All four of us did something today. Someone alert the press."
+    },
+    {
+      "id": "ALL4",
+      "title": "Full coven ✦",
+      "body": "Bling, bling, bling, bitches is mad!",
+      "rare": 10
+    }
+  ],
+  "RX": [
+    {
+      "id": "RXh1",
+      "title": "{who}'s heart is swelling ♡",
+      "body": "On your {post}. We'd ask you to stay humble, but we've met you.",
+      "tags": [
+        "heart"
+      ]
+    },
+    {
+      "id": "RXs1",
+      "title": "{who} is spellbound ✦",
+      "body": "On your {post}. A bow is customary. Several bows are encouraged.",
+      "tags": [
+        "spell"
+      ]
+    },
+    {
+      "id": "RXs2",
+      "title": "{who} cannot look away ✦",
+      "body": "Your {post} has her in a chokehold. Respectfully.",
+      "tags": [
+        "spell"
+      ]
+    },
+    {
+      "id": "RXs3",
+      "title": "{who} is obsessed ✦",
+      "body": "With your {post}. She's telling everyone, and by everyone we mean us.",
+      "tags": [
+        "spell"
+      ]
+    },
+    {
+      "id": "RXm1",
+      "title": "{who} sent you calm tides ☾",
+      "body": "On your {post}. Unclench your shoulders, the coven's got this.",
+      "tags": [
+        "moon"
+      ]
+    },
+    {
+      "id": "RXm2",
+      "title": "{who} sent you a soft landing ☾",
+      "body": "For your {post}. Exhale, gorgeous.",
+      "tags": [
+        "moon"
+      ]
+    }
+  ],
+  "QA": [
+    {
+      "id": "QA1",
+      "title": "{who} spilled ✦",
+      "titles": [
+        "{who} spilled ✦",
+        "Fresh tea from {who} ✦",
+        "{who} has entered the chat ✦"
+      ],
+      "body": "{answer}"
+    },
+    {
+      "id": "QA2",
+      "title": "{who} spilled ✦",
+      "titles": [
+        "{who} spilled ✦",
+        "Fresh tea from {who} ✦",
+        "{who} has entered the chat ✦"
+      ],
+      "body": "Her answer is in. Go read it before the group chat does.",
+      "rare": 4
+    }
+  ],
+  "SR": [
+    {
+      "id": "SR1",
+      "title": "{who} read this and thought of us ✦",
+      "body": "{label}"
+    },
+    {
+      "id": "SR2",
+      "title": "{who} left something on the altar ✦",
+      "body": "{label}"
+    },
+    {
+      "id": "SR3",
+      "title": "{who} passed on a little magic ✦",
+      "body": "{label}"
+    }
+  ],
+  "CU": [
+    {
+      "id": "CUr1",
+      "title": "{who} opened a new chapter ✦",
+      "body": "{value}",
+      "tags": [
+        "reading"
+      ]
+    },
+    {
+      "id": "CUr2",
+      "title": "{who} turned a new page ✦",
+      "body": "{value}",
+      "tags": [
+        "reading"
+      ]
+    },
+    {
+      "id": "CUr3",
+      "title": "{who} is deep in a new one ✦",
+      "body": "{value}",
+      "tags": [
+        "reading"
+      ]
+    },
+    {
+      "id": "CUw1",
+      "title": "{who} hit play on something new ✦",
+      "body": "{value}",
+      "tags": [
+        "watching"
+      ]
+    },
+    {
+      "id": "CUw2",
+      "title": "{who} is on the couch with a new one ✦",
+      "body": "{value}",
+      "tags": [
+        "watching"
+      ]
+    },
+    {
+      "id": "CUw3",
+      "title": "{who} queued up something new ✦",
+      "body": "{value}",
+      "tags": [
+        "watching"
+      ]
+    },
+    {
+      "id": "CUl1",
+      "title": "{who}'s soundtrack just changed ✦",
+      "body": "{value}",
+      "tags": [
+        "listening"
+      ]
+    },
+    {
+      "id": "CUl2",
+      "title": "{who} has a new one on repeat ✦",
+      "body": "{value}",
+      "tags": [
+        "listening"
+      ]
+    },
+    {
+      "id": "CUl3",
+      "title": "{who} is setting the mood ✦",
+      "body": "{value}",
+      "tags": [
+        "listening"
+      ]
+    }
+  ],
+  "GH": [
+    {
+      "id": "GH1",
+      "title": "New group habit ✦",
+      "body": "{who} started {habit}. Peer pressure, but make it healthy."
+    },
+    {
+      "id": "GH2",
+      "title": "New group habit ✦",
+      "body": "{who} wants a {habit} club. Membership is free and mildly mandatory."
+    },
+    {
+      "id": "GH3",
+      "title": "New group habit ✦",
+      "body": "{who} started {habit}. Join before it gets awkward."
+    },
+    {
+      "id": "GH4",
+      "title": "New group habit ✦",
+      "body": "Group habit alert. {who} started {habit} and your presence is requested."
+    }
+  ],
+  "CM": [
+    {
+      "id": "CM7_1",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "{who} is 7 days deep on {habit}. Somebody check on {who}, it is going suspiciously well.",
+      "tags": [
+        "d7"
+      ]
+    },
+    {
+      "id": "CM7_2",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "Seven days of {habit} for {who}. We are being very normal about it.",
+      "tags": [
+        "d7"
+      ]
+    },
+    {
+      "id": "CM7_3",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "{who} hit 7 days on {habit}. Nobody panic.",
+      "tags": [
+        "d7"
+      ]
+    },
+    {
+      "id": "CM7_4",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "A full week of {habit}. {who} is not messing around.",
+      "tags": [
+        "d7"
+      ]
+    },
+    {
+      "id": "CM14_1",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "Fourteen days of {habit}. {who} is a menace and we love it.",
+      "tags": [
+        "d14"
+      ]
+    },
+    {
+      "id": "CM14_2",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "Two weeks of {habit} for {who}. The rest of us are taking notes.",
+      "tags": [
+        "d14"
+      ]
+    },
+    {
+      "id": "CM14_3",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "{who} is 14 days in on {habit}. This is becoming a pattern.",
+      "tags": [
+        "d14"
+      ]
+    },
+    {
+      "id": "CM14_4",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "Fourteen days. {who} and {habit} are basically a couple.",
+      "tags": [
+        "d14"
+      ]
+    },
+    {
+      "id": "CM30_1",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "Thirty days of {habit}. {who} has entered a whole era.",
+      "tags": [
+        "d30"
+      ]
+    },
+    {
+      "id": "CM30_2",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "{who} just hit 30 days on {habit}. We are not worthy.",
+      "tags": [
+        "d30"
+      ]
+    },
+    {
+      "id": "CM30_3",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "Thirty days of {habit}. {who} has made it a personality.",
+      "tags": [
+        "d30"
+      ]
+    },
+    {
+      "id": "CM30_4",
+      "title": "Milestone alert ✦",
+      "titles": [
+        "Milestone alert ✦",
+        "Somebody's on a streak ✦",
+        "Pop the champagne ✦"
+      ],
+      "body": "A full month of {habit} for {who}. Someone get this person a trophy.",
+      "tags": [
+        "d30"
+      ]
+    }
+  ],
+  "MP": [
+    {
+      "id": "MP7a",
+      "title": "Seven days of {habit} ✦",
+      "body": "A whole week. The coven is losing it.",
+      "tags": [
+        "d7"
+      ]
+    },
+    {
+      "id": "MP7b",
+      "title": "Seven days of {habit} ✦",
+      "body": "A habit is trying to become a personality.",
+      "tags": [
+        "d7"
+      ]
+    },
+    {
+      "id": "MP7c",
+      "title": "Seven days of {habit} ✦",
+      "body": "A whole week. You are basically a professional now.",
+      "tags": [
+        "d7"
+      ]
+    },
+    {
+      "id": "MP14a",
+      "title": "Two weeks of {habit} ✦",
+      "body": "Fourteen days straight. Honestly, ENERGY.",
+      "tags": [
+        "d14"
+      ]
+    },
+    {
+      "id": "MP14b",
+      "title": "Two weeks of {habit} ✦",
+      "body": "Fourteen days in a row. This is not a phase, it is a lifestyle.",
+      "tags": [
+        "d14"
+      ]
+    },
+    {
+      "id": "MP14c",
+      "title": "Two weeks strong ✦",
+      "body": "Fourteen days of {habit}. It would like to make things official.",
+      "tags": [
+        "d14"
+      ]
+    },
+    {
+      "id": "MP30a",
+      "title": "Thirty days of {habit} ✦",
+      "body": "A full month. Iconic behavior, truly.",
+      "tags": [
+        "d30"
+      ]
+    },
+    {
+      "id": "MP30b",
+      "title": "Thirty days of {habit} ✦",
+      "body": "A full month. Somebody get this person a trophy.",
+      "tags": [
+        "d30"
+      ]
+    },
+    {
+      "id": "MP30c",
+      "title": "Thirty days ✦",
+      "body": "A full month of {habit}. We are drafting your acceptance speech.",
+      "tags": [
+        "d30"
+      ]
+    }
+  ],
+  "ST": [
+    {
+      "id": "ST1",
+      "title": "Your streak is glowing ✦",
+      "body": "{n} days and counting. One small thing makes it {n1}."
+    },
+    {
+      "id": "ST2",
+      "title": "Your streak is glowing ✦",
+      "body": "Your {n} day streak is glowing. Keep it lit with one small thing."
+    },
+    {
+      "id": "ST3",
+      "title": "Your streak is glowing ✦",
+      "body": "Look at you, {n} days deep. One tiny thing and the streak keeps shining."
+    },
+    {
+      "id": "ST4",
+      "title": "Your streak is glowing ✦",
+      "body": "{n} days of main character energy. One small thing and the arc continues."
+    },
+    {
+      "id": "ST5",
+      "title": "Your streak is glowing ✦",
+      "body": "{n} days in a row and the coven is obsessed. Let's make tonight count."
+    },
+    {
+      "id": "ST6",
+      "title": "Your streak is glowing ✦",
+      "body": "Day {n} is calling your name, and it sounds excited. One small thing."
+    }
+  ],
+  "CB": [
+    {
+      "id": "CB1",
+      "title": "Welcome back ✦",
+      "body": "The coven kept your seat warm. One small thing and you are back."
+    },
+    {
+      "id": "CB2",
+      "title": "Welcome back ✦",
+      "body": "Fresh start energy. One small thing and day one is yours again."
+    },
+    {
+      "id": "CB3",
+      "title": "Welcome back ✦",
+      "body": "We missed you. One small thing and it is like you never left."
+    },
+    {
+      "id": "CB4",
+      "title": "Welcome back ✦",
+      "body": "Twirl back in, gone with the wind fabulous. One small thing and you are back."
+    },
+    {
+      "id": "CB5",
+      "title": "Look who it is ✦",
+      "body": "Your habits saved your seat and kept the snacks warm. One small thing and you are back in the room."
+    },
+    {
+      "id": "CB6",
+      "title": "Comeback season ✦",
+      "body": "Every great comeback starts with one small thing. This is the montage part, {name}."
     }
   ]
 }

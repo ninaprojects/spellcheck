@@ -1,4 +1,5 @@
-// Spell Check reaction pushes.
+// Spell Check push Worker. Since Nov 2026 it sends the habit tracker pushes (habitsRun, see the README and
+// push-copy.json). The Round 2 jobs below ran Oct 1 to 31 and are skipped after that.
 // A separate Worker from the media-search one, so that one is never touched.
 // Runs on a Cron Trigger every 5 minutes. It has no public endpoints that do
 // anything, so nobody can trigger pushes from outside.
@@ -491,8 +492,12 @@ function composeActivityText(items, castTodayCount) {
 
 export default {
   async scheduled(event, env, ctx) {
+    // Round 2 (old-app.html) ran Oct 1 to 31, 2026. After that its jobs have nothing to send, so it is skipped
+    // and the whole call budget goes to the habit tracker.
+    const now = new Date();
+    const round2 = pacificDayNumber(now) <= 31;
     ctx.waitUntil(
-      run(env, new Date()).catch(e => console.error('run failed', e && e.stack || e))
+      (round2 ? run(env, now).catch(e => console.error('run failed', e && e.stack || e)) : Promise.resolve(resetRun()))
         .then(() => habitsRun(env, new Date()))
         .catch(e => console.error('habits run failed', e && e.stack || e))
     );
@@ -1094,18 +1099,25 @@ export async function run(env, now) {
 }
 
 // ---------- new habit tracker pushes (index.html, data under recalData/h3-*) ----------
-// Three scheduled pushes for the habit tracker, kept apart from the Round 2 jobs above. They share the
-// run's call counter, use their own state key, and claim each send (saved as done) BEFORE it goes out.
-//   h3morning 8am to 11:59am Pacific, every day: one approved line per person (see weekPlan). A and J lines only when a habit is open today.
-//   h3nudge   7pm to 9:59pm Pacific, every day: someone has a habit due today that is not done yet.
+// Everything for the habit tracker, kept apart from the Round 2 jobs above. Own state key (h3-push-state).
+// Scheduled sends are claimed (saved as done) BEFORE they go out, like Round 2.
+//   h3sky     8am to 11:59am Pacific on her sky days (New and Full Moons, the app's SKY_DAYS, every Wednesday).
+//   h3morning 8am to 11:59am Pacific (9am on her sky days, so the two never land together): one approved line
+//             per person (see weekPlan). A and J lines only when a habit is open today. After two days with nothing
+//             done, the comeback line goes out instead.
+//   h3brew    noon to 9:59pm Pacific: today's brew question, skipped once she has answered.
+//   h3nudge   7pm to 9:59pm Pacific: a habit due today is not done. When one of those habits has a streak of 3 or
+//             more, the streak line goes out instead of the nudge.
 //   h3vote    Sunday 6pm to 9:59pm Pacific: next week's coven habit vote is still open for her.
 //   h3result  Monday 8am to 11:59am Pacific: the coven habit for this week, if anyone voted.
-// The morning and evening wording is approved and lives in push-copy.json. The vote and result lines below are still DRAFTS.
+//   social    every run: friend showed up, all four showed up, milestones, reactions, brew answers, shared reads,
+//             Currently, new group habits.
+// All wording lives in push-copy.json. The brew question and the sky headline come from the app itself
+// (h3-sched-<Person>, written by index.html), so the Worker never holds its own copy of them.
 const H3_STATE_KEY = 'h3-push-state';
-// The Sunday vote reminder and the Monday result still use DRAFT wording that Nina has not approved, so they stay off.
-// Turn each on (true) only after its copy is approved and moved into push-copy.json.
-export const H3_JOBS_ON = { vote: false, result: false };
+export const H3_JOBS_ON = { vote: true, result: true };
 export const H3_VOTE_NAMES = { phone: 'Phone-free hour', walk: '10 minute walk outside', tidy: 'Tidy 10 minutes', water: 'Drink a full glass first thing' };
+export const SEASON_START = '2026-11-05'; // must match index.html
 // ---------- push copy lives in the repo (push-copy.json), not in this file ----------
 // Approved wording is fetched from GitHub Pages once per run, so a wording change is a pull request and
 // never a Cloudflare paste. It counts as one outside call. If the fetch fails or a line is invalid, the
@@ -1116,25 +1128,58 @@ export const H3_FALLBACK = {
   A: [{ id: 'A1', title: 'Rise and tap ✦', body: 'Today’s habits. The effort? Tiny. The cheering section? ENORMOUS.' }, { id: 'A2', title: 'Good morning, {name} ✦', body: 'Today’s habits are ready when you are.' }],
   J: [{ id: 'J5', title: 'A way with words ✦', body: 'Putting what you feel into sentences is a real skill, and we love watching you use it, {name}.' }],
   C: [{ id: 'C6', title: 'Daily highlight ✦', body: 'Choose one moment to look forward to and say it out loud. A reason to smile, already booked.' }],
-  E: [{ id: 'E2', title: 'Tap before the credits ✦', body: 'Whatever is still open from today is waiting, and the day deserves a proper finale, {name}.' }]
+  E: [{ id: 'E2', title: 'Tap before the credits ✦', body: 'Whatever is still open from today is waiting, and the day deserves a proper finale, {name}.' }],
+  BT: [{ id: 'BT1', title: 'The coven wants to know ✦', body: '{q}' }],
+  V: [{ id: 'V1', title: 'Last call to vote ✦', body: 'Next week\'s coven habit is still open. Pick one before the night is over, or we run it back.' }],
+  R: [{ id: 'R1', title: 'The people have spoken ✦', body: '{habit} it is. Everyone is in, whether they know it yet or not.' }],
+  B: [{ id: 'B14', title: 'Psst, gossip for you ✦', body: '{sky}' }],
+  IN: [{ id: 'IN8', title: '{who} is in ✦', body: '{who} did {habit}. Girl get yours.' }],
+  ALL: [{ id: 'ALL1', title: 'All four showed up ✦', body: 'Everyone did something today. The coven is undefeated.' }],
+  RX: [{ id: 'RXh1', title: '{who}\'s heart is swelling ♡', body: 'On your {post}. We\'d ask you to stay humble, but we\'ve met you.', tags: ['heart'] },
+    { id: 'RXs1', title: '{who} is spellbound ✦', body: 'On your {post}. A bow is customary. Several bows are encouraged.', tags: ['spell'] },
+    { id: 'RXm1', title: '{who} sent you calm tides ☾', body: 'On your {post}. Unclench your shoulders, the coven\'s got this.', tags: ['moon'] }],
+  QA: [{ id: 'QA1', title: '{who} spilled ✦', body: '{answer}' }],
+  SR: [{ id: 'SR1', title: '{who} read this and thought of us ✦', body: '{label}' }],
+  CU: [{ id: 'CUr1', title: '{who} opened a new chapter ✦', body: '{value}', tags: ['reading'] }, { id: 'CUw1', title: '{who} hit play on something new ✦', body: '{value}', tags: ['watching'] }, { id: 'CUl1', title: '{who}\'s soundtrack just changed ✦', body: '{value}', tags: ['listening'] }],
+  GH: [{ id: 'GH1', title: 'New group habit ✦', body: '{who} started {habit}. Peer pressure, but make it healthy.' }],
+  CM: [{ id: 'CM7_1', title: 'Milestone alert ✦', body: '{who} hit 7 days on {habit}. Nobody panic.', tags: ['d7'] }, { id: 'CM14_1', title: 'Milestone alert ✦', body: 'Two weeks of {habit} for {who}. The rest of us are taking notes.', tags: ['d14'] }, { id: 'CM30_1', title: 'Milestone alert ✦', body: '{who} just hit 30 days on {habit}. We are not worthy.', tags: ['d30'] }],
+  MP: [{ id: 'MP7a', title: 'Seven days of {habit} ✦', body: 'A whole week. The coven is losing it.', tags: ['d7'] }, { id: 'MP14a', title: 'Two weeks of {habit} ✦', body: 'Fourteen days straight. Honestly, ENERGY.', tags: ['d14'] }, { id: 'MP30a', title: 'Thirty days of {habit} ✦', body: 'A full month. Iconic behavior, truly.', tags: ['d30'] }],
+  ST: [{ id: 'ST1', title: 'Your streak is glowing ✦', body: '{n} days and counting. One small thing makes it {n1}.' }],
+  CB: [{ id: 'CB1', title: 'Welcome back ✦', body: 'The coven kept your seat warm. One small thing and you are back.' }]
 };
-// Keeps only well-formed lines: a short id, a title ending in the star, bodies under 130 characters, no links,
-// no em or en dashes. Anything else is dropped. A group left empty falls back to the built-in lines.
+// Groups where a line must match its own tag (a reaction, a field, a milestone). If the copy file loses every line
+// for one tag, the built-in lines for that tag fill in.
+const TAGGED = { RX: ['heart', 'spell', 'moon'], CU: ['reading', 'watching', 'listening'], CM: ['d7', 'd14', 'd30'], MP: ['d7', 'd14', 'd30'] };
+const okTitle = t => typeof t === 'string' && t.length > 0 && t.length <= 40 && /[✦♡☾]$/.test(t);
+// Keeps only well-formed lines: a short id, titles ending in the star (or a reaction symbol), bodies under 130
+// characters, no links, no em or en dashes. Anything else is dropped. A group left empty falls back to the built-in lines.
 export function cleanCopy(raw, fallback = H3_FALLBACK) {
   const out = {};
   for (const g of Object.keys(fallback)) {
     const list = raw && Array.isArray(raw[g]) ? raw[g] : [];
-    const ok = list.filter(l => l && typeof l.id === 'string' && /^[A-Za-z0-9_-]{1,16}$/.test(l.id)
-      && typeof l.title === 'string' && l.title.length <= 40 && l.title.endsWith('✦')
-      && typeof l.body === 'string' && l.body.length > 0 && l.body.length <= 130
-      && !/https?:|www\./i.test(l.title + l.body) && !/[–—]/.test(l.title + l.body));
+    const ok = list.filter(l => {
+      if (!l || typeof l.id !== 'string' || !/^[A-Za-z0-9_-]{1,16}$/.test(l.id)) return false;
+      const titles = Array.isArray(l.titles) && l.titles.length ? l.titles : [l.title];
+      if (!titles.every(okTitle)) return false;
+      if (typeof l.body !== 'string' || !l.body.length || l.body.length > 130) return false;
+      const all = titles.join(' ') + ' ' + l.body;
+      return !/https?:|www\./i.test(all) && !/[–—]/.test(all);
+    });
     const seen = new Set();
-    out[g] = ok.filter(l => !seen.has(l.id) && seen.add(l.id)).map(l => (Array.isArray(l.tags) && l.tags.length
-      ? { ...l, tags: l.tags.filter(t => typeof t === 'string' && /^[a-z]{2,16}$/.test(t)).slice(0, 4) } : l));
-    if (!out[g].length) out[g] = fallback[g];
+    out[g] = ok.filter(l => !seen.has(l.id) && seen.add(l.id)).map(l => {
+      const o = { id: l.id, titles: Array.isArray(l.titles) && l.titles.length ? l.titles.slice() : [l.title], title: Array.isArray(l.titles) && l.titles.length ? l.titles[0] : l.title, body: l.body };
+      if (Array.isArray(l.tags)) o.tags = l.tags.filter(t => typeof t === 'string' && /^[a-z0-9]{1,16}$/.test(t)).slice(0, 4);
+      if (typeof l.set === 'string' && /^[a-z0-9]{1,16}$/.test(l.set)) o.set = l.set;
+      if (Number.isInteger(l.rare) && l.rare >= 2 && l.rare <= 50) o.rare = l.rare;
+      if (typeof l.only === 'string' && /^[a-z]{2,16}$/.test(l.only)) o.only = l.only;
+      return o;
+    });
+    if (!out[g].length) out[g] = cleanCopy.norm(fallback[g]);
+    for (const tag of (TAGGED[g] || [])) if (!out[g].some(l => (l.tags || []).includes(tag))) out[g] = out[g].concat(cleanCopy.norm(fallback[g].filter(l => (l.tags || []).includes(tag))));
   }
   return out;
 }
+cleanCopy.norm = list => list.map(l => ({ ...l, titles: l.titles || [l.title] }));
 let _copyP = null;
 async function loadCopy() {
   if (!_copyP) _copyP = (async () => {
@@ -1142,23 +1187,39 @@ async function loadCopy() {
       const r = await bfetch(COPY_URL, { cf: { cacheTtl: 300 } });
       if (!r.ok) throw new Error('copy ' + r.status);
       return cleanCopy(await r.json());
-    } catch (e) { console.error('push copy not loaded, using the built-in lines:', e && e.message); return H3_FALLBACK; }
+    } catch (e) { console.error('push copy not loaded, using the built-in lines:', e && e.message); return cleanCopy({}); }
   })();
   return _copyP;
 }
 // Picks a line that was not used among the last (pool size minus 1) sends to this person, so a line only comes back
-// after the whole pool has been used. Stable for the same person, day and group.
-export function pickFresh(pool, recent, seed) {
-  const skip = new Set((recent || []).slice(-(pool.length - 1)));
-  const fresh = pool.filter(l => !skip.has(l.id));
-  const list = fresh.length ? fresh : pool;
+// after the whole pool has been used. Stable for the same person, day and group. Lines that share a set with a line
+// sent in the last 28 days are passed over while anything else is available (best effort when the pool is small).
+// A line marked rare: N is only picked about 1 in N times.
+export function pickFresh(pool, recent, seed, setLast, date) {
+  const rareRoll = h3Hash(seed + 'r');
+  let base = pool.filter(l => !l.rare || rareRoll % l.rare === 0);
+  if (pool.some(l => l.rare) && base.some(l => l.rare)) base = base.filter(l => l.rare); // the rare one won the roll
+  if (!base.length) base = pool;
+  const skip = new Set((recent || []).slice(-(base.length - 1)));
+  let list = base.filter(l => !skip.has(l.id));
+  if (!list.length) list = base;
+  if (setLast && date) {
+    const clear = list.filter(l => !l.set || !setLast[l.set] || h3DaysBetween(setLast[l.set], date) >= 28);
+    if (clear.length) list = clear;
+    else { const age = l => (l.set && setLast[l.set]) ? h3DaysBetween(setLast[l.set], date) : 999; const best = Math.max(...list.map(age)); list = list.filter(l => age(l) === best); }
+  }
   return list[h3Hash(seed) % list.length];
 }
-const fillName = (m, name) => ({ title: m.title.replace(/\{name\}/g, name), body: m.body.replace(/\{name\}/g, name) });
+export function h3Fill(line, vars, seed) {
+  const titles = line.titles || [line.title];
+  const t = titles[h3Hash((seed || '') + 't') % titles.length];
+  const f = s => s.replace(/\{(\w+)\}/g, (m, k) => vars[k] != null ? String(vars[k]) : m);
+  return { title: f(t), body: f(line.body) };
+}
 // Morning pushes: a shuffled mix, different for each person. Each week (Monday to Sunday) every person gets 2 ritual days (C),
 // plus 2 journaling days (J) if she tracks the Journal habit. The days are picked by a seeded shuffle, so they are stable for a person
 // and a week but differ between people, and the same kind never lands on back-to-back days (a ritual next to a journaling day can happen for people who journal). Every other day
-// is a habits line (A). A and J lines are skipped when nothing is open today. The sky (B) pushes come later.
+// is a habits line (A). A and J lines are skipped when nothing is open today.
 // A stronger string hash than h3Hash (which must match the app), so shuffles do not follow the last character.
 function h3Mix(str) { let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822507); h ^= h >>> 13; h = Math.imul(h, 3266489909); h ^= h >>> 16; return h >>> 0; }
 export function weekPlan(weekStart, person, hasJournal) {
@@ -1194,8 +1255,9 @@ export function habitTags(habits) {
   return t;
 }
 // About 2 of every 3 ritual lines match a habit she tracks (when she has a match). No line repeats within her last 8 rituals
-// (about 4 weeks), unless the pool runs out.
+// (about 4 weeks), unless the pool runs out. A line marked only: <tag> goes only to people who track that habit.
 export function pickRitual(pool, recent, seed, tags) {
+  pool = pool.filter(l => !l.only || tags.has(l.only));
   const skip = new Set((recent || []).slice(-Math.min(8, pool.length - 1)));
   const fresh = pool.filter(l => !skip.has(l.id));
   const base = fresh.length ? fresh : pool;
@@ -1205,13 +1267,15 @@ export function pickRitual(pool, recent, seed, tags) {
   const list = wantMatch && match.length ? match : (other.length ? other : base);
   return list[h3Hash(seed) % list.length];
 }
-export const H3_VOTE_PUSH = { title: 'Last call to vote \u2726', body: 'Next week\u2019s coven habit is still open. Pick one before the night is over, or we run it back.' };
-export function h3ResultPush(name) { return { title: 'This week\u2019s coven habit \u2726', body: `${name}. Everyone is in, whether they know it yet or not.` }; }
 function h3Date(now) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); }
 function h3Add(k, n) { const d = new Date(k + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 function h3Wd(k) { return (new Date(k + 'T12:00:00Z').getUTCDay() + 6) % 7; } // Monday is 0
+function h3DaysBetween(a, b) { return Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 86400000); }
 function h3Hash(s) { let h = 0; for (const c of String(s)) { h = (h * 31 + c.charCodeAt(0)) | 0; } return Math.abs(h); } // same as the app
-function h3Done(h, log, k) { const v = (log[k] && log[k][h.id]) || 0; return h.type === 'number' ? v >= (h.target || 1) : v >= 1; }
+function h3Pick(arr, seed) { return arr[h3Hash(seed) % arr.length]; } // same as the app's pick()
+function h3Val(log, k, id) { return (log[k] && log[k][id]) || 0; }
+function h3Done(h, log, k) { const v = h3Val(log, k, h.id); return h.type === 'number' ? v >= (h.target || 1) : v >= 1; }
+const h3Counts = (h, k) => !!(h.days && h.days[h3Wd(k)]);
 export function h3Due(h, log, date) {
   if (!h || h.archived) return false;
   if (h.paused && h.pausedAt && date >= h.pausedAt) return false;
@@ -1226,6 +1290,17 @@ export function h3Due(h, log, date) {
   }
   return !!(h.days && h.days[wd]);
 }
+// Daily streak ending on day k, the same count as the app's streakAt() for daily habits.
+export function h3StreakAt(h, log, k) {
+  let n = 0, x = k, g = 0;
+  while (g++ < 800) {
+    if (h.createdDay && x < h.createdDay) break;
+    if (!h3Counts(h, x)) { x = h3Add(x, -1); continue; }
+    if (h3Done(h, log, x)) n++; else break;
+    x = h3Add(x, -1);
+  }
+  return n;
+}
 export function h3Winner(votes, weekKey) {
   const t = {};
   for (const v of Object.values(votes)) t[v] = (t[v] || 0) + 1;
@@ -1235,97 +1310,392 @@ export function h3Winner(votes, weekKey) {
   const tied = ids.filter(i => t[i] === max).sort();
   return tied[h3Hash(weekKey) % tied.length];
 }
+// The coven habit running in a week: last week's winner, else the one before, else the first option (same as the app).
+function h3CovenHabit(votesBy, wk) {
+  for (let w = wk, g = 0; g < 60; g++, w = h3Add(w, -7)) {
+    const v = {}; for (const p of PEOPLE) { const x = (votesBy[p] || {})[w]; if (x) v[p] = x; }
+    const win = h3Winner(v, w); if (win) return win;
+    if (w <= h3Add(SEASON_START, -h3Wd(SEASON_START))) break;
+  }
+  return 'phone';
+}
+// What a person finished today that the coven can see: a shared habit, the coven habit or the moon spell. Private habits never count.
+export function h3Showed(habits, log, k, votesBy) {
+  const l = log[k] || {};
+  for (const h of habits) if (h.shared && !h.archived && h3Done(h, log, k)) return h.name;
+  for (const id of Object.keys(l)) {
+    if (!l[id]) continue;
+    if (id.startsWith('_coven_')) return H3_VOTE_NAMES[h3CovenHabit(votesBy, id.slice(7))] || 'the coven habit';
+    if (id.startsWith('_spell_')) return 'the moon spell';
+  }
+  return null;
+}
+function anyDone(log, k) { const l = log[k] || {}; return Object.keys(l).some(id => !!l[id]); }
+
+// Reads every h3 record in two calls (the photos and avatars are skipped: they are big and never needed here) and
+// fills the per-run cache, so the jobs below never read inside a per-person loop. Returns false if it failed, and the
+// social job then sits the run out rather than spending the call budget on single reads.
+async function prefetchH3() {
+  try {
+    for (const [a, b] of [['h3-', 'h3-pha'], ['h3-pr', 'h3-~']]) {
+      const url = DB.replace(/\/$/, '') + '.json?orderBy=%22%24key%22&startAt=' + encodeURIComponent(JSON.stringify(a)) + '&endAt=' + encodeURIComponent(JSON.stringify(b));
+      const r = await bfetch(url);
+      if (!r.ok) throw new Error('prefetch ' + r.status);
+      const all = (await r.json()) || {};
+      for (const [k, v] of Object.entries(all)) {
+        let out = null;
+        if (typeof v === 'string') { try { out = JSON.parse(v); } catch (e) { out = null; } }
+        _readCache.set(k, out);
+      }
+    }
+    for (const p of PEOPLE) for (const kind of ['habits', 'log', 'prof', 'qa', 'rx', 'cur', 'shr', 'vote', 'sched']) if (!_readCache.has('h3-' + kind + '-' + p)) _readCache.set('h3-' + kind + '-' + p, null);
+    return true;
+  } catch (e) { console.error('h3 prefetch failed', e && e.message); return false; }
+}
+
+// Who a Tea post belongs to, and what to call it in a reaction push. Ids are the app's feed ids (buildFeed).
+export function h3PostInfo(id, habitsBy) {
+  const s = String(id), parts = s.split(':');
+  const own = p => PEOPLE.includes(p) ? p : null;
+  if (parts[0] === 'f') { const p = own(parts[1]); const h = p && (habitsBy[p] || {})[parts[2]]; return p ? { owner: p, noun: h && h.name ? h.name : 'habit' } : null; }
+  if (parts[0] === 'sh') return own(parts[1]) ? { owner: parts[1], noun: 'shared read' } : null;
+  if (parts[0] === 'pic') return own(parts[1]) ? { owner: parts[1], noun: 'photo' } : null;
+  if (parts[0] === 'cur') return own(parts[1]) ? { owner: parts[1], noun: 'Currently update' } : null;
+  if (parts[0] === 'sp') { const p = PEOPLE.find(x => s.startsWith('sp:' + x)); return p ? { owner: p, noun: 'moon spell' } : null; }
+  return null; // the brew, the vote and group habits have no single owner
+}
+const RX_GLYPH = { heart: '♡', spell: '✦', moon: '☾' };
+
 export async function habitsRun(env, now, opts = {}) {
   if (opts.fresh) resetRun(); // tests only. In production it shares the call counter of the run() just before it.
   const date = h3Date(now);
   const ptHour = pacificHour(now);
   const dow = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short' }).format(now);
-  const jobs = [];
-  if (ptHour >= 8 && ptHour < 12) jobs.push('h3morning');
-  if (ptHour >= 19 && ptHour < 22) jobs.push('h3nudge');
-  if (H3_JOBS_ON.vote && dow === 'Sun' && ptHour >= 18 && ptHour < 22) jobs.push('h3vote');
-  if (H3_JOBS_ON.result && dow === 'Mon' && ptHour >= 8 && ptHour < 12) jobs.push('h3result');
   const sent = [];
-  if (!jobs.length) return { sent };
+  const fetched = await prefetchH3();
   let st;
   try { st = (await readKey(H3_STATE_KEY)) || {}; } catch (e) { console.error('h3 state read failed, sending nothing:', e && e.message); return { sent }; }
   st.sched = st.sched || {};
   let changed = false;
   let token = null;
+  const prefsOf = async p => Object.assign({ activity: true, nudge: true, morning: true }, (await readKey('recal-notif-prefs:' + p)) || {});
+  const habitsOf = async p => Object.values((await readKey('h3-habits-' + p)) || {}).filter(h => h && !h.archived);
+  const logOf = async p => (await readKey('h3-log-' + p)) || {};
+  const schedOf = async p => (await readKey('h3-sched-' + p)) || {};
+  const skyDay = async p => { const s = await schedOf(p); return s.sky && s.sky[date] ? s.sky[date] : null; };
+  const send = async (list) => { // list of {person, msg, tok}
+    for (const { person, msg, tok, job } of list) {
+      try {
+        if (!token) token = await getAccessToken(env);
+        await sendPush(env, token, tok, msg);
+        sent.push({ owner: person, job, ...msg });
+      } catch (e) { console.error(job, 'send failed for', person, e && e.message); }
+    }
+  };
+  const saveState = async () => { await writeKey(H3_STATE_KEY, st, true); changed = false; };
+  const setLastOf = p => { st.setLast = st.setLast || {}; return st.setLast[p] = st.setLast[p] || {}; };
+  const noteSet = (p, line) => { if (line.set) setLastOf(p)[line.set] = date; };
+
+  const jobs = [];
+  if (ptHour >= 8 && ptHour < 12) jobs.push('h3sky', 'h3morning');
+  if (ptHour >= 12 && ptHour < 22) jobs.push('h3brew');
+  if (ptHour >= 19 && ptHour < 22) jobs.push('h3nudge');
+  if (H3_JOBS_ON.vote && dow === 'Sun' && ptHour >= 18 && ptHour < 22) jobs.push('h3vote');
+  if (H3_JOBS_ON.result && dow === 'Mon' && ptHour >= 8 && ptHour < 12) jobs.push('h3result');
   for (const job of jobs) {
     await guard(job, async () => {
       let rec = st.sched[job];
       if (!rec || rec.date !== date) { rec = st.sched[job] = { date, done: [] }; changed = true; }
+      if (PEOPLE.every(p => rec.done.includes(p))) return;
       const outbox = [];
-      let winner = null, weekKey = null;
+      let winner = null;
       if (job === 'h3result') {
-        weekKey = date;
         const votes = {};
-        for (const p of PEOPLE) { const v = (await readKey('h3-vote-' + p)) || {}; if (v[weekKey]) votes[p] = v[weekKey]; }
-        winner = h3Winner(votes, weekKey);
-        if (!winner) { console.log('Nobody voted for the week of', weekKey, ', no result push.'); return; }
+        for (const p of PEOPLE) { const v = (await readKey('h3-vote-' + p)) || {}; if (v[date]) votes[p] = v[date]; }
+        winner = h3Winner(votes, date);
+        if (!winner) { console.log('Nobody voted for the week of', date, ', no result push.'); return; }
+      }
+      let brewQ = null;
+      if (job === 'h3brew') {
+        for (const p of PEOPLE) { const s = await schedOf(p); if (s.brew && s.brew[date]) { brewQ = s.brew[date]; break; } }
+        if (!brewQ) { console.log('No brew question known for', date, ', no brew push.'); return; }
       }
       for (const person of PEOPLE) {
         if (rec.done.includes(person)) continue;
         const finish = () => { rec.done.push(person); changed = true; };
-        const prefs = Object.assign({ activity: true, nudge: true, morning: true }, (await readKey('recal-notif-prefs:' + person)) || {});
-        if (!(job === 'h3nudge' ? prefs.nudge : job === 'h3morning' ? prefs.morning : prefs.activity)) { finish(); continue; }
-        const habits = Object.values((await readKey('h3-habits-' + person)) || {}).filter(h => h && !h.archived);
+        const prefs = await prefsOf(person);
+        const prefOn = job === 'h3nudge' ? prefs.nudge : (job === 'h3morning' || job === 'h3brew' || job === 'h3sky') ? prefs.morning : prefs.activity;
+        if (!prefOn) { finish(); continue; }
+        const habits = await habitsOf(person);
         if (!habits.length) { finish(); continue; } // not using the new app
+        const log = await logOf(person);
+        const copy = await loadCopy();
+        st.morn = st.morn || {};
+        const mem = st.morn[person] = st.morn[person] || {};
+        const take = (g, line) => { mem[g] = (mem[g] || []).concat(line.id).slice(-40); noteSet(person, line); changed = true; };
         let msg;
-        if (job === 'h3morning') {
-          const log = (await readKey('h3-log-' + person)) || {};
-          const anyOpen = habits.some(h => h3Due(h, log, date));
-          const kind = morningKind(date, person, habits.some(isJournal));
-          if (kind !== 'C' && !anyOpen) { finish(); continue; } // A and J lines need something still open
-          const copy = await loadCopy();
-          const pool = copy[kind];
-          st.morn = st.morn || {};
-          const mem = st.morn[person] = st.morn[person] || {};
-          const line = kind === 'C' ? pickRitual(pool, mem[kind], date + person + kind, habitTags(habits)) : pickFresh(pool, mem[kind], date + person + kind);
-          mem[kind] = (mem[kind] || []).concat(line.id).slice(-40);
-          changed = true;
-          msg = fillName(line, person);
+        if (job === 'h3sky') {
+          const sky = await skyDay(person);
+          if (!sky || !sky.h) { finish(); continue; }
+          const line = pickFresh(copy.B, mem.B, date + person + 'B', setLastOf(person), date);
+          take('B', line);
+          msg = h3Fill(line, { name: person, sky: trunc(sky.h, 128) }, date + person);
+        } else if (job === 'h3morning') {
+          if (ptHour < 9 && await skyDay(person)) continue; // her sky push goes at 8, this one waits until 9
+          // Comeback: nothing done yesterday or the day before, she has done something before, and no comeback since.
+          const y1 = h3Add(date, -1), y2 = h3Add(date, -2);
+          const lastDone = Object.keys(log).filter(k => k < date && anyDone(log, k)).sort().pop();
+          st.come = st.come || {};
+          if (lastDone && lastDone < y2 && !anyDone(log, y1) && !anyDone(log, y2) && !anyDone(log, date) && !(st.come[person] && st.come[person] > lastDone)) {
+            const line = pickFresh(copy.CB, mem.CB, date + person + 'CB');
+            take('CB', line);
+            st.come[person] = date;
+            msg = h3Fill(line, { name: person }, date + person);
+          } else {
+            const anyOpen = habits.some(h => h3Due(h, log, date));
+            const kind = morningKind(date, person, habits.some(isJournal));
+            if (kind !== 'C' && !anyOpen) { finish(); continue; } // A and J lines need something still open
+            const pool = copy[kind];
+            const line = kind === 'C' ? pickRitual(pool, mem[kind], date + person + kind, habitTags(habits)) : pickFresh(pool, mem[kind], date + person + kind, setLastOf(person), date);
+            take(kind, line);
+            msg = h3Fill(line, { name: person }, date + person);
+          }
+        } else if (job === 'h3brew') {
+          const qa = (await readKey('h3-qa-' + person)) || {};
+          if (qa[date]) { finish(); continue; }
+          msg = h3Fill(copy.BT[h3Hash(date) % copy.BT.length], { name: person, q: brewQ }, date + person);
         } else if (job === 'h3nudge') {
-          const log = (await readKey('h3-log-' + person)) || {};
-          if (!habits.some(h => h3Due(h, log, date))) { finish(); continue; }
-          const copy = await loadCopy();
+          const due = habits.filter(h => h3Due(h, log, date));
+          if (!due.length) { finish(); continue; }
+          const n = Math.max(0, ...due.filter(h => !h.perWeek).map(h => h3StreakAt(h, log, h3Add(date, -1))));
           st.eve = st.eve || {};
-          const recent = st.eve[person] || [];
-          const line = pickFresh(copy.E, recent, date + person);
-          st.eve[person] = recent.concat(line.id).slice(-40);
-          changed = true;
-          msg = fillName(line, person);
+          if (n >= 3) {
+            const line = pickFresh(copy.ST, mem.ST, date + person + 'ST');
+            take('ST', line);
+            msg = h3Fill(line, { name: person, n, n1: n + 1 }, date + person);
+          } else {
+            const recent = st.eve[person] || [];
+            const line = pickFresh(copy.E, recent, date + person, setLastOf(person), date);
+            st.eve[person] = recent.concat(line.id).slice(-40);
+            noteSet(person, line);
+            changed = true;
+            msg = h3Fill(line, { name: person }, date + person);
+          }
         } else if (job === 'h3vote') {
           const nextWeek = h3Add(date, 7 - h3Wd(date));
           const v = (await readKey('h3-vote-' + person)) || {};
           if (v[nextWeek]) { finish(); continue; }
-          msg = { ...H3_VOTE_PUSH };
+          const line = pickFresh(copy.V, mem.V, date + person + 'V');
+          take('V', line);
+          msg = h3Fill(line, { name: person }, date + person);
         } else {
-          msg = h3ResultPush(H3_VOTE_NAMES[winner] || winner);
+          const line = pickFresh(copy.R, mem.R, date + 'R');
+          take('R', line);
+          msg = h3Fill(line, { name: person, habit: H3_VOTE_NAMES[winner] || winner }, date);
         }
         const tok = await readRaw('recal-fcm-token:' + person);
         if (!tok) { finish(); continue; }
         finish();
-        outbox.push({ person, msg, tok });
+        outbox.push({ person, msg, tok, job });
       }
       if (!outbox.length) return;
-      try { await writeKey(H3_STATE_KEY, st, true); changed = false; } catch (e) {
+      try { await saveState(); } catch (e) {
         for (const o of outbox) rec.done = rec.done.filter(x => x !== o.person);
         console.error(job, 'could not save state, not sending:', e && e.message);
         return;
       }
-      for (const { person, msg, tok } of outbox) {
-        try {
-          if (!token) token = await getAccessToken(env);
-          await sendPush(env, token, tok, msg);
-          sent.push({ owner: person, job, ...msg });
-        } catch (e) { console.error(job, 'send failed for', person, e && e.message); }
-      }
+      await send(outbox);
     });
   }
-  if (changed) { try { await writeKey(H3_STATE_KEY, st, true); } catch (e) { console.error('h3 state save failed', e && e.message); } }
+
+  if (fetched) await guard('h3social', async () => {
+    const r = await socialEvents(st, date, now, prefsOf);
+    if (r.changedOnly) { changed = true; return; }
+    if (!r.outbox.length) { if (r.changed) changed = true; return; }
+    try { await saveState(); } catch (e) { console.error('social could not save state, not sending:', e && e.message); r.rollback(); return; }
+    await send(r.outbox);
+  });
+
+  if (changed) { try { await saveState(); } catch (e) { console.error('h3 state save failed', e && e.message); } }
   return { sent };
+}
+
+// Finds what happened since the last run and builds the pushes. State lives in st.soc. The very first run only
+// records what already exists, so nobody gets a flood of old news.
+async function socialEvents(st, date, now, prefsOf) {
+  const copy = await loadCopy();
+  const habitsBy = {}, logBy = {}, votesBy = {}, rxBy = {}, qaBy = {}, curBy = {}, shrBy = {};
+  for (const p of PEOPLE) {
+    habitsBy[p] = (await readKey('h3-habits-' + p)) || {};
+    logBy[p] = (await readKey('h3-log-' + p)) || {};
+    votesBy[p] = (await readKey('h3-vote-' + p)) || {};
+    rxBy[p] = (await readKey('h3-rx-' + p)) || {};
+    qaBy[p] = (await readKey('h3-qa-' + p)) || {};
+    curBy[p] = (await readKey('h3-cur-' + p)) || {};
+    shrBy[p] = (await readKey('h3-shr-' + p));
+    if (!Array.isArray(shrBy[p])) shrBy[p] = [];
+  }
+  const active = p => Object.values(habitsBy[p]).some(h => h && !h.archived);
+  const list = p => Object.values(habitsBy[p]).filter(h => h && !h.archived);
+  const before = JSON.stringify(st.soc || null);
+  const soc = st.soc = st.soc || {};
+  const first = !soc.init;
+  // Live reactions as reactor|post|kind.
+  const liveRx = new Set();
+  for (const r of PEOPLE) for (const [post, ks] of Object.entries(rxBy[r] || {})) for (const [k, on] of Object.entries(ks || {})) if (on && RX_GLYPH[k]) liveRx.add(r + '|' + post + '|' + k);
+  const latestAt = arr => arr.reduce((m, x) => (x && x.at && String(x.at) > m ? String(x.at) : m), '');
+  const groupIds = () => { const s = []; for (const p of PEOPLE) for (const h of list(p)) if (h.shared && h.groupOwner === p && h.groupId === h.id) s.push(h.id); return s; };
+  if (first) {
+    soc.init = true;
+    soc.rxSeen = Array.from(liveRx);
+    soc.rxPend = {};
+    soc.qa = { date, done: PEOPLE.filter(p => qaBy[p][date]) };
+    soc.day = { date, in: PEOPLE.filter(p => h3Showed(list(p), logBy[p], date, votesBy)), all: PEOPLE.every(p => h3Showed(list(p), logBy[p], date, votesBy)) };
+    soc.mile = { date, done: [] };
+    for (const p of PEOPLE) for (const h of list(p)) if (!h.perWeek && h3Done(h, logBy[p], date)) soc.mile.done.push(p + '|' + h.id);
+    soc.curAt = {}; soc.shrAt = {};
+    for (const p of PEOPLE) { soc.curAt[p] = latestAt(curBy[p].hist || []); soc.shrAt[p] = latestAt(shrBy[p]); }
+    soc.grp = groupIds();
+    console.log('h3 social: first run, marked what exists as seen.');
+    return { outbox: [], changedOnly: true };
+  }
+  const events = []; // {to: [people], msg, key}
+  const others = p => PEOPLE.filter(x => x !== p && active(x));
+  const mem = st.socMem = st.socMem || {};
+  const pickG = (g, seed, filter) => { const pool = filter ? copy[g].filter(filter) : copy[g]; const line = pickFresh(pool.length ? pool : copy[g], mem[g], seed); mem[g] = (mem[g] || []).concat(line.id).slice(-40); return line; };
+
+  // Day rollover for the per-day records.
+  if (!soc.day || soc.day.date !== date) soc.day = { date, in: [], all: false };
+  if (!soc.qa || soc.qa.date !== date) soc.qa = { date, done: [] };
+  if (!soc.mile || soc.mile.date !== date) soc.mile = { date, done: [] };
+
+  // Friend showed up, and all four showed up.
+  const showedNow = {};
+  for (const p of PEOPLE) showedNow[p] = h3Showed(list(p), logBy[p], date, votesBy);
+  const allNow = PEOPLE.every(p => showedNow[p]);
+  if (allNow && !soc.day.all) {
+    soc.day.all = true;
+    const line = pickG('ALL', date + 'ALL');
+    events.push({ to: PEOPLE.filter(active), msg: h3Fill(line, {}, date), job: 'all' });
+  }
+  for (const p of PEOPLE) {
+    if (!showedNow[p] || soc.day.in.includes(p)) continue;
+    soc.day.in.push(p);
+    if (allNow && events.some(e => e.job === 'all')) continue; // the all-four push covers the last one in
+    const line = pickG('IN', date + p + 'IN');
+    events.push({ to: others(p), msg: h3Fill(line, { who: p, habit: showedNow[p] }, date + p), job: 'in', activity: true });
+  }
+
+  // Milestones: private to her for any daily habit, plus the coven for shared ones (same line as the Tea post).
+  for (const p of PEOPLE) for (const h of list(p)) {
+    if (h.perWeek || !h3Done(h, logBy[p], date)) continue;
+    const key = p + '|' + h.id;
+    if (soc.mile.done.includes(key)) continue;
+    soc.mile.done.push(key);
+    const n = h3StreakAt(h, logBy[p], date);
+    if (![7, 14, 30].includes(n)) continue;
+    const mp = pickG('MP', date + key, l => (l.tags || []).includes('d' + n));
+    events.push({ to: [p], msg: h3Fill(mp, { name: p, habit: h.name, n }, date + key), job: 'mile' });
+    if (h.shared) {
+      const cm = copy.CM.filter(l => (l.tags || []).includes('d' + n));
+      const line = h3Pick(cm, p + h.id + n); // same pick as the app's feed
+      events.push({ to: others(p), msg: h3Fill(line, { who: p, habit: h.name, n }, date + key), job: 'covenmile', activity: true, target: 'post:' + safeKey('f:' + p + ':' + h.id + ':' + date) });
+    }
+  }
+
+  // Brew answers: to everyone who answered earlier today.
+  for (const p of PEOPLE) {
+    const a = qaBy[p][date];
+    if (!a || soc.qa.done.includes(p)) continue;
+    const earlier = soc.qa.done.filter(x => x !== p && active(x));
+    soc.qa.done.push(p);
+    if (!earlier.length) continue;
+    const line = pickG('QA', date + p + 'QA');
+    events.push({ to: earlier, msg: h3Fill(line, { who: p, answer: trunc(a.t, 120) }, date + p), job: 'brewanswer', activity: true });
+  }
+
+  // Shared reads and Currently.
+  soc.shrAt = soc.shrAt || {}; soc.curAt = soc.curAt || {};
+  for (const p of PEOPLE) {
+    const fresh = shrBy[p].filter(s => s && s.at && String(s.at) > (soc.shrAt[p] || ''));
+    if (fresh.length) {
+      soc.shrAt[p] = latestAt(fresh.concat([{ at: soc.shrAt[p] }]));
+      const s = fresh.sort((a, b) => String(a.at).localeCompare(String(b.at)))[fresh.length - 1];
+      const site = domainOf(String(s.u || ''));
+      const label = trunc(s.l, 120) || (site ? `From ${site}.` : 'Come take a look.');
+      const line = pickG('SR', p + s.id);
+      events.push({ to: others(p), msg: h3Fill(line, { who: p, label }, p + s.id), job: 'share', activity: true, target: 'post:' + safeKey('sh:' + p + ':' + s.id) });
+    }
+    const hist = (curBy[p].hist || []).filter(h => h && h.at && String(h.at) > (soc.curAt[p] || ''));
+    if (hist.length) {
+      soc.curAt[p] = latestAt(hist.concat([{ at: soc.curAt[p] }]));
+      const h = hist.sort((a, b) => String(a.at).localeCompare(String(b.at)))[hist.length - 1];
+      const pool = copy.CU.filter(l => (l.tags || []).includes(h.f));
+      if (pool.length && h.t) {
+        const id = 'cur:' + p + ':' + h.at;
+        const line = h3Pick(pool, id); // same pick as the app's feed
+        events.push({ to: others(p), msg: h3Fill(line, { who: p, value: trunc(h.t, 120) }, id), job: 'currently', activity: true, target: 'post:' + safeKey(id) });
+      }
+    }
+  }
+
+  // New group habits.
+  soc.grp = soc.grp || [];
+  for (const p of PEOPLE) for (const h of list(p)) {
+    if (!(h.shared && h.groupOwner === p && h.groupId === h.id) || soc.grp.includes(h.id)) continue;
+    soc.grp.push(h.id);
+    const line = h3Pick(copy.GH, h.id); // same pick as the app's feed
+    events.push({ to: others(p), msg: h3Fill(line, { who: p, habit: h.name }, h.id), job: 'group', activity: true });
+  }
+
+  // Reactions: held about a minute (a quick tap and untap never sends), then one push per post owner.
+  const seen = new Set(soc.rxSeen || []);
+  soc.rxPend = soc.rxPend || {};
+  for (const id of Object.keys(soc.rxPend)) if (!liveRx.has(id)) delete soc.rxPend[id];
+  const nowMs = now.getTime();
+  const ready = [];
+  for (const id of liveRx) {
+    if (seen.has(id)) continue;
+    if (!soc.rxPend[id]) { soc.rxPend[id] = nowMs; continue; }
+    if (nowMs - soc.rxPend[id] >= 55000) ready.push(id);
+  }
+  const byOwner = {};
+  for (const id of ready) {
+    delete soc.rxPend[id]; seen.add(id);
+    const [reactor, post, k] = [id.split('|')[0], id.split('|').slice(1, -1).join('|'), id.split('|').slice(-1)[0]];
+    const info = h3PostInfo(post, habitsBy);
+    if (!info || info.owner === reactor || !active(info.owner)) continue;
+    (byOwner[info.owner] = byOwner[info.owner] || []).push({ reactor, post, k, noun: info.noun });
+  }
+  soc.rxSeen = Array.from(seen).filter(id => liveRx.has(id));
+  for (const [owner, items] of Object.entries(byOwner)) {
+    const posts = uniq(items.map(i => i.post));
+    const target = posts.length === 1 ? 'post:' + safeKey(posts[0]) : 'tea';
+    let msg;
+    if (items.length === 1) {
+      const it = items[0];
+      const line = pickG('RX', date + owner + it.post + it.k, l => (l.tags || []).includes(it.k));
+      msg = h3Fill(line, { who: it.reactor, post: it.noun }, it.post + it.k);
+    } else { // Round 2 wording for several at once
+      const what = posts.length === 1 ? 'your ' + items[0].noun : `${posts.length} of your posts`;
+      msg = { title: `${joinNames(uniq(items.map(i => i.reactor)))} reacted ${uniq(items.map(i => RX_GLYPH[i.k])).join(' ')}`, body: `On ${what}. The coven sees you, and it’s being weird about how good you are.` };
+    }
+    events.push({ to: [owner], msg, job: 'reaction', activity: true, target });
+  }
+
+  // Build the outbox: one push per person per event, respecting her Coven activity switch and the call budget.
+  const outbox = [];
+  for (const e of events) for (const person of uniq(e.to)) {
+    if (!active(person)) continue;
+    if (e.activity && !(await prefsOf(person)).activity) continue;
+    const tok = await readRaw('recal-fcm-token:' + person);
+    if (!tok) continue;
+    outbox.push({ person, tok, job: 'h3' + e.job, msg: e.target ? { ...e.msg, target: e.target } : e.msg });
+  }
+  const room = CALL_LIMIT - _calls - 3; // token, state save, a little spare
+  if (outbox.length > room) { console.error('h3 social: too many pushes for one run, sending', Math.max(0, room), 'of', outbox.length); outbox.length = Math.max(0, room); }
+  const snapshot = before;
+  return { outbox, changed: JSON.stringify(st.soc) !== before, rollback: () => { st.soc = snapshot === 'null' ? undefined : JSON.parse(snapshot); } };
 }
 
 // ---------- Google auth + FCM (data-only, same as the morning push) ----------
