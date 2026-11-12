@@ -298,6 +298,21 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sec)}.legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
 .orow{display:flex;flex-direction:column;gap:6px}.oh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .pbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.pbar i{display:block;height:100%;background:#7CCBBE;border-radius:4px}
+
+/* Currently and shared reads */
+.cur{display:flex;flex-direction:column;gap:14px}
+.cur .cr{display:flex;gap:12px;align-items:center;min-width:0}
+.cur .cr img,.cur .cr .ci{width:44px;height:44px;border-radius:8px;flex:none;object-fit:cover;background:var(--line)}
+.cur .ct{min-width:0;flex:1}
+.cur .ct a,.cur .ct b{font-weight:600;font-size:15px;color:var(--text);text-decoration:none;overflow-wrap:anywhere}
+.cur .ctl{display:flex;gap:14px;flex-wrap:wrap}
+.cres{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.cres .d{font-size:13px;color:var(--sec)}
+.shr{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--text);min-width:0}
+.shr b{font-size:15px;overflow-wrap:anywhere}.shr span{font-size:13px;color:var(--sec)}
+.shrrow{display:flex;gap:10px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.shrrow .shr{border-bottom:0;flex:1}
+.hist{display:flex;flex-direction:column;gap:6px;font-size:14px}
 </style>
 </head>
 <body>
@@ -401,10 +416,10 @@ const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slic
 let me=null;
 let autoDetected=false;
 try{me=localStorage.getItem('h3-whoami');if(!me){const old=localStorage.getItem('recal-whoami');if(old&&PEOPLE.includes(old)){me=old;autoDetected=true;localStorage.setItem('h3-whoami',old);}}}catch(e){}
-const D={habits:{},log:{},prof:{},vote:{},rx:{},qa:{},photo:{}}; // each: {Person: data}
-PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};D.qa[p]={};D.photo[p]={};});
+const D={habits:{},log:{},prof:{},vote:{},rx:{},qa:{},photo:{},cur:{},shr:{}}; // each: {Person: data}
+PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};D.qa[p]={};D.photo[p]={};D.cur[p]={};D.shr[p]=[];});
 let loaded=false;
-const ui={brewOpen:false,route:'today',arg:null,addPreset:null,voteOpen:true,standMode:'week',sky:null,setupStep:1,stepEdit:false,confirm:false,draft:null};
+const ui={curEdit:{},curQ:{},curRes:{},hist:{},shr:{url:'',label:'',err:''},shrDel:null,brewOpen:false,route:'today',arg:null,addPreset:null,voteOpen:true,standMode:'week',sky:null,setupStep:1,stepEdit:false,confirm:false,draft:null};
 
 function keyFor(kind,p){return 'recalData/h3-'+kind+'-'+p;}
 function cacheGet(kind,p){try{const v=localStorage.getItem('h3c-'+kind+'-'+p);return v?JSON.parse(v):null;}catch(e){return null;}}
@@ -420,7 +435,7 @@ function save(kind){
   db.ref(keyFor(kind,me)).set(JSON.stringify(v)).then(()=>{pending--;if(!pending)setSync('Saved');setTimeout(()=>{if(!pending)setSync('');},1500);}).catch(e=>{pending--;setSync('Not saved. Check your connection.');console.error(e);});
 }
 function startSync(){
-  ['habits','log','prof','vote','rx','qa','photo'].forEach(kind=>PEOPLE.forEach(p=>{
+  ['habits','log','prof','vote','rx','qa','photo','cur','shr'].forEach(kind=>PEOPLE.forEach(p=>{
     const c=cacheGet(kind,p);if(c)D[kind][p]=c;
     if(!db)return;
     db.ref(keyFor(kind,p)).on('value',s=>{
@@ -687,7 +702,7 @@ function habitIcon(h,go){return iconEl(iconId(h),go);}
 /* ---------- render ---------- */
 function nav(){
   const t=ui.route;const on=(...r)=>r.includes(t)?' class="on"':'';
-  return `<nav><a href="#today"${on('today','sky',...(ui.src==='habits'?[]:['habit','edit','add']))}>Today</a><a href="#coven"${on('coven','standings')}>Coven</a><a href="#habits"${on('habits',...(ui.src==='habits'?['habit','edit','add']:[]))}>Habits</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
+  return `<nav><a href="#today"${on('today','sky',...(ui.src==='habits'?[]:['habit','edit','add']))}>Today</a><a href="#coven"${on('coven','standings','person')}>Coven</a><a href="#habits"${on('habits',...(ui.src==='habits'?['habit','edit','add']:[]))}>Habits</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
 }
 function topbar(){return `<div class="top"><div class="brand">Spell Check</div><a class="avatar" href="#me" aria-label="${esc(me)}" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(me)}</a></div><div class="wipnote" role="status"><b>In progress.</b> We are still polishing this one. Round 2 is safe and still here: <a href="old-app.html">open Round 2</a>.</div>`;}
 function sub(back,right){return `<div class="top"><a class="link" href="${back[0]}">${back[1]}</a>${right||''}</div>`;}
@@ -731,12 +746,12 @@ function viewToday(){
   const chId='_coven_'+wk;const chDone=val(me,chId,t)>=1;
   const ev=weekEvent(t);const spId='_spell_'+wk;const spDone=val(me,spId,t)>=1;
   const showed=PEOPLE.filter(p=>anyShared(p,t));
-  const members=PEOPLE.map(p=>{const d=(val(p,chId,t)>=1);return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div class="av${d?' on':''}">${avatarInner(p)}</div><div class="small">${p}</div></div>`;}).join('');
+  const members=PEOPLE.map(p=>{const d=(val(p,chId,t)>=1);return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><a class="av${d?' on':''}" href="${p===me?'#me':'#person/'+p}" aria-label="${p}'s profile" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(p)}</a><a class="small" href="${p===me?'#me':'#person/'+p}" style="text-decoration:none;color:inherit">${p}</a></div>`;}).join('');
   const pg=todayProgress();
   const nDone=PEOPLE.filter(p=>val(p,chId,t)>=1).length;
   const waiting=PEOPLE.filter(p=>!anyShared(p,t));
   const showedLine=showed.length===4?'All four showed up today.':showed.length===0?'Nobody has shown up yet today. Do one thing to go first.':(showed.includes(me)?`${showed.length} of 4 showed up. Waiting on ${list(waiting)}.`:`${showed.length} of 4 showed up. Do one thing today to join ${list(showed)}.`);
-  const strip=`<div class="strip" role="img" aria-label="${esc(showedLine)}"><div class="avs">${PEOPLE.map(p=>`<div class="av${showed.includes(p)?' on':''}">${avatarInner(p)}</div>`).join('')}</div><div class="small" style="flex:1">${esc(showedLine)}</div></div>`;
+  const strip=`<div class="strip" role="img" aria-label="${esc(showedLine)}"><div class="avs">${PEOPLE.map(p=>`<a class="av${showed.includes(p)?' on':''}" href="${p===me?'#me':'#person/'+p}" aria-label="${p}'s profile" style="text-decoration:none;color:inherit">${avatarInner(p)}</a>`).join('')}</div><div class="small" style="flex:1">${esc(showedLine)}</div></div>`;
   const phase=moonPhaseName(t);
   return topbar()+`<div class="body">
   <div class="date">${longDate(t)}</div>
@@ -755,7 +770,7 @@ function viewToday(){
    <button class="pill${chDone?' out':''}" aria-pressed="${chDone}" data-act="cov" data-id="${chId}">${chDone?'Done for today':'Mark done'}</button>
    ${ev?`<div class="row" style="border-top:1px solid var(--line);padding-top:10px"><div><div class="label">Spell · ${esc(ev.name)} week</div><div class="h2" style="margin-top:4px">This week's spell</div><div class="small">Set one small intention under the ${esc(ev.name)}.</div></div><button class="check${spDone?' on':''}" aria-pressed="${spDone}" aria-label="Spell, mark done" data-act="cov" data-id="${spId}">${spDone?CHECK:''}</button></div>`:''}
   </div>
-  <a class="link" href="old-app.html#coven" style="align-self:flex-start">Share what you are into, in The Tea</a>
+  <a class="link" href="#me" style="align-self:flex-start">Share what you are into</a>
   </div>`+nav();
 }
 const ALLDONE=['All done. Your glow is visible from space.','Every habit done. Somebody get this person a trophy and a snack.','All done and looking cute doing it.','Clean sweep. Hydrate, you iconic thing.'];
@@ -1029,6 +1044,8 @@ function buildFeed(){
     else body=ans.map(p=>`<div style="margin-top:4px">${esc(fill(BREW_LINE,{name:p}))}</div>`).join('');
     items.push({id:'qa:'+k,at:k+'q',who:'',body});
   }
+  for(const p of PEOPLE){for(const s of shrOf(p)){const k=s.at?dkey(new Date(s.at)):'';if(!k||k<addDays(t,-13))continue;
+    items.push({id:'sh:'+p+':'+s.id,at:k+'s',who:p,body:`<a href="${p===me?'#me':'#person/'+p}" style="color:inherit;text-decoration:none"><b>${esc(p)}</b></a> shared a read.${shrLink(s)}`});}}
   items.sort((a,b)=>b.at<a.at?-1:1);
   return items.slice(0,25);
 }
@@ -1049,8 +1066,8 @@ function feedItem(it){
   // render who's name bold at the start: text contains \u0001 where the name goes
   let html;
   if(it.body)html=it.body;
-  else if(it.text.includes('\u0001'))html=esc(it.text).replace('\u0001','<b>'+esc(it.who)+'</b>');
-  else html='<b>'+esc(it.who)+'</b>'+esc(it.text);
+  else{const nm=PEOPLE.includes(it.who)?`<a href="${it.who===me?'#me':'#person/'+it.who}" style="color:inherit;text-decoration:none"><b>${esc(it.who)}</b></a>`:'<b>'+esc(it.who)+'</b>';
+    html=it.text.includes('\u0001')?esc(it.text).replace('\u0001',nm):nm+esc(it.text);}
   const joinable=it.join&&it.join.groupOwner!==me&&!myHabits(me).some(h=>h.groupId===it.join.groupId);
   const right=it.join?(joinable?`<button class="chip" data-act="join" data-id="${it.join.id}">Join</button>`:`<span class="done">${it.join.groupOwner===me?'Yours':'✓ In'}</span>`):`<div class="rx">${GL.map(g=>{const on=((D.rx[me]||{})[it.id]||{})[g.k];const n=rxCount(it.id,g.k);return `<button class="${on?'on':''}" aria-pressed="${!!on}" aria-label="${g.l}" data-act="rx" data-id="${esc(it.id)}" data-k="${g.k}">${g.g}${n?' '+n:''}</button>`;}).join('')}</div>`;
   return `<div class="feed"><div>${html}${it.bonus?`<div class="bonus">${esc(it.bonus)}</div>`:''}</div><div style="display:flex">${right}</div></div>`;
@@ -1099,7 +1116,7 @@ function viewStandings(){
   return topbar()+`<div class="body">
   <div class="seg"><button data-go="coven">The Tea</button><button class="on">Standings</button></div>
   <div class="seg"><button class="${week?'on':''}" data-act="stand" data-v="week">This week</button><button class="${!week?'on':''}" data-act="stand" data-v="season">Season</button></div>
-  <div class="card" style="padding:0 16px">${rows.map((r,i)=>`<div class="rank"><div class="h2" style="width:18px">${i+1}</div><div class="av on">${initial(r.p)}</div><div style="flex:1"><div class="h2">${r.p}</div><div class="small" style="display:flex;gap:8px;align-items:center">${week?`<span aria-hidden="true">${r.dots.map(d=>`<i class="dot" style="width:8px;height:8px;margin-right:3px;background:${d?'var(--yellow)':'var(--line)'}"></i>`).join('')}</span><span>${r.days} of 7</span>`:`<span>Showed up ${r.days} of ${seasonDays} days</span>`}</div></div><div style="text-align:right"><div class="h2">${r.pts}</div><div class="small">${r.best} day streak</div></div></div>`).join('')}</div>
+  <div class="card" style="padding:0 16px">${rows.map((r,i)=>`<div class="rank"><div class="h2" style="width:18px">${i+1}</div><a class="av on" href="${r.p===me?'#me':'#person/'+r.p}" aria-label="${r.p}'s profile" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(r.p)}</a><div style="flex:1"><a class="h2" href="${r.p===me?'#me':'#person/'+r.p}" style="text-decoration:none;color:inherit;display:block">${r.p}</a><div class="small" style="display:flex;gap:8px;align-items:center">${week?`<span aria-hidden="true">${r.dots.map(d=>`<i class="dot" style="width:8px;height:8px;margin-right:3px;background:${d?'var(--yellow)':'var(--line)'}"></i>`).join('')}</span><span>${r.days} of 7</span>`:`<span>Showed up ${r.days} of ${seasonDays} days</span>`}</div></div><div style="text-align:right"><div class="h2">${r.pts}</div><div class="small">${r.best} day streak</div></div></div>`).join('')}</div>
   <div class="h2" style="font-size:15px">${cap}</div>
   <div class="small">Points are just for fun. Showed up counts any day you did one thing. Only shared habits, the coven habit and the spell count, so private habits stay private.</div></div>`+nav();
 }
@@ -1107,16 +1124,17 @@ function viewStandings(){
 /* ---------- Habits tab: Your habits and Overall (both show only you) ---------- */
 const HOME=()=>ui.src==='habits'?'#habits':'#today';
 function schedOn(h,k){return k<=todayK()&&k>=(h.createdDay||k)&&counts(h,k)&&!pausedOn(h,k);}
-function habitCardRow(h){
-  const t=todayK(),s=streak(me,h),b=bestStreak(me,h);
+function habitCardRow(h,p){
+  p=p||me;const own=p===me;
+  const t=todayK(),s=streak(p,h),b=bestStreak(p,h);
   const dots=[];let n=0;
-  for(let i=6;i>=0;i--){const k=addDays(t,-i);if(!schedOn(h,k))dots.push('<i class="o"></i>');else if(isDone(me,h,k)){n++;dots.push('<i class="on"></i>');}else dots.push('<i></i>');}
+  for(let i=6;i>=0;i--){const k=addDays(t,-i);if(!schedOn(h,k))dots.push('<i class="o"></i>');else if(isDone(p,h,k)){n++;dots.push('<i class="on"></i>');}else dots.push('<i></i>');}
   const txt=`${s} now · ${b} best${h.perWeek?' weeks':''}${pausedOn(h,t)?' · Paused':''}`;
-  return `<div class="habit hcard"><div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">${habitIcon(h)}<div style="min-width:0"><button class="name" data-go="habit/${h.id}">${esc(h.name)}</button><div class="tags"><span>${txt}</span></div></div></div><div class="d7" role="img" aria-label="Last 7 days, ${n} done">${dots.join('')}</div></div>`;
+  return `<div class="habit hcard"><div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">${habitIcon(h)}<div style="min-width:0">${own?`<button class="name" data-go="habit/${h.id}">${esc(h.name)}</button>`:`<div class="name">${esc(h.name)}</div>`}<div class="tags"><span>${txt}</span></div></div></div><div class="d7" role="img" aria-label="Last 7 days, ${n} done">${dots.join('')}</div></div>`;
 }
 function habitsPane(hs){
   const arch=Object.values(D.habits[me]||{}).filter(h=>h.archived);
-  return (hs.length?`<div class="card" style="padding:4px 16px">${hs.map(habitCardRow).join('')}</div>`:`<div class="card"><div class="small">No habits yet. Add one and it shows up here.</div></div>`)
+  return (hs.length?`<div class="card" style="padding:4px 16px">${hs.map(h=>habitCardRow(h)).join('')}</div>`:`<div class="card"><div class="small">No habits yet. Add one and it shows up here.</div></div>`)
    +`<a class="pill" href="#add" id="addhabit2">Add a habit</a>`
    +(arch.length?`<div class="card"><div class="label">Archived</div>${arch.map(h=>`<div class="habit"><div><div class="h2">${esc(h.name)}</div><div class="small">${streak(me,h)} day streak saved</div></div><button class="chip" data-act="unarch" data-id="${h.id}">Bring back</button></div>`).join('')}</div>`:'');
 }
@@ -1164,10 +1182,14 @@ function viewMe(){
    ?`<div class="grid2" style="grid-template-columns:repeat(3,1fr)">${b3.map(k=>`<div class="field"><label for="b-${k}">${k[0].toUpperCase()+k.slice(1)}</label><input id="b-${k}" type="text" value="${esc(b[k]||'')}" placeholder="Sign" data-in="big-${k}"></div>`).join('')}</div><button class="link" data-act="b3edit" style="align-self:flex-start">Done</button>`
    :`<div class="b3">${b3.map(k=>`<div class="b3c"><div class="label">${k[0].toUpperCase()+k.slice(1)}</div>${(b[k]||'').trim()?signBadge(b[k]):`<button class="b3add" data-act="b3edit" aria-label="Add your ${k} sign">Add</button>`}<div class="b3n">${esc(signOf(b[k])?signOf(b[k])[0]:(b[k]||'').trim())}</div>${houseLine(b[k],b.rising)}</div>`).join('')}</div>${planetGrids(bd,b)}<div class="b3links">${hasPlanets(bd)?`<button class="link" data-act="moreplanets" aria-expanded="${!!ui.morePl}">${ui.morePl?'Show fewer':'Show more planets'}</button>`:''}<button class="link" data-act="b3edit">Edit your big 3</button></div>`;
   const birthSum=[bd.date,bd.time,bd.place].filter(Boolean).join(' · ');
-  return topbar()+`<div class="body">
-  <div class="mehead"><label class="phbig" for="pf" style="cursor:pointer">${avatarInner(me)}</label><input id="pf" class="vh" type="file" accept="image/*" aria-label="Change photo"><div class="h1">${esc(pr.name||me)}</div><label class="link" for="pf">Change photo</label></div>
+  const tab=ui.arg==='settings'?'settings':'profile';const myShared=sharedHabits(me);
+  const profileHtml=`  <div class="mehead"><label class="phbig" for="pf" style="cursor:pointer">${avatarInner(me)}</label><input id="pf" class="vh" type="file" accept="image/*" aria-label="Change photo"><div class="h1">${esc(pr.name||me)}</div><label class="link" for="pf">Change photo</label>${ui.photoErr?`<div class="small" role="alert" style="color:var(--text)">${esc(ui.photoErr)}</div>`:''}</div>
   ${chartCard()}
   <div class="card">${b3html}</div>
+  <div><div class="label" style="margin:4px 0 8px">Shared habits</div>${myShared.length?`<div class="card" style="padding:4px 16px">${myShared.map(h=>habitCardRow(h,me)).join('')}</div>`:`<div class="card"><div class="small">Nothing shared yet. Share a habit from its page and it shows here and in The Tea.</div></div>`}</div>
+  ${curCard(me)}
+  ${shrCard(me)}`;
+  const settingsHtml=`${chartCard()}
   <div class="card" style="padding:4px 16px">
    <label class="mrow" for="cf" style="cursor:pointer"><div><div class="h2">Birth chart</div><div class="small">Upload a Co-Star screenshot and we fill in your Big 3.</div></div><span class="link" aria-hidden="true">Upload</span></label><input id="cf" class="vh" type="file" accept="image/*" aria-label="Upload a birth chart screenshot">
    <button class="mrow" data-act="birthedit" aria-expanded="${!!ui.birthOpen}"><div><div class="h2">Birth details</div><div class="small">${esc(birthSum||'Date, time and place. Makes your sky more yours.')}</div></div><span class="link" aria-hidden="true">${ui.birthOpen?'Close':(birthSum?'Edit':'Add')}</span></button>
@@ -1177,10 +1199,83 @@ function viewMe(){
    <a class="mrow" href="#connections"><div><div class="h2">Connections</div><div class="small">Oura, Strava and Apple Health.</div></div><span class="link" aria-hidden="true">Open</span></a>
   </div>
   <div class="small">Signed in as ${esc(me)}. <button class="link quiet" data-act="switch" style="display:inline-flex">Not you?</button></div>
-  <div class="small">Your Round 2 habits, journal, and photos are still there. <a class="link" href="old-app.html" style="min-height:44px">Open Round 2</a></div></div>`+nav();
+  <div class="small">Your Round 2 habits, journal, and photos are still there. <a class="link" href="old-app.html" style="min-height:44px">Open Round 2</a></div>`;
+  return topbar()+`<div class="body">
+  <div class="seg"><button class="${tab==='settings'?'':'on'}" data-go="me">Profile</button><button class="${tab==='settings'?'on':''}" data-go="me/settings">Settings${notifNeedsAction()?'<i class="pdot" aria-label="Needs attention"></i>':''}</button></div>
+  ${tab==='settings'?settingsHtml:profileHtml}</div>`+nav();
+}
+function viewPerson(p){
+  const pr=D.prof[p]||{};const b=pr.big3||{};const name=pr.name||p;
+  const b3=['sun','moon','rising'];
+  const hs=sharedHabits(p);
+  const b3html=b3.some(k=>(b[k]||'').trim())
+   ?`<div class="b3">${b3.map(k=>`<div class="b3c"><div class="label">${k[0].toUpperCase()+k.slice(1)}</div>${(b[k]||'').trim()?signBadge(b[k]):'<div class="sbadge x" aria-hidden="true">?</div>'}<div class="b3n">${esc(signOf(b[k])?signOf(b[k])[0]:((b[k]||'').trim()||'Not added'))}</div></div>`).join('')}</div>`
+   :`<div class="small">${esc(name)} has not added her Big 3 yet.</div>`;
+  return sub([ui.pback||'#coven','Back'])+`<div class="body">
+  <div class="mehead"><div class="phbig">${avatarInner(p)}</div><div class="h1">${esc(name)}</div></div>
+  <div class="card">${b3html}</div>
+  <button class="pill" data-act="personsky" data-p="${esc(p)}">See ${esc(name)}'s sky</button>
+  <div><div class="label" style="margin:4px 0 8px">Shared habits</div>${hs.length?`<div class="card" style="padding:4px 16px">${hs.map(h=>habitCardRow(h,p)).join('')}</div>`:`<div class="card"><div class="small">${esc(name)} has not shared any habits yet.</div></div>`}
+  <div class="small" style="margin-top:8px">Only habits ${esc(name)} has shared show up here. Private habits stay private.</div></div>
+  ${curCard(p)}
+  ${shrCard(p)}</div>`+nav();
+}
+/* ---------- Currently (reading, watching, listening) and shared reads ---------- */
+const MEDIA_BASE='https://spellcheck.nnirema.workers.dev';
+const CUR_F=[['reading','Reading','googlebooks',"Whatever you're reading"],['watching','Watching','tmdb',"Whatever you're watching"],['listening','Listening','spotify',"Whatever you're listening to"]];
+function nameOf(p){return (D.prof[p]||{}).name||p;}
+function safeUrl(u){u=String(u||'').trim();if(!u)return '';if(!/^https?:\/\//i.test(u)){if(/^[a-z][a-z0-9+.-]*:/i.test(u))return '';u='https://'+u;}try{const x=new URL(u);return /^https?:$/.test(x.protocol)&&x.hostname.indexOf('.')>0?x.href:'';}catch(e){return '';}}
+function domainOf(u){try{return new URL(u).hostname.replace(/^www\./,'');}catch(e){return '';}}
+const _mc=new Map();
+async function mediaSearch(kind,q){
+  q=(q||'').trim();if(!q)return [];
+  const key=kind+'|'+q.toLowerCase();if(_mc.has(key))return _mc.get(key);
+  try{const r=await fetch(MEDIA_BASE+'/'+kind+'?q='+encodeURIComponent(q)+'&list=1');if(!r.ok)return null;const j=await r.json();
+    const l=Array.isArray(j.results)?j.results:(j.result?[j.result]:[]);_mc.set(key,l);return l;}catch(e){return null;}
+}
+function curSet(f,v){const c=D.cur[me]||(D.cur[me]={});c[f]=v;const h=c.hist||(c.hist=[]);h.unshift({f,t:v.t,u:v.u||'',at:new Date().toISOString()});c.hist=h.slice(0,60);save('cur');}
+function curValueHtml(v){
+  const u=safeUrl(v.u),im=safeUrl(v.i),t=esc(v.t);
+  return `<div class="cr">${im?`<img src="${esc(im)}" alt="">`:'<span class="ci" aria-hidden="true"></span>'}<div class="ct">${u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${t}</a>`:`<b>${t}</b>`}${v.s?`<div class="small">${esc(v.s)}</div>`:''}</div></div>`;
+}
+function curResHtml(f){
+  const r=ui.curRes[f],q=(ui.curQ[f]||'').trim();let h='';
+  if(r==='loading')h='<div class="d">Searching</div>';
+  else if(r===null)h='<div class="d">Search is not available right now. You can still use what you typed.</div>';
+  else if(Array.isArray(r)){h=r.map((x,i)=>`<button type="button" class="opt" data-act="curpick" data-f="${f}" data-i="${i}"><span>${esc(x.title||'')}</span>${x.subtitle?`<span class="d">${esc(x.subtitle)}</span>`:''}</button>`).join('');if(q&&!r.length)h='<div class="d">No match. Check the spelling, or use what you typed.</div>';}
+  if(q)h+=`<button type="button" class="link" data-act="curtyped" data-f="${f}" style="align-self:flex-start">Use what I typed</button>`;
+  return h;
+}
+function curPaint(f){const el=document.getElementById('curres-'+f);if(el)el.innerHTML=curResHtml(f);}
+function curRow(p,f,label,ph,own){
+  const v=(D.cur[p]||{})[f];const has=v&&v.t;
+  if(!own&&!has)return '';
+  let body;
+  if(own&&(ui.curEdit[f]||!has)){
+    body=`<div class="field"><label class="vh" for="cur-${f}">${label}</label><input id="cur-${f}" type="text" autocomplete="off" placeholder="${esc(ph)}" value="${esc(ui.curQ[f]||'')}" data-in="cur-${f}"></div><div class="cres" id="curres-${f}">${curResHtml(f)}</div>${has?`<button type="button" class="link" data-act="curcancel" data-f="${f}" style="align-self:flex-start">Cancel</button>`:''}`;
+  }else{
+    body=curValueHtml(v)+(own?`<div class="ctl"><button type="button" class="link" data-act="curedit" data-f="${f}">Edit</button><button type="button" class="link" data-act="curclear" data-f="${f}">Clear</button></div>`:'');
+  }
+  return `<div style="display:flex;flex-direction:column;gap:8px"><div class="label">${label}</div>${body}</div>`;
+}
+function curCard(p){
+  const own=p===me;const c=D.cur[p]||{};
+  const any=CUR_F.some(x=>c[x[0]]&&c[x[0]].t);
+  if(!own&&!any)return `<div class="card"><div class="label">Currently</div><div class="small">${esc(nameOf(p))} has not shared what she is into yet.</div></div>`;
+  const hist=(c.hist||[]);
+  const hb=hist.length?`<button type="button" class="link" data-act="histtoggle" data-p="${esc(p)}" aria-expanded="${!!ui.hist[p]}" style="align-self:flex-start">${ui.hist[p]?'Hide past updates':'See past updates'}</button>${ui.hist[p]?`<div class="hist">${hist.map(x=>{const l=(CUR_F.find(y=>y[0]===x.f)||[0,x.f])[1];return `<div><b>${esc(l)}</b> ${esc(x.t)} <span class="small">${esc(fmtShort(dkey(new Date(x.at))))}</span></div>`;}).join('')}</div>`:''}`:'';
+  return `<div class="card cur"><div class="label">Currently</div>${CUR_F.map(([f,l,k,ph])=>curRow(p,f,l,ph,own)).join('')}${hb}</div>`;
+}
+function shrOf(p){return (Array.isArray(D.shr[p])?D.shr[p]:[]).filter(s=>s&&safeUrl(s.u)).slice().sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));}
+function shrLink(s){const u=safeUrl(s.u),d=domainOf(u);return `<a class="shr" href="${esc(u)}" target="_blank" rel="noopener noreferrer"><b>${esc((s.l||'').trim()||d)}</b><span>${esc(d)}${s.at?' · '+esc(fmtShort(dkey(new Date(s.at)))):''}</span></a>`;}
+function shrCard(p){
+  const own=p===me;const list=shrOf(p);
+  const form=own?`<div style="display:flex;flex-direction:column;gap:10px"><div class="field"><label for="shr-url">A link to send the group</label><input id="shr-url" type="text" inputmode="url" autocomplete="off" placeholder="Paste a link" value="${esc(ui.shr.url)}" data-in="shr-url"></div><div class="field"><label for="shr-label">What is it? Optional</label><input id="shr-label" type="text" maxlength="120" placeholder="A title or a line about it" value="${esc(ui.shr.label)}" data-in="shr-label"></div>${ui.shr.err?`<div class="small" role="alert" style="color:var(--text)">${esc(ui.shr.err)}</div>`:''}<button class="pill" data-act="shradd">Send to the group</button></div>`:'';
+  const items=list.length?list.map(s=>own?`<div class="shrrow">${shrLink(s)}<button type="button" class="link" data-act="shrdel" data-id="${esc(s.id)}">${ui.shrDel===s.id?'Tap again to remove':'Remove'}</button></div>`:shrLink(s)).join(''):`<div class="small">${own?'Nothing shared yet.':esc(nameOf(p))+' has not shared any reads yet.'}</div>`;
+  return `<div class="card"><div class="label">Shared reads</div>${form}${items}</div>`;
 }
 function viewConnections(){
-  return sub(['#me','Back'])+`<div class="body"><div><div class="h1" style="font-size:26px">Connections</div><div class="sec" style="margin-top:6px">Connect an app and it can tick habits for you. You pick which habit each one counts toward.</div></div>
+  return sub(['#me/settings','Back'])+`<div class="body"><div><div class="h1" style="font-size:26px">Connections</div><div class="sec" style="margin-top:6px">Connect an app and it can tick habits for you. You pick which habit each one counts toward.</div></div>
   ${['Oura','Strava'].map(n=>`<div class="card"><div class="row"><div class="h2">${n}</div><span class="chip on" style="border-color:var(--line2);color:var(--sec)">Soon</span></div><div class="small">${n==='Oura'?'Sleep and activity from your ring can tick habits like Sleep 8 hours.':'A logged workout can tick habits like Move 30 min.'} Not switched on yet, so tick by hand for now.</div></div>`).join('')}
   <div class="card"><div class="row"><div class="h2">Apple Health</div><span class="chip on" style="border-color:var(--line2);color:var(--sec)">Incoming</span></div>
    <div class="small">Apple does not let apps like this one read Health directly, so this one is still being worked out.</div>
@@ -1205,7 +1300,11 @@ function viewSetupGateWrap(){return viewSetup();}
 function route(){
   const h=(location.hash||'#today').slice(1);let [r,a]=h.split('/');
   if(r==='journey'){r='habits';try{history.replaceState(null,'','#habits');}catch(x){}}
-  const prev=ui.route;ui.route=r||'today';ui.arg=a||null;
+  const prev=ui.route;const prevHash=ui.lastHash||'#today';ui.lastHash='#'+h;
+  try{if(a)a=decodeURIComponent(a);}catch(x){}
+  ui.route=r||'today';ui.arg=a||null;
+  if(ui.route==='person'&&prev!=='person'&&prev!=='sky')ui.pback=prevHash;
+  if(ui.route!=='sky'){if(prev==='sky'&&ui.skyBack)ui.sky=null;ui.skyBack=null;}
   if(ui.route==='today'||ui.route==='habits')ui.src=ui.route;
   if(prev!==ui.route){ui.confirm=false;if(ui.route!=='add'&&ui.route!=='edit'&&ui.route!=='setup')ui.draft=null;if(ui.route==='edit'&&ui.draft&&ui.draft._id!==a)ui.draft=null;}
   ui.enter=prev!==ui.route;render();window.scrollTo(0,0);
@@ -1228,6 +1327,7 @@ async function placeSearch(q){
   }catch(e){if(e&&e.name==='AbortError')return;box.innerHTML='<div class="small pnone">Search is not available right now. What you typed is saved. Come back later to pick the exact place.</div>';}
 }
 function render(){
+  if(ui.picking&&Date.now()-ui.picking<120000){ui.dirty=true;return;}
   const act=document.activeElement;const keep=act&&act.dataset&&act.dataset.in?{id:act.id,s:act.selectionStart}:null;
   let html;
   if(!me)html=viewGate();
@@ -1244,6 +1344,7 @@ function render(){
       case 'standings':html=viewStandings();break;
       case 'habits':html=viewHabits();break;
       case 'me':html=viewMe();break;
+      case 'person':html=PEOPLE.includes(ui.arg)&&ui.arg!==me?viewPerson(ui.arg):viewMe();break;
       case 'connections':html=viewConnections();break;
       default:html=viewToday();
     }
@@ -1550,7 +1651,7 @@ document.addEventListener('click',e=>{
     case 'b3use':{const pr=D.prof[me]||(D.prof[me]={});const c=birthChart(pr.birth);if(!c)return;const bg=pr.big3||(pr.big3={});if(c.sun.length===1)bg.sun=c.sun[0];if(c.moon.length===1)bg.moon=c.moon[0];if(c.rising)bg.rising=c.rising;save('prof');break;}
     case 'birthhide':try{localStorage.setItem('h3-birthhint:'+me,'1');}catch(x){}break;
     case 'notime':{const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});bd.noTime=!bd.noTime;if(bd.noTime)delete bd.time;save('prof');break;}
-    case 'birthgo':{ui.birthOpen=true;if(location.hash==='#me'){render();}else{location.hash='#me';}setTimeout(()=>{const x=document.getElementById('bd-date');if(x){x.scrollIntoView({block:'center'});x.focus({preventScroll:true});}},80);return;}
+    case 'birthgo':{ui.birthOpen=true;if(location.hash==='#me/settings'){render();}else{location.hash='#me/settings';}setTimeout(()=>{const x=document.getElementById('bd-date');if(x){x.scrollIntoView({block:'center'});x.focus({preventScroll:true});}},80);return;}
     case 'placepick':{const p=(ui.placeRes||[])[+id];if(!p)return;const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});bd.place=p.label;bd.placeLat=Math.round(p.lat*100)/100;bd.placeLon=Math.round(p.lon*100)/100;bd.placeTz=p.tz;ui.placeRes=[];save('prof');break;}
     case 'placechange':{const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});delete bd.placeLat;delete bd.placeLon;delete bd.placeTz;save('prof');setTimeout(()=>{const x=document.getElementById('bd-place');if(x){x.focus();x.select();}},0);break;}
 
@@ -1596,9 +1697,20 @@ document.addEventListener('click',e=>{
     case 'rx':{const r=(D.rx[me]||(D.rx[me]={}));const o=(r[id]||(r[id]={}));o[b.dataset.k]=!o[b.dataset.k];save('rx');break;}
     case 'join':{const src=findHabit(id);if(!src)return;if(myHabits(me).some(h=>h.groupId===src.h.groupId))return;newHabit({name:src.h.name,type:src.h.type,target:src.h.target||1,unit:src.h.unit||'',step:src.h.step||1,days:src.h.days.slice(),shared:true,preset:src.h.preset||null,groupId:src.h.groupId,groupOwner:src.h.groupOwner});break;}
     case 'stand':ui.standMode=b.dataset.v;break;
+    case 'curpick':{const f=b.dataset.f,r=(ui.curRes[f]||[])[+b.dataset.i];if(!r||!r.title)return;curSet(f,{t:String(r.title).slice(0,140),u:safeUrl(r.url),i:safeUrl(r.image),s:String(r.subtitle||'').slice(0,140)});ui.curEdit[f]=false;ui.curQ[f]='';ui.curRes[f]=null;break;}
+    case 'curtyped':{const f=b.dataset.f,q=(ui.curQ[f]||'').trim();if(!q)return;curSet(f,{t:q.slice(0,140)});ui.curEdit[f]=false;ui.curQ[f]='';ui.curRes[f]=null;break;}
+    case 'curedit':{const f=b.dataset.f;ui.curEdit[f]=true;ui.curQ[f]='';ui.curRes[f]=null;render();setTimeout(()=>{const x=document.getElementById('cur-'+f);if(x)x.focus();},0);return;}
+    case 'curcancel':{const f=b.dataset.f;ui.curEdit[f]=false;ui.curQ[f]='';ui.curRes[f]=null;break;}
+    case 'curclear':{const f=b.dataset.f;const c=D.cur[me]||{};delete c[f];save('cur');break;}
+    case 'histtoggle':ui.hist[b.dataset.p]=!ui.hist[b.dataset.p];break;
+    case 'shradd':{const u=safeUrl(ui.shr.url);if(!u){ui.shr.err='That link does not look right. Check it and try again.';break;}
+      const cur=Array.isArray(D.shr[me])?D.shr[me]:[];if(cur.some(x=>safeUrl(x.u)===u)){ui.shr.err='You already sent that one.';break;}
+      cur.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),u,l:(ui.shr.label||'').trim().slice(0,120),at:new Date().toISOString()});D.shr[me]=cur;save('shr');ui.shr={url:'',label:'',err:''};break;}
+    case 'shrdel':{const id=b.dataset.id;if(ui.shrDel===id){D.shr[me]=(D.shr[me]||[]).filter(x=>x.id!==id);save('shr');ui.shrDel=null;}else ui.shrDel=id;break;}
     case 'skywho':ui.sky=b.dataset.p;break;
+    case 'personsky':ui.sky=b.dataset.p;ui.skyBack='#person/'+encodeURIComponent(b.dataset.p);location.hash='#sky';return;
     case 'skytab':ui.skyTab=b.dataset.v;break;
-    case 'skyclose':location.hash='#today';return;
+    case 'skyclose':{const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';return;}
     case 'snext':ui.setupStep=Math.min(4,ui.setupStep+1);{const pr=D.prof[me]||(D.prof[me]={});if(ui.setupStep===4||true){pr.setup=true;}save('prof');}break;
     case 'sdone':{const pr=D.prof[me]||(D.prof[me]={});pr.setup=true;save('prof');break;}
     default:return;
@@ -1611,6 +1723,9 @@ document.addEventListener('input',e=>{
   if(i==='place-search'){const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});bd.place=v;delete bd.placeLat;delete bd.placeLon;delete bd.placeTz;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);clearTimeout(window.__pt);window.__pt=setTimeout(()=>placeSearch(v),350);return;}
   if(i.startsWith('birth-')){const pr=D.prof[me]||(D.prof[me]={});(pr.birth||(pr.birth={}))[i.slice(6)]=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);birthCalcUpdate();return;}
   if(i==='sname'){const pr=D.prof[me]||(D.prof[me]={});pr.name=v;clearTimeout(window.__bt);window.__bt=setTimeout(()=>save('prof'),500);return;}
+  if(i.startsWith('cur-')){const f=i.slice(4),row=CUR_F.find(x=>x[0]===f);if(!row)return;ui.curQ[f]=v;clearTimeout(window.__ct);window.__ct=setTimeout(async()=>{const q=(ui.curQ[f]||'').trim();if(!q){ui.curRes[f]=null;curPaint(f);return;}ui.curRes[f]='loading';curPaint(f);const r=await mediaSearch(row[2],q);if((ui.curQ[f]||'').trim()!==q)return;ui.curRes[f]=r;curPaint(f);},400);curPaint(f);return;}
+  if(i==='shr-url'){ui.shr.url=v;ui.shr.err='';return;}
+  if(i==='shr-label'){ui.shr.label=v;return;}
   if(i==='brew')return;
   const d=ui.draft;if(!d)return;
   d[i]=v;
@@ -1620,13 +1735,16 @@ document.addEventListener('input',e=>{
   if(i==='step')d.stepTouched=true;
   if(i==='name'){const btn=document.querySelector('[data-act=create]');if(btn)btn.disabled=!v.trim();}
 });
+function pickDone(){ui.picking=0;if(ui.dirty){ui.dirty=false;render();}}
+document.addEventListener('click',e=>{const l=e.target&&e.target.closest&&e.target.closest('label[for=pf],label[for=cf]');if(l){ui.picking=Date.now();ui.photoErr='';}},true);
+document.addEventListener('cancel',e=>{if(e.target&&(e.target.id==='pf'||e.target.id==='cf'))pickDone();},true);
 document.addEventListener('change',async e=>{
-  if(e.target&&e.target.id==='cf'&&me){const f=e.target.files&&e.target.files[0];e.target.value='';if(f)readChart(f);return;}
+  if(e.target&&e.target.id==='cf'&&me){const f=e.target.files&&e.target.files[0];e.target.value='';pickDone();if(f)readChart(f);return;}
   if(!e.target||e.target.id!=='pf'||!me)return;
-  const f=e.target.files&&e.target.files[0];if(!f)return;
-  try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};save('photo');render();}catch(x){console.error(x);setSync('That photo would not load. Try another.');}
+  const f=e.target.files&&e.target.files[0];pickDone();if(!f)return;
+  try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};ui.photoErr='';save('photo');render();}catch(x){console.error(x);ui.photoErr='That photo would not load. Try a different one, or a screenshot of it.';render();}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.route==='sky')location.hash='#today';});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
 window.addEventListener('hashchange',route);
 let synced=false;function startSyncOnce(){if(synced)return;synced=true;startSync();importFromRound2();}
 function importFromRound2(){ // carry over what we can so nobody has to redo anything

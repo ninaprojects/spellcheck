@@ -18,7 +18,7 @@ def run(mode,w=390):
             return r.fulfill(status=200,content_type='application/json',headers={'access-control-allow-origin':'*'},body=json.dumps(RES))
         return r.abort() if u.startswith('http') else r.continue_()
     p.route('**/*',h);p.clock.install(time=datetime.datetime.fromisoformat('2026-11-08T12:00:00'));p.add_init_script(INIT)
-    p.goto('file://'+APP+'#me');p.wait_for_selector('[data-act=birthedit]');p.click('[data-act=birthedit]');p.wait_for_selector('#bd-place')
+    p.goto('file://'+APP+'#me/settings');p.wait_for_selector('[data-act=birthedit]');p.click('[data-act=birthedit]');p.wait_for_selector('#bd-place')
     return p,errs
 with sync_playwright() as pw:
     b=pw.chromium.launch()

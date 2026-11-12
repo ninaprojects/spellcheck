@@ -17,7 +17,7 @@ for i, js in enumerate(scripts):
         print(r.stderr[:400]); ok = False
 
 # 2. Browser tests against mocked Firebase, location lookups, and photo files
-for name in ['t_habits.py', 't_show.py', 't_habits_tab.py', 't_sky.py', 't_birthplace.py', 't_birthauto.py', 't_fullchart.py', 't_chart.py', 't_main.py', 't_saved.py', 't_photo.py', 't_social.py', 't_zoom.py', 't_big3.py', 't_receipts.py', 't_pages.py', 't_question.py', 't_letters.py', 't_water.py', 't_brew.py', 'errs.py']:
+for name in ['t_habits.py', 't_show.py', 't_habits_tab.py','t_person.py', 't_currently.py', 't_profilephoto.py', 't_sky.py', 't_birthplace.py', 't_birthauto.py', 't_fullchart.py', 't_chart.py', 't_main.py', 't_saved.py', 't_photo.py', 't_social.py', 't_zoom.py', 't_big3.py', 't_receipts.py', 't_pages.py', 't_question.py', 't_letters.py', 't_water.py', 't_brew.py', 'errs.py']:
     r = subprocess.run([sys.executable, '-B', os.path.join(HERE, name)], capture_output=True, text=True)
     out = r.stdout.strip().splitlines()
     fails = [l for l in out if l.startswith('FAIL')]
