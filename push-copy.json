@@ -1,5 +1,5 @@
 {
-  "_note": "Approved push wording. The push Worker fetches this file from GitHub Pages. Edit through a pull request only. Titles end with the star (reactions may end with their own symbol), no em dashes, no links. Placeholders: {name} is the person getting the push, {who} the friend it is about, plus {habit}, {n}, {n1}, {post}, {q}, {sky}, {answer}, {label}, {value}. A line can have several titles (titles, the first also kept in title for older Worker versions) that rotate. Lines with the same set are kept apart. rare: N means about 1 in N sends. only: tag means only people tracking that habit. Groups: A habits morning, J journaling morning, C small ritual, E evening nudge, BT brew titles, V Sunday vote, R Monday result, B sky titles, IN friend showed up, ALL all four showed up, RX reactions (tag is the reaction), QA brew answers, SR shared reads, CU Currently (tag is the field), GH new group habit, CM coven milestone (must match L_MILE in index.html), MP private milestone, ST streak at risk, CB comeback. GH, CM and CU must stay word for word and in the same order as L_GROUP, L_MILE and CUR_LINES in index.html (with {who} for {name}); tests check this. Source of truth for wording: the Spell Check copy library.",
+  "_note": "Approved push wording. The push Worker fetches this file from GitHub Pages. Edit through a pull request only. Titles end with the star (reactions may end with their own symbol), no em dashes, no links. Placeholders: {name} is the person getting the push, {who} the friend it is about, plus {habit}, {n}, {n1}, {post}, {q}, {sky}, {answer}, {label}, {value}. A line can have several titles (titles, the first also kept in title for older Worker versions) that rotate. Lines with the same set are kept apart. rare: N means about 1 in N sends. only: tag means only people tracking that habit. Groups: A habits morning, J journaling morning, C small ritual, E evening nudge, BT brew titles, V Sunday vote, R Monday result, B sky titles, IN friend showed up, ALL all four showed up, RX reactions (tag is the reaction), QA brew answers, SR shared reads, CU Currently (tag is the field), GH new group habit, CM coven milestone (must match L_MILE in index.html), MP private milestone, ST streak at risk, CB comeback, RC Sunday recap (tag: regular, perfect or quiet week). GH, CM and CU must stay word for word and in the same order as L_GROUP, L_MILE and CUR_LINES in index.html (with {who} for {name}); tests check this. Source of truth for wording: the Spell Check copy library.",
   "A": [
     {
       "id": "A1",
@@ -1066,6 +1066,88 @@
       "id": "CB6",
       "title": "Comeback season ✦",
       "body": "Every great comeback starts with one small thing. This is the montage part, {name}."
+    }
+  ],
+  "RC": [
+    {
+      "id": "RCa1",
+      "title": "The week, in receipts ✦",
+      "body": "All four of us showed up {days} days this week. {brews} brew answers and {rx} reactions later, we are thriving.",
+      "tags": [
+        "regular"
+      ]
+    },
+    {
+      "id": "RCa2",
+      "title": "Weekly gossip report ✦",
+      "body": "{days} full-coven days, {brews} brew answers, {rx} reactions. Somebody alert Andy Cohen.",
+      "tags": [
+        "regular"
+      ]
+    },
+    {
+      "id": "RCa3",
+      "title": "Sunday debrief ✦",
+      "body": "{days} days all four of us showed up, {brews} brews spilled, {rx} reactions thrown. We are a lot, and we know it.",
+      "tags": [
+        "regular"
+      ]
+    },
+    {
+      "id": "RCa4",
+      "title": "That was a lot of action ✦",
+      "body": "{days} full-coven days and {rx} reactions this week. Respectfully, the coven gets around.",
+      "tags": [
+        "regular"
+      ]
+    },
+    {
+      "id": "RCb1",
+      "title": "A perfect week ✦",
+      "body": "All four of us showed up all seven days. Come admire us, we'll wait.",
+      "tags": [
+        "perfect"
+      ]
+    },
+    {
+      "id": "RCb2",
+      "title": "Seven for seven ✦",
+      "body": "Every one of us, every single day. The group chat is about to be unbearable.",
+      "tags": [
+        "perfect"
+      ]
+    },
+    {
+      "id": "RCb3",
+      "title": "Undefeated ✦",
+      "body": "Seven days, four witches, zero days off. We are frankly a lot to be around.",
+      "tags": [
+        "perfect"
+      ]
+    },
+    {
+      "id": "RCc1",
+      "title": "Soft week ✦",
+      "body": "A gentler week for the coven. Even witches nap. Monday is a fresh page and we're all on it.",
+      "tags": [
+        "quiet"
+      ]
+    },
+    {
+      "id": "RCc2",
+      "title": "Rest era ✦",
+      "body": "We took it easy this week, and that counts. New week tomorrow, same coven.",
+      "tags": [
+        "quiet"
+      ]
+    },
+    {
+      "id": "RCc3",
+      "title": "Recharging ✦",
+      "body": "Low-key week, high-key love. Tomorrow we start fresh, together.",
+      "tags": [
+        "quiet"
+      ]
     }
   ]
 }

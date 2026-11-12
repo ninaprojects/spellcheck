@@ -1311,5 +1311,45 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('h3 comments: the next minute stays under the call limit too', W.callsUsed() < 50, W.callsUsed());
 }
 
+// ===== Sunday recap (h3recap) =====
+{
+  const COPY = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'push-copy.json'), 'utf8'));
+  const habit = (o) => Object.assign({ id: 'h' + Math.random().toString(36).slice(2, 7), name: 'Read', type: 'yesno', target: 1, days: [1, 1, 1, 1, 1, 1, 1], archived: false, shared: true }, o);
+  const runH = async (iso) => { pushes = []; return W.habitsRun(env, at(iso), { fresh: true }); };
+  const SUN_5PM = '2026-11-23T01:05:00Z'; // Sun Nov 22, 5:05pm Pacific; the week is Mon Nov 16 to Sun Nov 22
+  const week = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'];
+  const fillIn = (t, o) => t.replace(/\{(\w+)\}/g, (m, k) => o[k] != null ? o[k] : m);
+  const setup = (fullDays, extra = {}) => {
+    resetWorld();
+    for (const p of PEOPLE) {
+      put('h3-habits-' + p, { s: habit({ id: 's' }), q: habit({ id: 'q', shared: false }) });
+      const log = {}; for (const k of week) log[k] = { q: 1 }; // private habits never count
+      for (const k of week.slice(0, fullDays)) log[k].s = 1;
+      put('h3-log-' + p, log);
+    }
+    for (const [k, v] of Object.entries(extra)) put(k, v);
+  };
+  setup(3, { 'h3-qa-Nina': { '2026-11-17': { t: 'a' }, '2026-11-18': { t: 'b' }, '2026-11-01': { t: 'old' } }, 'h3-qa-Kellye': { '2026-11-17': { t: 'c' } },
+    'h3-rx-Lauren': { 'f:Nina:s:2026-11-17': { heart: true, spell: true }, 'qa:2026-11-18': { moon: true }, 'f:Nina:s:2026-11-02': { heart: true } } });
+  await runH(SUN_5PM);
+  const reg = COPY.RC.filter(l => l.tags.includes('regular'));
+  check('recap: a regular week goes to all four at 5pm', pushes.length === 4 && pushes.every(x => reg.some(l => l.title === x.title)), pushes);
+  check('recap: real numbers (3 full-coven days, 3 brew answers, 3 reactions on this week’s posts; private habits and older posts left out)', pushes[0] && reg.some(l => fillIn(l.body, { days: 3, brews: 3, rx: 3 }) === pushes[0].body), pushes[0]);
+  check('recap: everyone gets the same line', new Set(pushes.map(x => x.title + x.body)).size === 1, pushes);
+  await runH('2026-11-23T01:35:00Z');
+  check('recap: once a week', pushes.length === 0, pushes);
+  setup(7); await runH(SUN_5PM);
+  check('recap: a perfect week uses a perfect-week line', pushes.length === 4 && pushes.every(x => COPY.RC.some(l => l.tags.includes('perfect') && l.title === x.title && l.body === x.body)), pushes);
+  setup(1); await runH(SUN_5PM);
+  check('recap: a quiet week uses a kind quiet-week line', pushes.length === 4 && pushes.every(x => COPY.RC.some(l => l.tags.includes('quiet') && l.title === x.title && l.body === x.body)), pushes);
+  setup(3); await runH('2026-11-23T00:30:00Z'); // 4:30pm
+  check('recap: not before 5pm', pushes.filter(x => COPY.RC.some(l => l.title === x.title)).length === 0, pushes);
+  setup(3); await runH('2026-11-22T01:05:00Z'); // Saturday 5:05pm
+  check('recap: Sundays only', pushes.filter(x => COPY.RC.some(l => l.title === x.title)).length === 0, pushes);
+  setup(3, { 'recal-notif-prefs:Lauren': { activity: false } }); await runH(SUN_5PM);
+  check('recap: Coven activity switch off means no recap', pushes.length === 3 && !pushes.some(x => x.to === 'Lauren'), pushes);
+  check('recap: stays under the call budget', W.callsUsed() < 46, W.callsUsed());
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);
