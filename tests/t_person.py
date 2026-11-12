@@ -68,7 +68,7 @@ with sync_playwright() as pw:
         ck(f'{w} no page errors',not errs)
         if w==390:
             page.goto('file://'+os.path.abspath(APP)+'#person/Kellye'); page.wait_for_selector('.mehead')
-            page.screenshot(path='/tmp/shots/person390.png',full_page=True)
+            page.wait_for_timeout(1200); page.screenshot(path='/tmp/shots/person390.png',full_page=True)
         ctx.close()
     # empty state
     ctx=b.new_context(viewport={'width':390,'height':800}); page=ctx.new_page()
