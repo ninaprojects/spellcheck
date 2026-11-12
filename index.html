@@ -282,6 +282,22 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .show .sh-mid .h1{outline:0}
 @media (prefers-color-scheme:dark){.sh-music[aria-expanded=true]{background:#1C3A36;border-color:#3E8F82;color:#7FD6C8}.sh-toggle[aria-checked=true] .sh-sw{background:#1C3A36;border-color:#3E8F82}.sh-toggle[aria-checked=true] .sh-sw b{background:#7FD6C8}.sh-badge{background:#1C3A36;border-color:#3E8F82;color:#7FD6C8}}
 @media (prefers-reduced-motion:reduce){.show *{animation:none!important;transition:none!important}}
+
+/* Habits tab */
+:root{--h1:#E3F4F1;--h2:#BFE7E0;--h3:#8FD3C7;--h4:#4FB3A3}
+@media (prefers-color-scheme:dark){:root{--h1:#1C3A36;--h2:#245249;--h3:#2F7266;--h4:#3E8F82}}
+.hcard:last-child{border-bottom:0}
+.d7{display:flex;gap:3px;flex:none}.d7 i{width:7px;height:22px;border-radius:3px;background:var(--line)}.d7 i.on{background:#7CCBBE}.d7 i.o{background:none;border:1px dashed var(--line)}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{border:1px solid var(--line);padding:12px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}.stat b{font-size:24px;font-weight:600}.stat span{font-size:12px;line-height:1.3;color:var(--sec)}.stat .sn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.cal .dow{font-size:11px;color:var(--sec);text-align:center}
+.cal i{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-style:normal;background:var(--line)}.cal i span{font-size:11px;color:var(--text)}
+.cal i.e{background:none}.cal i.f{background:none;border:1px dashed var(--line)}.cal i.f span{color:var(--sec)}.cal i.n{background:none;border:1px solid var(--line)}
+.cal i.l1{background:var(--h1)}.cal i.l2{background:var(--h2)}.cal i.l3{background:var(--h3)}.cal i.l4{background:var(--h4)}
+.cal i.today{outline:2px solid var(--pink);outline-offset:1px}
+.legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sec)}.legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.orow{display:flex;flex-direction:column;gap:6px}.oh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.pbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.pbar i{display:block;height:100%;background:#7CCBBE;border-radius:4px}
 </style>
 </head>
 <body>
@@ -671,7 +687,7 @@ function habitIcon(h,go){return iconEl(iconId(h),go);}
 /* ---------- render ---------- */
 function nav(){
   const t=ui.route;const on=(...r)=>r.includes(t)?' class="on"':'';
-  return `<nav><a href="#today"${on('today','habit','edit','add','sky')}>Today</a><a href="#coven"${on('coven','standings')}>Coven</a><a href="#journey"${on('journey')}>Journey</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
+  return `<nav><a href="#today"${on('today','sky',...(ui.src==='habits'?[]:['habit','edit','add']))}>Today</a><a href="#coven"${on('coven','standings')}>Coven</a><a href="#habits"${on('habits',...(ui.src==='habits'?['habit','edit','add']:[]))}>Habits</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
 }
 function topbar(){return `<div class="top"><div class="brand">Spell Check</div><a class="avatar" href="#me" aria-label="${esc(me)}" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(me)}</a></div><div class="wipnote" role="status"><b>In progress.</b> We are still polishing this one. Round 2 is safe and still here: <a href="old-app.html">open Round 2</a>.</div>`;}
 function sub(back,right){return `<div class="top"><a class="link" href="${back[0]}">${back[1]}</a>${right||''}</div>`;}
@@ -834,7 +850,7 @@ function anyShared(p,k){ // "showed up" counts shared habits, the coven habit, o
 function viewAdd(){
   const d=ui.draft||(ui.draft={name:'',type:'yesno',target:100,unit:'reps',step:10,stepTouched:false,shared:false,preset:null,days:[1,1,1,1,1,1,1],freq:'days',perWeek:3});
   const grp=(g,l)=>`<div style="display:flex;flex-direction:column;gap:8px"><div class="label">${g}</div><div class="grid2">${l.map(p=>`<button class="opt pk${d.preset===p.id?' on':''}" aria-pressed="${d.preset===p.id}" data-act="preset" data-id="${p.id}">${iconEl(p.id,d.preset===p.id&&ui.iconGo===p.id)}<span class="pt"><span>${p.name}</span><span>${p.amount}</span></span></button>`).join('')}</div></div>`;
-  return `<div class="top"><div class="h2">New habit</div><a class="link" href="#today" data-act="closeadd">Close</a></div><div class="body">
+  return `<div class="top"><div class="h2">New habit</div><a class="link" href="${HOME()}" data-act="closeadd">Close</a></div><div class="body">
   <div style="display:flex;flex-direction:column;gap:16px"><div class="label">Start from a preset</div>${Object.keys(PRESETS).map(g=>grp(g,PRESETS[g])).join('')}</div>
   <div class="field"><label for="hn">Or name your own</label><div class="row" style="justify-content:flex-start;gap:12px"><span id="hnico">${iconEl(d.preset||d.icon||suggestIcon(d.name))}</span><input id="hn" type="text" value="${esc(d.name)}" placeholder="Sit-ups" data-in="name" style="flex:1;min-width:0"></div><div class="small" id="hnsug"${d.preset?' hidden':''}>${d.icon?'Your pick.':'Icon suggested from the name.'} <button class="link" data-act="iconpick" aria-expanded="${!!ui.iconPick}">${ui.iconPick?'Done':'Change'}</button></div>${ui.iconPick&&!d.preset?`<div class="iconrow">${Object.keys(HI).map(k=>`<button aria-label="${k}" data-act="iconset" data-id="${k}" class="${(d.icon||suggestIcon(d.name))===k?'on':''}">${iconEl(k)}</button>`).join('')}</div>`:''}</div>
   <div><div class="label">How do you count it</div><div class="seg"><button class="${d.type==='yesno'?'on':''}" data-act="dtype" data-v="yesno">Yes or no</button><button class="${d.type==='number'?'on':''}" data-act="dtype" data-v="number">A number</button></div>
@@ -849,7 +865,7 @@ function shareLine(s){return s?'The coven sees your streak and the days you fini
 function suggestStep(n){n=parseInt(n,10);if(!n||n<1)return 1;const raw=n/10;for(const x of [1,2,5,10,20,25,50,100])if(x>=raw)return x;return 100;}
 
 function viewDetail(id){
-  const f=findHabit(id);if(!f||f.p!==me)return `<div class="body"><a class="link" href="#today">Back</a><div class="h2">That habit is not here.</div></div>`+nav();
+  const f=findHabit(id);if(!f||f.p!==me)return `<div class="body"><a class="link" href="${HOME()}">Back</a><div class="h2">That habit is not here.</div></div>`+nav();
   const h=f.h;const t=todayK();const s=streak(me,h),best=bestStreak(me,h);const U=h.perWeek?'week':'day';
   const ws=weekStart(t);const start=addDays(ws,-28);
   let cells='';
@@ -865,7 +881,7 @@ function viewDetail(id){
   const restDays=DOW.filter((_,i)=>!h.days[i]);
   const sched=h.perWeek?`${h.perWeek} time${h.perWeek===1?'':'s'} a week, any days. ${weekCount(me,h,ws)} so far this week.`:restDays.length?`Counts ${DOW.filter((_,i)=>h.days[i]).map(x=>x.slice(0,3)).join(', ')}. ${restDays.join(', ')} ${restDays.length>1?'are rest days':'is a rest day'}.`:'Counts every day.';
   const sl=h.paused?`${s} ${U}s in a row, held safely while you are away.`:s===0?'Nothing yet. Today is a good day to start.':h.shared?`${s} ${U}${s===1?'':'s'} in a row. We noticed, and we are acting very normal about it.`:`${s} ${U}${s===1?'':'s'} in a row. Nobody knows but you.`;
-  return sub(['#today','Back'],`<a class="link" href="#edit/${h.id}">Edit</a>`)+`<div class="body">
+  return sub([HOME(),'Back'],`<a class="link" href="#edit/${h.id}">Edit</a>`)+`<div class="body">
   <div><div class="h1">${esc(h.name)}</div><div class="sec">${h.type==='number'?`${h.target} ${esc(h.unit)} a day`:'Yes or no'}</div></div>
   ${h.preset==='show'&&!h.paused?`<button class="pill" data-act="showopen" data-id="${h.id}">Take the stage</button>`:''}
   <div class="big"><b>${s}</b><div><div>${U}s in a row</div><div class="small">Longest: ${best} ${U}${best===1?'':'s'}</div></div></div>
@@ -878,7 +894,7 @@ function viewDetail(id){
 }
 
 function viewEdit(id){
-  const f=findHabit(id);if(!f||f.p!==me)return `<div class="body"><a class="link" href="#today">Back</a></div>`+nav();
+  const f=findHabit(id);if(!f||f.p!==me)return `<div class="body"><a class="link" href="${HOME()}">Back</a></div>`+nav();
   const h=f.h;const d=ui.draft&&ui.draft._id===id?ui.draft:(ui.draft={_id:id,name:h.name,target:h.target,days:h.days.slice(),step:h.step,perWeek:h.perWeek||0});
   const steps=[1,2,5,8,10,25,50,100];
   return `<div class="top"><a class="link quiet" href="#habit/${id}" data-act="cancel">Cancel</a><button class="link" data-act="saveedit" data-id="${id}">Save</button></div><div class="body">
@@ -1088,12 +1104,54 @@ function viewStandings(){
   <div class="small">Points are just for fun. Showed up counts any day you did one thing. Only shared habits, the coven habit and the spell count, so private habits stay private.</div></div>`+nav();
 }
 
-function viewJourney(){
-  const hs=myHabits(me);
-  return topbar()+`<div class="body"><div class="h1">Journey</div>
-  ${hs.length?hs.map(h=>`<div class="card"><div class="row"><button class="name h2" style="background:none;border:0;padding:0;text-align:left" data-go="habit/${h.id}">${esc(h.name)}</button><span class="small">${streak(me,h)} now · ${bestStreak(me,h)} best${h.perWeek?' weeks':''}</span></div><div class="small">${countDone(h)} days done since ${longDate(h.createdDay||todayK())}.</div></div>`).join(''):'<div class="small">Your habit history builds here as you go.</div>'}</div>`+nav();
+/* ---------- Habits tab: Your habits and Overall (both show only you) ---------- */
+const HOME=()=>ui.src==='habits'?'#habits':'#today';
+function schedOn(h,k){return k<=todayK()&&k>=(h.createdDay||k)&&counts(h,k)&&!pausedOn(h,k);}
+function habitCardRow(h){
+  const t=todayK(),s=streak(me,h),b=bestStreak(me,h);
+  const dots=[];let n=0;
+  for(let i=6;i>=0;i--){const k=addDays(t,-i);if(!schedOn(h,k))dots.push('<i class="o"></i>');else if(isDone(me,h,k)){n++;dots.push('<i class="on"></i>');}else dots.push('<i></i>');}
+  const txt=`${s} now · ${b} best${h.perWeek?' weeks':''}${pausedOn(h,t)?' · Paused':''}`;
+  return `<div class="habit hcard"><div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">${habitIcon(h)}<div style="min-width:0"><button class="name" data-go="habit/${h.id}">${esc(h.name)}</button><div class="tags"><span>${txt}</span></div></div></div><div class="d7" role="img" aria-label="Last 7 days, ${n} done">${dots.join('')}</div></div>`;
 }
-function countDone(h){let n=0,k=h.createdDay||todayK();const e=todayK();while(k<=e){if(counts(h,k)&&isDone(me,h,k))n++;k=addDays(k,1);}return n;}
+function habitsPane(hs){
+  const arch=Object.values(D.habits[me]||{}).filter(h=>h.archived);
+  return (hs.length?`<div class="card" style="padding:4px 16px">${hs.map(habitCardRow).join('')}</div>`:`<div class="card"><div class="small">No habits yet. Add one and it shows up here.</div></div>`)
+   +`<a class="pill" href="#add" id="addhabit2">Add a habit</a>`
+   +(arch.length?`<div class="card"><div class="label">Archived</div>${arch.map(h=>`<div class="habit"><div><div class="h2">${esc(h.name)}</div><div class="small">${streak(me,h)} day streak saved</div></div><button class="chip" data-act="unarch" data-id="${h.id}">Bring back</button></div>`).join('')}</div>`:'');
+}
+function overallPane(hs){
+  if(!hs.length)return `<div class="card"><div class="small">Add a habit and your month builds here.</div></div>`;
+  const t=todayK(),ms=t.slice(0,8)+'01',[y,m]=t.split('-').map(Number),nd=new Date(y,m,0).getDate();
+  let checkins=0,full=0;const cells=[];
+  for(let i=0;i<wd(ms);i++)cells.push('<i class="e"></i>');
+  for(let d=1;d<=nd;d++){
+    const k=ms.slice(0,8)+('0'+d).slice(-2);
+    if(k>t){cells.push(`<i class="f"><span>${d}</span></i>`);continue;}
+    let s=0,dn=0;for(const h of hs)if(schedOn(h,k)){s++;if(isDone(me,h,k))dn++;}
+    checkins+=dn;
+    let lv='n',lab=`${MON[m-1]} ${d}, no habits scheduled`;
+    if(s){const r=dn/s;lv=dn===0?'l0':r<=.25?'l1':r<=.5?'l2':dn<s?'l3':'l4';if(dn===s)full++;lab=`${MON[m-1]} ${d}, ${dn} of ${s} done`;}
+    cells.push(`<i class="${lv}${k===t?' today':''}" role="img" aria-label="${lab}"><span>${d}</span></i>`);
+  }
+  let top=null;for(const h of hs){const b=bestStreak(me,h);if(!top||b>top.b)top={b,h};}
+  const rows=hs.map(h=>{
+    let tot=0,dn=0,k=h.createdDay||t;
+    while(k<=t){if(schedOn(h,k)){tot++;if(isDone(me,h,k))dn++;}k=addDays(k,1);}
+    const sm=h.perWeek?`${dn} check-in${dn===1?'':'s'}`:`${dn} of ${tot} day${tot===1?'':'s'}`;
+    const bar=h.perWeek?'':`<div class="pbar"><i style="width:${tot?Math.round(dn/tot*100):0}%"></i></div>`;
+    return `<div class="orow"><div class="oh"><span class="h2" style="font-size:14px">${esc(h.name)}</span><span class="small">${sm}</span></div>${bar}</div>`;
+  }).join('');
+  return `<div class="stats3"><div class="stat"><b>${checkins}</b><span>check-ins this month</span></div><div class="stat"><b>${top.b}</b><span>longest streak</span><span class="sn">${esc(top.h.name)}</span></div><div class="stat"><b>${full}</b><span>days with every habit done</span></div></div>
+  <div class="card"><div class="label">${MON[m-1]}</div><div class="cal">${['M','T','W','T','F','S','S'].map(x=>`<span class="dow" aria-hidden="true">${x}</span>`).join('')}${cells.join('')}</div>
+  <div class="legend" aria-hidden="true">Fewer <i style="background:var(--line)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i> More</div></div>
+  <div class="card"><div class="label">Since you started each one</div>${rows}</div>`;
+}
+function viewHabits(){
+  const hs=myHabits(me),tab=ui.htab==='overall'?'overall':'habits';
+  const seg=`<div class="seg" role="tablist" aria-label="Habits views"><button role="tab" class="${tab==='habits'?'on':''}" aria-selected="${tab==='habits'}" data-act="htab" data-id="habits">Your habits</button><button role="tab" class="${tab==='overall'?'on':''}" aria-selected="${tab==='overall'}" data-act="htab" data-id="overall">Overall</button></div>`;
+  return topbar()+`<div class="body"><div class="h1">Habits</div>${seg}${tab==='habits'?habitsPane(hs):overallPane(hs)}</div>`+nav();
+}
 
 function houseLine(sign,rising){const s=signOf(sign),r=signOf(rising);if(!s||!r)return '';const h=bcHouse(s[0],r[0]);return h?`<div class="b3h">${bcOrd(h)} house</div>`:'';}
 function hasPlanets(bd){const c=birthChart(bd);return !!(c&&c.planets&&Object.keys(c.planets).length);}
@@ -1101,7 +1159,6 @@ function planetCell(n,c,rising){const s=c.planets[n];if(!s)return '';if(s.length
 function planetGrids(bd,b){const c=birthChart(bd);if(!c||!c.planets||!Object.keys(c.planets).length)return '';const g=a=>`<div class="b3 b3sep">${a.map(n=>planetCell(n,c,b.rising)).join('')}</div>`;return g(['Mercury','Venus','Mars'])+(ui.morePl?g(['Jupiter','Saturn','Uranus'])+g(['Neptune','Pluto']):'');}
 function viewMe(){
   const pr=D.prof[me]||{};const b=pr.big3||{};const bd=pr.birth||{};
-  const arch=Object.values(D.habits[me]||{}).filter(h=>h.archived);
   const b3=['sun','moon','rising'];
   const b3html=ui.b3edit
    ?`<div class="grid2" style="grid-template-columns:repeat(3,1fr)">${b3.map(k=>`<div class="field"><label for="b-${k}">${k[0].toUpperCase()+k.slice(1)}</label><input id="b-${k}" type="text" value="${esc(b[k]||'')}" placeholder="Sign" data-in="big-${k}"></div>`).join('')}</div><button class="link" data-act="b3edit" style="align-self:flex-start">Done</button>`
@@ -1119,7 +1176,6 @@ function viewMe(){
    <a class="mrow" href="old-app.html"><div><div class="h2">Photos</div><div class="small">Your Round 2 photos live in the original Spell Check.</div></div><span class="link" aria-hidden="true">Open</span></a>
    <a class="mrow" href="#connections"><div><div class="h2">Connections</div><div class="small">Oura, Strava and Apple Health.</div></div><span class="link" aria-hidden="true">Open</span></a>
   </div>
-  ${arch.length?`<div class="card"><div class="label">Archived</div>${arch.map(h=>`<div class="habit"><div><div class="h2">${esc(h.name)}</div><div class="small">${streak(me,h)} day streak saved</div></div><button class="chip" data-act="unarch" data-id="${h.id}">Bring back</button></div>`).join('')}</div>`:''}
   <div class="small">Signed in as ${esc(me)}. <button class="link quiet" data-act="switch" style="display:inline-flex">Not you?</button></div>
   <div class="small">Your Round 2 habits, journal, and photos are still there. <a class="link" href="old-app.html" style="min-height:44px">Open Round 2</a></div></div>`+nav();
 }
@@ -1147,8 +1203,10 @@ function viewSetupGateWrap(){return viewSetup();}
 
 /* ---------- router ---------- */
 function route(){
-  const h=(location.hash||'#today').slice(1);const [r,a]=h.split('/');
+  const h=(location.hash||'#today').slice(1);let [r,a]=h.split('/');
+  if(r==='journey'){r='habits';try{history.replaceState(null,'','#habits');}catch(x){}}
   const prev=ui.route;ui.route=r||'today';ui.arg=a||null;
+  if(ui.route==='today'||ui.route==='habits')ui.src=ui.route;
   if(prev!==ui.route){ui.confirm=false;if(ui.route!=='add'&&ui.route!=='edit'&&ui.route!=='setup')ui.draft=null;if(ui.route==='edit'&&ui.draft&&ui.draft._id!==a)ui.draft=null;}
   ui.enter=prev!==ui.route;render();window.scrollTo(0,0);
 }
@@ -1184,7 +1242,7 @@ function render(){
       case 'sky':html=viewSky();break;
       case 'coven':html=viewCoven();break;
       case 'standings':html=viewStandings();break;
-      case 'journey':html=viewJourney();break;
+      case 'habits':html=viewHabits();break;
       case 'me':html=viewMe();break;
       case 'connections':html=viewConnections();break;
       default:html=viewToday();
@@ -1482,6 +1540,7 @@ document.addEventListener('click',e=>{
     case 'tog':{const f=findHabit(id);if(!f)return;ui.popId=id;setTimeout(()=>{ui.popId=null;},1300);const w=todayProgress();setVal(id,t,isDone(me,f.h,t)?0:1);const n=todayProgress();if(n.n&&n.d===n.n&&!(w.n&&w.d===w.n)){ui.burst=Date.now();haptic('done');}break;}
     case 'add':{const f=findHabit(id);ui.popId=id;setTimeout(()=>{ui.popId=null;},1300);const w=todayProgress();setVal(id,t,Math.min(f.h.target,val(me,id,t)+f.h.step));const n=todayProgress();if(n.n&&n.d===n.n&&!(w.n&&w.d===w.n)){ui.burst=Date.now();haptic('done');}break;}
     case 'showopen':Show.open(id);return;
+    case 'htab':ui.htab=id==='overall'?'overall':'habits';break;
     case 'notifon':enableNotifs(false);return;
     case 'b3edit':ui.b3edit=!ui.b3edit;break;
     case 'chartclear':ui.chart=null;break;
@@ -1522,7 +1581,7 @@ document.addEventListener('click',e=>{
       if(d.type==='number'){o.target=Math.max(1,+d.target||1);o.unit=d.unit||'';o.step=Math.max(1,+d.step||1);}
       let h;if(d.group){o.shared=true;}
       h=newHabit(o);if(d.group){h.groupId=h.id;h.groupOwner=me;save('habits');}
-      ui.draft=null;location.hash='#today';return;}
+      ui.draft=null;location.hash=HOME();return;}
     case 'hshare':{const f=findHabit(id);f.h.shared=b.dataset.v==='1';save('habits');break;}
     case 'pause':{const f=findHabit(id);f.h.paused=!f.h.paused;f.h.pausedAt=f.h.paused?t:null;save('habits');break;}
     case 'saveedit':{const f=findHabit(id);const d=ui.draft;f.h.name=(d.name||f.h.name).trim();if(f.h.type==='number'){f.h.target=Math.max(1,+d.target||f.h.target);f.h.step=d.step;}if(f.h.perWeek)f.h.perWeek=Math.max(1,Math.min(7,+d.perWeek||f.h.perWeek));else f.h.days=d.days.slice();save('habits');ui.draft=null;location.hash='#habit/'+id;return;}
@@ -1530,7 +1589,7 @@ document.addEventListener('click',e=>{
     case 'stepdn':case 'stepup':{const st=[1,2,5,8,10,25,50,100];let i=st.indexOf(+ui.draft.step);if(i<0)i=2;i=Math.max(0,Math.min(st.length-1,i+(a==='stepup'?1:-1)));ui.draft.step=st[i];break;}
     case 'askarch':ui.confirm=true;break;
     case 'keep':ui.confirm=false;break;
-    case 'archive':{const f=findHabit(id);f.h.archived=true;save('habits');ui.confirm=false;ui.draft=null;location.hash='#today';return;}
+    case 'archive':{const f=findHabit(id);f.h.archived=true;save('habits');ui.confirm=false;ui.draft=null;location.hash=HOME();return;}
     case 'unarch':{const f=findHabit(id);f.h.archived=false;save('habits');break;}
     case 'vote':{const wk=votingWeek(t);(D.vote[me]||(D.vote[me]={}))[wk]=id;save('vote');ui.voteOpen=false;break;}
     case 'reopen':ui.voteOpen=true;break;
