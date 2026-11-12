@@ -338,6 +338,15 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .loc-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 2px;min-height:44px;cursor:pointer;font:inherit;color:inherit;touch-action:manipulation}
 .loc-item-text{display:flex;flex-direction:column;min-width:0}.loc-name{font-weight:500;font-size:14px}.loc-meta{font-size:12px;color:var(--sec)}
 .loc-type{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px}.loc-type input{flex:1;min-width:0}
+.rxrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rxrow .sayit{margin-left:auto}
+.cmts{display:flex;flex-direction:column;gap:6px;border-left:2px solid var(--line);padding-left:10px}
+.cmt{font-size:14px;line-height:1.4;overflow-wrap:anywhere}.cmt b{font-weight:600}
+.cmt-t{color:var(--sec);font-size:12px;margin-left:6px}
+.cmt-del{background:none;border:0;padding:0 0 0 8px;min-height:32px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sec);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px;cursor:pointer;touch-action:manipulation}
+.cmt-box{display:flex;gap:10px;align-items:center}.cmt-box input{flex:1;min-width:0}
+.feed.pulse{animation:fpulse 2.4s ease-out}@keyframes fpulse{0%,40%{background:var(--ptint)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.feed.pulse{animation:none;background:var(--ptint)}}
 @media (prefers-reduced-motion:no-preference){#picsheet .ps{animation:psup .22s ease-out}@keyframes psup{from{transform:translate(-50%,24px);opacity:0}to{transform:translate(-50%,0);opacity:1}}}
 </style>
 </head>
@@ -444,8 +453,8 @@ const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slic
 let me=null;
 let autoDetected=false;
 try{me=localStorage.getItem('h3-whoami');if(!me){const old=localStorage.getItem('recal-whoami');if(old&&PEOPLE.includes(old)){me=old;autoDetected=true;localStorage.setItem('h3-whoami',old);}}}catch(e){}
-const D={habits:{},log:{},prof:{},vote:{},rx:{},qa:{},photo:{},cur:{},shr:{},pic:{}}; // each: {Person: data}
-PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};D.qa[p]={};D.photo[p]={};D.cur[p]={};D.shr[p]=[];D.pic[p]={};});
+const D={habits:{},log:{},prof:{},vote:{},rx:{},qa:{},photo:{},cur:{},shr:{},pic:{},cmt:{}}; // each: {Person: data}
+PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};D.qa[p]={};D.photo[p]={};D.cur[p]={};D.shr[p]=[];D.pic[p]={};D.cmt[p]={};});
 let loaded=false;
 const ui={picF:'all',curEdit:{},curQ:{},curRes:{},hist:{},shr:{url:'',label:'',err:''},shrDel:null,brewOpen:false,route:'today',arg:null,addPreset:null,voteOpen:true,standMode:'week',sky:null,setupStep:1,stepEdit:false,confirm:false,draft:null};
 
@@ -463,7 +472,7 @@ function save(kind){
   db.ref(keyFor(kind,me)).set(JSON.stringify(v)).then(()=>{pending--;if(!pending)setSync('Saved');setTimeout(()=>{if(!pending)setSync('');},1500);}).catch(e=>{pending--;setSync('Not saved. Check your connection.');console.error(e);});
 }
 function startSync(){
-  ['habits','log','prof','vote','rx','qa','photo','cur','shr','pic'].forEach(kind=>PEOPLE.forEach(p=>{
+  ['habits','log','prof','vote','rx','qa','photo','cur','shr','pic','cmt'].forEach(kind=>PEOPLE.forEach(p=>{
     const c=cacheGet(kind,p);if(c)D[kind][p]=c;
     if(!db)return;
     db.ref(keyFor(kind,p)).on('value',s=>{
@@ -471,7 +480,7 @@ function startSync(){
       const raw=s.val();let v=null;
       try{v=raw?(typeof raw==='string'?JSON.parse(raw):raw):null;}catch(e){}
       if(v){D[kind][p]=v;cacheSet(kind,p,v);}
-      loaded=true;render();
+      loaded=true;renderSoft();
     },e=>console.error(e));
   }));
 }
@@ -1102,7 +1111,7 @@ function feedItem(it){
     html=it.text.includes('\u0001')?esc(it.text).replace('\u0001',nm):nm+esc(it.text);}
   const joinable=it.join&&it.join.groupOwner!==me&&!myHabits(me).some(h=>h.groupId===it.join.groupId);
   const right=it.join?(joinable?`<button class="chip" data-act="join" data-id="${it.join.id}">Join</button>`:`<span class="done">${it.join.groupOwner===me?'Yours':'✓ In'}</span>`):`<div class="rx">${GL.map(g=>{const on=((D.rx[me]||{})[it.id]||{})[g.k];const n=rxCount(it.id,g.k);return `<button class="${on?'on':''}" aria-pressed="${!!on}" aria-label="${g.l}" data-act="rx" data-id="${esc(it.id)}" data-k="${g.k}">${g.g}${n?' '+n:''}</button>`;}).join('')}</div>`;
-  return `<div class="feed"><div>${html}${it.bonus?`<div class="bonus">${esc(it.bonus)}</div>`:''}</div><div style="display:flex">${right}</div></div>`;
+  return `<div class="feed" data-key="${esc(it.id)}"><div>${html}${it.bonus?`<div class="bonus">${esc(it.bonus)}</div>`:''}</div><div class="rxrow">${right}${cmtLink(it.id,PEOPLE.includes(it.who)?it.who:(it.join&&it.join.groupOwner)||'')}</div>${cmtBlock(it.id)}</div>`;
 }
 function groupsList(){
   const g={};PEOPLE.forEach(p=>myHabits(p).forEach(h=>{if(h.groupId&&h.shared){(g[h.groupId]=g[h.groupId]||[]).push({p,h});}}));
@@ -1325,6 +1334,38 @@ function picSet(id,data){
 function picFill(root){(root||document).querySelectorAll('img[data-pic]:not([src])').forEach(im=>{const sp=im.dataset.pic.split('|');const k=sp[0]+':'+sp[1];if(PD.has(k)){im.src=PD.get(k);return;}picGet(sp[0],sp[1]).then(d=>{if(d&&im.isConnected&&!im.getAttribute('src'))im.src=d;});});}
 function picList(f){const out=[];for(const p of PEOPLE){if(f==='mine'&&p!==me)continue;const ix=D.pic[p]||{};for(const id in ix){const m=ix[id];if(!m||(!m.sh&&p!==me))continue;out.push({p,id,m});}}out.sort((a,b)=>(b.m.at||0)-(a.m.at||0));return out;}
 function monthName(k){try{return parse(k+'-01').toLocaleDateString('en-US',{month:'long',year:'numeric'});}catch(e){return k;}}
+/* ---------- comments: on anything with reactions. Each person writes only her own record h3-cmt-<Person>: {feedId:[{id,t,at,o}]}. o is who the post is about, for the push. ---------- */
+const CMT_MAX=280;
+function cmtsFor(id){const out=[];for(const p of PEOPLE){const l=(D.cmt[p]||{})[id];if(Array.isArray(l))l.forEach(c=>{if(c&&c.id&&c.t)out.push({p,id:c.id,t:String(c.t),at:+c.at||0});});}return out.sort((a,b)=>a.at-b.at);}
+function agoLabel(at){const m=Math.floor((Date.now()-at)/60000);if(m<1)return 'now';if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';const d=Math.floor(h/24);if(d===1)return 'Yesterday';if(d<7)return d+'d';try{return new Date(at).toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){return '';}}
+function cmtLink(id,owner){if(!me||(ui.cmt&&ui.cmt.id===id))return '';return `<button type="button" class="link sayit" data-act="cmtopen" data-id="${esc(id)}" data-o="${esc(owner||'')}">Say something</button>`;}
+function cmtBlock(id){
+  const l=cmtsFor(id);const open=ui.cmt&&ui.cmt.id===id;
+  const list=l.length?`<div class="cmts">${l.map(c=>`<div class="cmt"><b>${esc(c.p)}</b> ${esc(c.t)}<span class="cmt-t">${esc(agoLabel(c.at))}</span>${c.p===me?`<button type="button" class="cmt-del" data-act="cmtdel" data-id="${esc(id)}" data-c="${esc(c.id)}" aria-label="Delete your comment">Delete</button>`:''}</div>`).join('')}</div>`:'';
+  const box=open?`<div class="cmt-box"><label class="vh" for="cmt-in">Say something nice, or at least funny</label><input id="cmt-in" class="cmt-input" type="text" maxlength="${CMT_MAX}" autocomplete="off" enterkeyhint="send" placeholder="Say something nice, or at least funny" value="${esc(ui.cmtText||'')}" data-in="cmt"><button type="button" class="link" data-act="cmtpost">Post</button></div><button type="button" class="link" data-act="cmtcancel" style="align-self:flex-start">Cancel</button>`:'';
+  return list+box;
+}
+function cmtPost(){
+  const c=ui.cmt;if(!c||!me)return;const inp=document.getElementById('cmt-in');const t=String(inp?inp.value:ui.cmtText||'').trim().slice(0,CMT_MAX);
+  if(inp)inp.blur();ui.cmt=null;ui.cmtText='';
+  if(t){const mine=D.cmt[me]||(D.cmt[me]={});const e={id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),t,at:Date.now()};if(PEOPLE.includes(c.o))e.o=c.o;(mine[c.id]||(mine[c.id]=[])).push(e);save('cmt');}
+  render();
+}
+function renderSoft(){const a=document.activeElement;if(a&&a.classList&&a.classList.contains('cmt-input')){ui.dirty=true;return;}render();}
+document.addEventListener('focusout',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('cmt-input'))setTimeout(()=>{const a=document.activeElement;if(ui.dirty&&!(a&&a.classList&&a.classList.contains('cmt-input'))&&!ui.picking){ui.dirty=false;render();}},250);});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='cmt-in'){e.preventDefault();cmtPost();}});
+/* A push about one post opens it: a photo opens its viewer, anything else scrolls to it in The Tea. */
+function openPostFromPush(key){
+  key=String(key||'');
+  if(key.startsWith('pic:')){const sp=key.split(':');if(PEOPLE.includes(sp[1])&&sp[2]){location.hash='#photo/'+encodeURIComponent(sp[1]+'.'+sp.slice(2).join(':'));return;}}
+  if(location.hash!=='#coven')location.hash='#coven';else route();
+  if(!key)return;
+  let n=0;const tryFind=()=>{let el=null;try{el=document.querySelector('.feed[data-key="'+CSS.escape(key)+'"]');}catch(e){}
+    if(el){el.scrollIntoView({block:'center'});el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),2400);return;}
+    if(++n<12)setTimeout(tryFind,250);};
+  setTimeout(tryFind,150);
+}
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{const d=e.data||{};if(d.type==='open-post')openPostFromPush(d.key||'');});
 function rxHtml(id){return `<div class="rx">${GL.map(g=>{const on=((D.rx[me]||{})[id]||{})[g.k];const n=rxCount(id,g.k);return `<button class="${on?'on':''}" aria-pressed="${!!on}" aria-label="${g.l}" data-act="rx" data-id="${esc(id)}" data-k="${g.k}">${g.g}${n?' '+n:''}</button>`;}).join('')}</div>`;}
 function viewPhotos(){
   const f=ui.picF==='mine'?'mine':'all';const list=picList(f);const months={};
@@ -1346,7 +1387,7 @@ function viewPhoto(arg){
   <div><div class="h2">${esc(p)}</div><div class="small">${esc(fmtShort(m.day))}</div></div>
   ${m.cap?`<div style="font-size:15px;line-height:1.45;overflow-wrap:anywhere">${esc(m.cap)}</div>`:''}
   ${Loc.row(m.loc||'','viewer',own)}
-  ${rxHtml(eid)}
+  <div class="rxrow">${rxHtml(eid)}${cmtLink(eid,p)}</div>${cmtBlock(eid)}
   ${own?`<button class="link" data-act="picdel" data-id="${esc(id)}" style="align-self:flex-start">${ui.picDel===id?'Tap again to delete':'Delete'}</button>`:''}
   </div>`+nav();
 }
@@ -1606,6 +1647,7 @@ function route(){
   if(ui.route!=='sky'){if(prev==='sky'&&ui.skyBack)ui.sky=null;ui.skyBack=null;}
   if(ui.route==='today'||ui.route==='habits')ui.src=ui.route;
   if(prev!==ui.route){ui.confirm=false;if(ui.route!=='add'&&ui.route!=='edit'&&ui.route!=='setup')ui.draft=null;if(ui.route==='edit'&&ui.draft&&ui.draft._id!==a)ui.draft=null;}
+  if(prev!==ui.route||ui.lastHash!==prevHash){ui.cmt=null;ui.cmtText='';}
   ui.enter=prev!==ui.route;render();window.scrollTo(0,0);
 }
 
@@ -2031,6 +2073,10 @@ document.addEventListener('click',e=>{
     case 'locuse':{if(Loc.st)Loc.choose(Loc.st.typed);return;}
     case 'loccancel':Loc.close();return;
     case 'locremove':if(b.dataset.ctx==='sheet'){if(PicSheet.st){PicSheet.st.loc='';PicSheet.paint();}return;}else{const m=(D.pic[me]||{})[(ui.arg||'').slice((ui.arg||'').indexOf('.')+1)];if(m){delete m.loc;save('pic');}break;}
+    case 'cmtopen':ui.cmt={id,o:b.dataset.o||''};ui.cmtText='';render();{const el=document.getElementById('cmt-in');if(el){el.focus({preventScroll:true});const c=el.closest('.cmt-box');const nx=c&&c.nextElementSibling;(nx||el).scrollIntoView({block:'center'});}}return;
+    case 'cmtpost':cmtPost();return;
+    case 'cmtcancel':ui.cmt=null;ui.cmtText='';{const el=document.getElementById('cmt-in');if(el)el.blur();}render();return;
+    case 'cmtdel':{const mine=D.cmt[me]||{};const l=mine[id];if(Array.isArray(l)){mine[id]=l.filter(c=>c&&c.id!==b.dataset.c);if(!mine[id].length)delete mine[id];save('cmt');}break;}
     case 'pscancel':PicSheet.close();return;
     case 'pssave':PicSheet.save();return;
     case 'skywho':ui.sky=b.dataset.p;break;
@@ -2052,6 +2098,7 @@ document.addEventListener('input',e=>{
   if(i.startsWith('cur-')){const f=i.slice(4),row=CUR_F.find(x=>x[0]===f);if(!row)return;ui.curQ[f]=v;clearTimeout(window.__ct);window.__ct=setTimeout(async()=>{const q=(ui.curQ[f]||'').trim();if(!q){ui.curRes[f]=null;curPaint(f);return;}ui.curRes[f]='loading';curPaint(f);const r=await mediaSearch(row[2],q);if((ui.curQ[f]||'').trim()!==q)return;ui.curRes[f]=r;curPaint(f);},400);curPaint(f);return;}
   if(i==='shr-url'){ui.shr.url=v;ui.shr.err='';return;}
   if(i==='shr-label'){ui.shr.label=v;return;}
+  if(i==='cmt'){ui.cmtText=v;return;}
   if(i==='loc-typed'){if(Loc.st)Loc.st.typed=v;return;}
   if(i==='ps-cap'){if(PicSheet.st)PicSheet.st.cap=v;return;}
   if(i==='brew')return;
@@ -2073,7 +2120,7 @@ document.addEventListener('change',async e=>{
   const f=e.target.files&&e.target.files[0];pickDone();if(!f)return;
   try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};ui.photoErr='';save('photo');render();}catch(x){console.error(x);ui.photoErr='That photo would not load. Try a different one, or a screenshot of it.';render();}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&Loc.st){Loc.close();return;}if(e.key==='Escape'&&PicSheet.st){PicSheet.close();return;}if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.cmt){ui.cmt=null;ui.cmtText='';render();return;}if(e.key==='Escape'&&Loc.st){Loc.close();return;}if(e.key==='Escape'&&PicSheet.st){PicSheet.close();return;}if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
 window.addEventListener('hashchange',route);
 let synced=false;function startSyncOnce(){if(synced)return;synced=true;startSync();importFromRound2();}
 function importFromRound2(){ // carry over what we can so nobody has to redo anything
@@ -2093,6 +2140,7 @@ function importFromRound2(){ // carry over what we can so nobody has to redo any
 if(me){startSyncOnce();try{if('Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('h3-notif-on:'+me)!=='1')setTimeout(()=>enableNotifs(true),1500);}catch(e){}}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW',e)));}
 route();
+try{const q=new URLSearchParams(location.search);if(q.get('push')==='tea'&&me){const pk=q.get('post')||'';history.replaceState(null,'',location.pathname+'#coven');setTimeout(()=>openPostFromPush(pk),300);}}catch(e){}
 // midnight rollover and tab refocus
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
 setInterval(()=>{if(!document.hidden&&!(document.activeElement&&document.activeElement.tagName==='INPUT'))render();},60000);

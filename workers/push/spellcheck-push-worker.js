@@ -500,6 +500,8 @@ export default {
       (round2 ? run(env, now).catch(e => console.error('run failed', e && e.stack || e)) : Promise.resolve(resetRun()))
         .then(() => habitsRun(env, new Date()))
         .catch(e => console.error('habits run failed', e && e.stack || e))
+        .then(() => h3CommentsRun(env, new Date()))
+        .catch(e => console.error('h3 comments run failed', e && e.stack || e))
     );
   },
   async fetch() {
@@ -1697,6 +1699,85 @@ async function socialEvents(st, date, now, prefsOf) {
   if (outbox.length > room) { console.error('h3 social: too many pushes for one run, sending', Math.max(0, room), 'of', outbox.length); outbox.length = Math.max(0, room); }
   const snapshot = before;
   return { outbox, changed: JSON.stringify(st.soc) !== before, rollback: () => { st.soc = snapshot === 'null' ? undefined : JSON.parse(snapshot); } };
+}
+
+// ---------- new habit tracker comments (index.html, recalData/h3-cmt-<Person>) ----------
+// Each person writes her own record: {feedId: [{id, t, at, o?}]}. at is milliseconds, o is who the post is about.
+// A new comment goes to the person the post is about and to anyone who commented on it before. One push per
+// person per run (the Round 2 wording in composeComments). Runs every minute, under the Reactions and comments switch.
+// State is claimed (saved) BEFORE sending, so a later crash can never make a comment push repeat.
+const H3C_STATE_KEY = 'h3-cmt-push-state';
+export function h3Noun(eventKey) {
+  const t = String(eventKey).split(':')[0];
+  return t === 'pic' ? 'photo' : t === 'f' ? 'check-in' : t === 'sh' ? 'shared read' : t === 'g' ? 'group habit'
+    : t === 'qa' ? 'brew answers' : (t === 'vote' || t === 'novote') ? 'coven vote' : 'post';
+}
+export function h3Owner(eventKey, o) {
+  const parts = String(eventKey).split(':');
+  if (['pic', 'f', 'sh'].includes(parts[0]) && PEOPLE.includes(parts[1])) return parts[1];
+  if (parts[0] === 'sp') return PEOPLE.find(x => String(parts[1] || '').startsWith(x)) || null;
+  if (parts[0] === 'qa' || parts[0] === 'vote' || parts[0] === 'novote') return null;
+  return PEOPLE.includes(o) ? o : null;
+}
+export async function h3CommentsRun(env, now, opts = {}) {
+  if (opts.fresh) resetRun(); // tests only
+  const sent = [];
+  await guard('h3 comments', async () => {
+    const st = (await readKey(H3C_STATE_KEY)) || {};
+    const live = new Map();
+    for (const author of PEOPLE) {
+      const rec = (await readKey('h3-cmt-' + author)) || {};
+      if (!rec || typeof rec !== 'object') continue;
+      for (const [eventKey, list] of Object.entries(rec)) {
+        if (!Array.isArray(list)) continue;
+        for (const c of list) {
+          if (!c || !c.id || !c.t) continue;
+          const atMs = typeof c.at === 'number' ? c.at : (Date.parse(c.at) || 0);
+          live.set(author + '|' + eventKey + '|' + c.id, { author, eventKey, t: String(c.t), at: atMs, o: c.o });
+        }
+      }
+    }
+    if (!st.init) {
+      await writeKey(H3C_STATE_KEY, { init: true, seen: Array.from(live.keys()) }, true);
+      console.log('h3 comments baseline: marked', live.size, 'existing comments as seen.');
+      return;
+    }
+    const seen = new Set(st.seen || []);
+    const before = seen.size;
+    const byPerson = {};
+    for (const [uid, c] of live) {
+      if (seen.has(uid)) continue;
+      seen.add(uid);
+      if (now.getTime() - c.at > 6 * 3600 * 1000) continue; // old news
+      const owner = h3Owner(c.eventKey, c.o);
+      const recipients = new Set();
+      if (owner && owner !== c.author) recipients.add(owner);
+      for (const o of live.values()) if (o.eventKey === c.eventKey && o.author !== c.author && o.at < c.at) recipients.add(o.author);
+      for (const r of recipients) (byPerson[r] = byPerson[r] || []).push({ author: c.author, eventKey: c.eventKey, t: c.t, owner, noun: h3Noun(c.eventKey), role: r === owner ? 'owner' : 'also' });
+    }
+    const kept = Array.from(seen).filter(u => live.has(u));
+    const changed = seen.size !== before || kept.length !== seen.size;
+    const outbox = [];
+    for (const [person, items] of Object.entries(byPerson)) {
+      const prefs = Object.assign({ reactions: true }, (await readKey('recal-notif-prefs:' + person)) || {});
+      if (!prefs.reactions) continue;
+      const tok = await readRaw('recal-fcm-token:' + person);
+      if (!tok) continue;
+      outbox.push({ person, tok, msg: composeComments(items) });
+    }
+    // Claiming and sending must fit in this run's call budget, or the claimed pushes would be lost.
+    // If they do not fit, claim nothing: the next minute starts with a fresh budget and sends them then.
+    const need = 1 + (outbox.length ? 1 + outbox.length : 0);
+    if (outbox.length && _calls + need > CALL_LIMIT) { console.log('h3 comments: busy minute, sending', outbox.length, 'next run'); return; }
+    if (changed) await writeKey(H3C_STATE_KEY, { init: true, seen: kept }, true); // claim before sending
+    if (!outbox.length) return;
+    const token = await getAccessToken(env);
+    for (const { person, tok, msg } of outbox) {
+      try { await sendPush(env, token, tok, msg); sent.push({ owner: person, job: 'h3comments', ...msg }); }
+      catch (e) { console.error('h3 comment send failed for', person, e && e.message); }
+    }
+  });
+  return { sent };
 }
 
 // ---------- Google auth + FCM (data-only, same as the morning push) ----------
