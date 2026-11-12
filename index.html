@@ -313,6 +313,23 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .shrrow{display:flex;gap:10px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
 .shrrow .shr{border-bottom:0;flex:1}
 .hist{display:flex;flex-direction:column;gap:6px;font-size:14px}
+
+/* Photos */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.pcell{position:relative;display:block;aspect-ratio:1;background:var(--soft);overflow:hidden}
+.pcell img{width:100%;height:100%;object-fit:cover;display:block}
+.pcell .who{position:absolute;left:5px;bottom:5px;font-size:10px;font-weight:600;background:rgba(255,255,255,.88);color:#1A1A1A;padding:2px 6px;border-radius:8px}
+.feedpic{display:block;width:100%;max-height:420px;object-fit:cover;margin-top:8px;background:var(--soft);min-height:160px}
+.pview{display:block;width:100%;max-height:70vh;object-fit:contain;background:var(--soft);min-height:200px}
+#picsheet{position:fixed;inset:0;z-index:60}
+#picsheet[hidden]{display:none}
+#picsheet .scrim{position:absolute;inset:0;border:0;background:rgba(20,18,26,.5);width:100%}
+#picsheet .ps{position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;background:var(--bg);border-radius:18px 18px 0 0;padding:16px 20px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;max-height:92vh;overflow:auto}
+#picsheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line2);align-self:center}
+#picsheet .two{display:flex;gap:8px}
+#picsheet .two label{flex:1;min-height:48px;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-align:center}
+#picsheet .prev{display:block;width:100%;max-height:300px;object-fit:contain;background:var(--soft)}
+@media (prefers-reduced-motion:no-preference){#picsheet .ps{animation:psup .22s ease-out}@keyframes psup{from{transform:translate(-50%,24px);opacity:0}to{transform:translate(-50%,0);opacity:1}}}
 </style>
 </head>
 <body>
@@ -416,10 +433,10 @@ const uid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slic
 let me=null;
 let autoDetected=false;
 try{me=localStorage.getItem('h3-whoami');if(!me){const old=localStorage.getItem('recal-whoami');if(old&&PEOPLE.includes(old)){me=old;autoDetected=true;localStorage.setItem('h3-whoami',old);}}}catch(e){}
-const D={habits:{},log:{},prof:{},vote:{},rx:{},qa:{},photo:{},cur:{},shr:{}}; // each: {Person: data}
-PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};D.qa[p]={};D.photo[p]={};D.cur[p]={};D.shr[p]=[];});
+const D={habits:{},log:{},prof:{},vote:{},rx:{},qa:{},photo:{},cur:{},shr:{},pic:{}}; // each: {Person: data}
+PEOPLE.forEach(p=>{D.habits[p]={};D.log[p]={};D.prof[p]={};D.vote[p]={};D.rx[p]={};D.qa[p]={};D.photo[p]={};D.cur[p]={};D.shr[p]=[];D.pic[p]={};});
 let loaded=false;
-const ui={curEdit:{},curQ:{},curRes:{},hist:{},shr:{url:'',label:'',err:''},shrDel:null,brewOpen:false,route:'today',arg:null,addPreset:null,voteOpen:true,standMode:'week',sky:null,setupStep:1,stepEdit:false,confirm:false,draft:null};
+const ui={picF:'all',curEdit:{},curQ:{},curRes:{},hist:{},shr:{url:'',label:'',err:''},shrDel:null,brewOpen:false,route:'today',arg:null,addPreset:null,voteOpen:true,standMode:'week',sky:null,setupStep:1,stepEdit:false,confirm:false,draft:null};
 
 function keyFor(kind,p){return 'recalData/h3-'+kind+'-'+p;}
 function cacheGet(kind,p){try{const v=localStorage.getItem('h3c-'+kind+'-'+p);return v?JSON.parse(v):null;}catch(e){return null;}}
@@ -435,7 +452,7 @@ function save(kind){
   db.ref(keyFor(kind,me)).set(JSON.stringify(v)).then(()=>{pending--;if(!pending)setSync('Saved');setTimeout(()=>{if(!pending)setSync('');},1500);}).catch(e=>{pending--;setSync('Not saved. Check your connection.');console.error(e);});
 }
 function startSync(){
-  ['habits','log','prof','vote','rx','qa','photo','cur','shr'].forEach(kind=>PEOPLE.forEach(p=>{
+  ['habits','log','prof','vote','rx','qa','photo','cur','shr','pic'].forEach(kind=>PEOPLE.forEach(p=>{
     const c=cacheGet(kind,p);if(c)D[kind][p]=c;
     if(!db)return;
     db.ref(keyFor(kind,p)).on('value',s=>{
@@ -702,7 +719,7 @@ function habitIcon(h,go){return iconEl(iconId(h),go);}
 /* ---------- render ---------- */
 function nav(){
   const t=ui.route;const on=(...r)=>r.includes(t)?' class="on"':'';
-  return `<nav><a href="#today"${on('today','sky',...(ui.src==='habits'?[]:['habit','edit','add']))}>Today</a><a href="#coven"${on('coven','standings','person')}>Coven</a><a href="#habits"${on('habits',...(ui.src==='habits'?['habit','edit','add']:[]))}>Habits</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
+  return `<nav><a href="#today"${on('today','sky',...(ui.src==='habits'?[]:['habit','edit','add']))}>Today</a><a href="#coven"${on('coven','standings','person','photos','photo')}>Coven</a><a href="#habits"${on('habits',...(ui.src==='habits'?['habit','edit','add']:[]))}>Habits</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
 }
 function topbar(){return `<div class="top"><div class="brand">Spell Check</div><a class="avatar" href="#me" aria-label="${esc(me)}" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(me)}</a></div><div class="wipnote" role="status"><b>In progress.</b> We are still polishing this one. Round 2 is safe and still here: <a href="old-app.html">open Round 2</a>.</div>`;}
 function sub(back,right){return `<div class="top"><a class="link" href="${back[0]}">${back[1]}</a>${right||''}</div>`;}
@@ -731,7 +748,7 @@ function habitRow(h){
     ctl=`<div style="display:flex;gap:8px;align-items:center"><button class="step" aria-label="Remove ${h.step} ${esc(h.unit)}" data-act="sub" data-id="${h.id}">−</button>`+(done?`<span class="done">Done</span>`:`<button class="step" aria-label="Add ${h.step} ${esc(h.unit)}" data-act="add" data-id="${h.id}">+${h.step}</button>`)+`</div>`;
   } else ctl=`<button class="check${done?' on':''}${done&&ui.popId===h.id?' pop':''}" aria-pressed="${done}" aria-label="${esc(h.name)}, mark done" data-act="tog" data-id="${h.id}">${done?CHECK:''}</button>`;
   const bar=h.type==='number'?`<div class="bar6"><div style="width:${Math.min(100,Math.round(v/h.target*100))}%"></div></div>`:'';
-  return `<div><div class="habit" style="border-bottom:0"><div style="display:flex;align-items:center;gap:12px;min-width:0">${habitIcon(h,ui.popId===h.id)}<div style="min-width:0"><button class="name" data-go="habit/${h.id}">${esc(h.name)}</button><div class="tags"><span>${line}</span>${tag}</div>${h.preset==='show'&&!paused?`<button class="link showlink" data-act="showopen" data-id="${h.id}">Take the stage</button>`:''}</div></div>${ctl}</div>${bar}</div>`;
+  return `<div><div class="habit" style="border-bottom:0"><div style="display:flex;align-items:center;gap:12px;min-width:0">${habitIcon(h,ui.popId===h.id)}<div style="min-width:0"><button class="name" data-go="habit/${h.id}">${esc(h.name)}</button><div class="tags"><span>${line}</span>${tag}</div>${h.preset==='show'&&!paused?`<button class="link showlink" data-act="showopen" data-id="${h.id}">Take the stage</button>`:''}${h.preset==='ootd'&&!paused&&!rest?(picToday(h.id)?'<div class="small">Photo added</div>':`<button class="link showlink" data-act="picadd" data-id="${h.id}">Add photo</button>`):''}</div></div>${ctl}</div>${bar}</div>`;
 }
 
 function birthHintOff(){try{return localStorage.getItem('h3-birthhint:'+me)==='1';}catch(e){return false;}}
@@ -1046,6 +1063,8 @@ function buildFeed(){
   }
   for(const p of PEOPLE){for(const s of shrOf(p)){const k=s.at?dkey(new Date(s.at)):'';if(!k||k<addDays(t,-13))continue;
     items.push({id:'sh:'+p+':'+s.id,at:k+'s',who:p,body:`<a href="${p===me?'#me':'#person/'+p}" style="color:inherit;text-decoration:none"><b>${esc(p)}</b></a> shared a read.${shrLink(s)}`});}}
+  for(const p of PEOPLE){const ix=D.pic[p]||{};for(const id in ix){const m=ix[id];if(!m||!m.sh||!m.day||m.day<addDays(t,-13))continue;
+    items.push({id:'pic:'+p+':'+id,at:m.day+'p',who:p,body:`<a href="${p===me?'#me':'#person/'+p}" style="color:inherit;text-decoration:none"><b>${esc(p)}</b></a> added a photo.<a href="#photo/${encodeURIComponent(p+'.'+id)}"><img class="feedpic" data-pic="${esc(p)}|${esc(id)}" alt="${m.cap?esc(m.cap):'Photo from '+esc(p)}"></a>${m.cap?`<div style="margin-top:6px;overflow-wrap:anywhere">${esc(m.cap)}</div>`:''}`});}}
   items.sort((a,b)=>b.at<a.at?-1:1);
   return items.slice(0,25);
 }
@@ -1087,7 +1106,7 @@ function viewCoven(){
   const gl=groupsList();
   const feed=buildFeed();
   return topbar()+`<div class="body">
-  <div class="seg"><button class="on">The Tea</button><button data-go="standings">Standings</button></div>
+  <div class="seg"><button class="on">The Tea</button><button data-go="standings">Standings</button><button data-go="photos">Photos</button></div>
   <div class="card bar">${showOpts?`<div class="label">Next week's coven habit</div><div class="h2">What are we doing next week?</div><div class="small">Pick one by Sunday, or we run it back like nothing happened.</div>${opts}<div class="small">${tally}</div>`:`<div class="row"><div><div class="label">Next week's coven habit</div><div class="h2">You voted: ${esc(optName(mine))}</div><div class="small">${tally} Winner announced Sunday night.</div></div><button class="link" data-act="reopen">Change vote</button></div>`}</div>
   <div class="card bar"><div class="row"><div class="h2">Group habits</div><a class="link" href="#add" data-act="startgroup">Start one</a></div>
    ${gl.length?gl.map(g=>{const first=g[0];const inn=g.some(x=>x.p===me);const owner=g.find(x=>x.h.groupOwner===x.p)||first;return `<div class="habit"><div><div class="h2">${esc(first.h.name)}</div><div class="small">${g.map(x=>initial(x.p)).join(' ')} · Started by ${esc(owner.p)}</div></div>${inn?'<span class="done">✓ In</span>':`<button class="chip" data-act="join" data-id="${owner.h.id}">Join</button>`}</div>`;}).join(''):'<div class="small">No group habits yet. Start one and anyone can join.</div>'}</div>
@@ -1114,7 +1133,7 @@ function viewStandings(){
   const gap=rows[0].pts-rows[1].pts;
   const cap=rows[0].pts===0?'Nobody has scored yet. Somebody has to go first.':gap===0?`${rows[0].p} and ${rows[1].p} are tied. Nobody is keeping score. Everybody is keeping score.`:`${rows[0].p} leads by ${gap}. Nobody is keeping score. Everybody is keeping score.`;
   return topbar()+`<div class="body">
-  <div class="seg"><button data-go="coven">The Tea</button><button class="on">Standings</button></div>
+  <div class="seg"><button data-go="coven">The Tea</button><button class="on">Standings</button><button data-go="photos">Photos</button></div>
   <div class="seg"><button class="${week?'on':''}" data-act="stand" data-v="week">This week</button><button class="${!week?'on':''}" data-act="stand" data-v="season">Season</button></div>
   <div class="card" style="padding:0 16px">${rows.map((r,i)=>`<div class="rank"><div class="h2" style="width:18px">${i+1}</div><a class="av on" href="${r.p===me?'#me':'#person/'+r.p}" aria-label="${r.p}'s profile" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(r.p)}</a><div style="flex:1"><a class="h2" href="${r.p===me?'#me':'#person/'+r.p}" style="text-decoration:none;color:inherit;display:block">${r.p}</a><div class="small" style="display:flex;gap:8px;align-items:center">${week?`<span aria-hidden="true">${r.dots.map(d=>`<i class="dot" style="width:8px;height:8px;margin-right:3px;background:${d?'var(--yellow)':'var(--line)'}"></i>`).join('')}</span><span>${r.days} of 7</span>`:`<span>Showed up ${r.days} of ${seasonDays} days</span>`}</div></div><div style="text-align:right"><div class="h2">${r.pts}</div><div class="small">${r.best} day streak</div></div></div>`).join('')}</div>
   <div class="h2" style="font-size:15px">${cap}</div>
@@ -1274,6 +1293,80 @@ function shrCard(p){
   const items=list.length?list.map(s=>own?`<div class="shrrow">${shrLink(s)}<button type="button" class="link" data-act="shrdel" data-id="${esc(s.id)}">${ui.shrDel===s.id?'Tap again to remove':'Remove'}</button></div>`:shrLink(s)).join(''):`<div class="small">${own?'Nothing shared yet.':esc(nameOf(p))+' has not shared any reads yet.'}</div>`;
   return `<div class="card"><div class="label">Shared reads</div>${form}${items}</div>`;
 }
+/* ---------- Photos: add from OOTD or the Photos page, view in Coven ---------- */
+const PD=new Map();
+function picKey(p,id){return 'recalData/h3-pic-'+p+'-'+id;}
+function picToday(hid){const ix=D.pic[me]||{};const t=todayK();return Object.keys(ix).some(id=>ix[id]&&ix[id].hid===hid&&ix[id].day===t);}
+function fitJpeg(file,max,q){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{const sc=Math.min(1,max/Math.max(img.width,img.height));const w=Math.max(1,Math.round(img.width*sc)),h=Math.max(1,Math.round(img.height*sc));const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',q||.82));};img.onerror=e=>{URL.revokeObjectURL(url);rej(e);};img.src=url;});}
+function picGet(p,id){
+  const k=p+':'+id;if(PD.has(k))return Promise.resolve(PD.get(k));
+  if(!db)return Promise.resolve(null);
+  return db.ref(picKey(p,id)).once('value').then(s=>{const v=s.val();if(typeof v==='string'&&v.indexOf('data:image/')===0){PD.set(k,v);return v;}return null;}).catch(()=>null);
+}
+function picSet(id,data){
+  PD.set(me+':'+id,data);
+  if(!db)return Promise.resolve();
+  pending++;setSync('Saving');
+  return db.ref(picKey(me,id)).set(data).then(()=>{pending--;if(!pending)setSync('Saved');setTimeout(()=>{if(!pending)setSync('');},1500);}).catch(e=>{pending--;setSync('Not saved. Check your connection.');throw e;});
+}
+function picFill(root){(root||document).querySelectorAll('img[data-pic]:not([src])').forEach(im=>{const sp=im.dataset.pic.split('|');const k=sp[0]+':'+sp[1];if(PD.has(k)){im.src=PD.get(k);return;}picGet(sp[0],sp[1]).then(d=>{if(d&&im.isConnected&&!im.getAttribute('src'))im.src=d;});});}
+function picList(f){const out=[];for(const p of PEOPLE){if(f==='mine'&&p!==me)continue;const ix=D.pic[p]||{};for(const id in ix){const m=ix[id];if(!m||(!m.sh&&p!==me))continue;out.push({p,id,m});}}out.sort((a,b)=>(b.m.at||0)-(a.m.at||0));return out;}
+function monthName(k){try{return parse(k+'-01').toLocaleDateString('en-US',{month:'long',year:'numeric'});}catch(e){return k;}}
+function rxHtml(id){return `<div class="rx">${GL.map(g=>{const on=((D.rx[me]||{})[id]||{})[g.k];const n=rxCount(id,g.k);return `<button class="${on?'on':''}" aria-pressed="${!!on}" aria-label="${g.l}" data-act="rx" data-id="${esc(id)}" data-k="${g.k}">${g.g}${n?' '+n:''}</button>`;}).join('')}</div>`;}
+function viewPhotos(){
+  const f=ui.picF==='mine'?'mine':'all';const list=picList(f);const months={};
+  list.forEach(x=>{const k=(x.m.day||'').slice(0,7)||'0000-00';(months[k]=months[k]||[]).push(x);});
+  const body=list.length?Object.keys(months).sort().reverse().map(k=>`<div><div class="label" style="margin-bottom:6px">${esc(monthName(k))}</div><div class="pgrid">${months[k].map(x=>`<a class="pcell" href="#photo/${encodeURIComponent(x.p+'.'+x.id)}" aria-label="Photo from ${esc(x.p)}"><img data-pic="${esc(x.p)}|${esc(x.id)}-t" alt="">${f==='all'?`<span class="who">${esc(x.p)}</span>`:''}</a>`).join('')}</div></div>`).join(''):`<div class="card"><div class="small">${f==='mine'?'You have not added a photo yet.':'No photos yet. Add the first one.'}</div></div>`;
+  return topbar()+`<div class="body">
+  <div class="seg"><button data-go="coven">The Tea</button><button data-go="standings">Standings</button><button class="on">Photos</button></div>
+  <button class="pill" data-act="picadd" data-id="">Add a photo</button>
+  <div class="seg"><button class="${f==='all'?'on':''}" data-act="picf" data-v="all">Everyone</button><button class="${f==='mine'?'on':''}" data-act="picf" data-v="mine">Mine</button></div>
+  ${body}</div>`+nav();
+}
+function viewPhoto(arg){
+  const i=(arg||'').indexOf('.');const p=(arg||'').slice(0,i),id=(arg||'').slice(i+1);
+  const m=PEOPLE.includes(p)?(D.pic[p]||{})[id]:null;
+  if(!m||(!m.sh&&p!==me))return sub(['#photos','Back'])+`<div class="body"><div class="card"><div class="small">That photo is not here anymore.</div></div></div>`+nav();
+  const own=p===me;const eid='pic:'+p+':'+id;
+  return sub(['#photos','Back'])+`<div class="body">
+  <img class="pview" data-pic="${esc(p)}|${esc(id)}" alt="${m.cap?esc(m.cap):'Photo from '+esc(p)}">
+  <div><div class="h2">${esc(p)}</div><div class="small">${esc(fmtShort(m.day))}</div></div>
+  ${m.cap?`<div style="font-size:15px;line-height:1.45;overflow-wrap:anywhere">${esc(m.cap)}</div>`:''}
+  ${rxHtml(eid)}
+  ${own?`<button class="link" data-act="picdel" data-id="${esc(id)}" style="align-self:flex-start">${ui.picDel===id?'Tap again to delete':'Delete'}</button>`:''}
+  </div>`+nav();
+}
+const PicSheet={st:null,
+  el(){let e=document.getElementById('picsheet');if(!e){e=document.createElement('div');e.id='picsheet';e.hidden=true;document.body.appendChild(e);}return e;},
+  open(o){this.st={hid:o.hid||null,day:o.day||todayK(),data:null,thumb:null,cap:'',busy:false,err:''};this.paint();const b=this.el().querySelector('label,button');if(b)b.focus&&b.focus();},
+  close(){this.st=null;const e=this.el();e.hidden=true;e.innerHTML='';},
+  paint(){
+    const st=this.st,e=this.el();if(!st){return;}
+    const h=st.hid?(findHabit(st.hid)||{}).h:null;
+    const note=h?(h.shared?'Shared with the coven, because this habit is shared.':'Only you will see this, because this habit is private.'):'Shared with the coven. Location is never saved.';
+    let main;
+    if(st.busy&&!st.data)main='<div class="small" role="status">Getting your photo ready</div>';
+    else if(!st.data)main=`<div class="two"><label for="ps-cam">Take photo</label><label for="ps-lib">Choose photo</label></div>${st.err?`<div class="small" role="alert" style="color:var(--text)">${esc(st.err)}</div>`:''}`;
+    else main=`<img class="prev" src="${st.data}" alt="Your photo"><div class="field"><label class="vh" for="ps-cap">Caption</label><input id="ps-cap" type="text" maxlength="140" autocomplete="off" placeholder="A caption, if you want one" value="${esc(st.cap)}" data-in="ps-cap"></div>${st.err?`<div class="small" role="alert" style="color:var(--text)">${esc(st.err)}</div>`:''}<button class="pill" data-act="pssave"${st.busy?' disabled':''}>${st.busy?'Saving':'Save photo'}</button><div class="two"><label for="ps-lib">Choose another</label></div>`;
+    e.innerHTML=`<button class="scrim" data-act="pscancel" aria-label="Close"></button><div class="ps" role="dialog" aria-modal="true" aria-label="Add a photo"><div class="grab"></div><div class="label">Add a photo</div>${main}<div class="small">${esc(note)}</div><button class="link" data-act="pscancel" style="align-self:center">Cancel</button><input id="ps-cam" class="vh" type="file" accept="image/*" capture="environment" aria-label="Take a photo"><input id="ps-lib" class="vh" type="file" accept="image/*" aria-label="Choose a photo"></div>`;
+    e.hidden=false;
+  },
+  async pick(f){
+    const st=this.st;if(!st||!f)return;st.busy=true;st.err='';this.paint();
+    try{st.data=await fitJpeg(f,1600,.82);st.thumb=await fitJpeg(f,360,.78);}catch(x){console.error(x);st.data=null;st.err='That photo would not load. Try a different one, or a screenshot of it.';}
+    st.busy=false;if(this.st===st)this.paint();
+  },
+  async save(){
+    const st=this.st;if(!st||!st.data||st.busy)return;st.busy=true;this.paint();
+    const id=Date.now().toString(36)+Math.random().toString(36).slice(2,4);
+    try{await picSet(id,st.data);await picSet(id+'-t',st.thumb||st.data);}catch(x){console.error(x);st.busy=false;st.err='That did not save. Check your connection and try again.';this.paint();return;}
+    const f=st.hid?findHabit(st.hid):null;const h=f&&f.p===me?f.h:null;
+    (D.pic[me]||(D.pic[me]={}))[id]={day:st.day,hid:st.hid||'',cap:(st.cap||'').trim().slice(0,140),at:Date.now(),sh:h?!!h.shared:true};
+    save('pic');
+    if(h&&h.type!=='number'&&!isDone(me,h,st.day)){setVal(h.id,st.day,1);ui.popId=h.id;}
+    this.close();render();
+  }
+};
 function viewConnections(){
   return sub(['#me/settings','Back'])+`<div class="body"><div><div class="h1" style="font-size:26px">Connections</div><div class="sec" style="margin-top:6px">Connect an app and it can tick habits for you. You pick which habit each one counts toward.</div></div>
   ${['Oura','Strava'].map(n=>`<div class="card"><div class="row"><div class="h2">${n}</div><span class="chip on" style="border-color:var(--line2);color:var(--sec)">Soon</span></div><div class="small">${n==='Oura'?'Sleep and activity from your ring can tick habits like Sleep 8 hours.':'A logged workout can tick habits like Move 30 min.'} Not switched on yet, so tick by hand for now.</div></div>`).join('')}
@@ -1342,6 +1435,8 @@ function render(){
       case 'sky':html=viewSky();break;
       case 'coven':html=viewCoven();break;
       case 'standings':html=viewStandings();break;
+      case 'photos':html=viewPhotos();break;
+      case 'photo':html=viewPhoto(ui.arg);break;
       case 'habits':html=viewHabits();break;
       case 'me':html=viewMe();break;
       case 'person':html=PEOPLE.includes(ui.arg)&&ui.arg!==me?viewPerson(ui.arg):viewMe();break;
@@ -1349,7 +1444,7 @@ function render(){
       default:html=viewToday();
     }
   }
-  $app.innerHTML=html;$app.classList.toggle('enter',!!ui.enter);ui.enter=false;
+  $app.innerHTML=html;$app.classList.toggle('enter',!!ui.enter);ui.enter=false;picFill($app);
   if(keep&&keep.id){const el=document.getElementById(keep.id);if(el){el.focus();try{el.setSelectionRange(keep.s,keep.s);}catch(e){}}}
 }
 
@@ -1707,6 +1802,11 @@ document.addEventListener('click',e=>{
       const cur=Array.isArray(D.shr[me])?D.shr[me]:[];if(cur.some(x=>safeUrl(x.u)===u)){ui.shr.err='You already sent that one.';break;}
       cur.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),u,l:(ui.shr.label||'').trim().slice(0,120),at:new Date().toISOString()});D.shr[me]=cur;save('shr');ui.shr={url:'',label:'',err:''};break;}
     case 'shrdel':{const id=b.dataset.id;if(ui.shrDel===id){D.shr[me]=(D.shr[me]||[]).filter(x=>x.id!==id);save('shr');ui.shrDel=null;}else ui.shrDel=id;break;}
+    case 'picadd':PicSheet.open({hid:b.dataset.id||null,day:todayK()});return;
+    case 'picf':ui.picF=b.dataset.v;break;
+    case 'picdel':{const id=b.dataset.id;if(ui.picDel===id){delete (D.pic[me]||{})[id];save('pic');PD.delete(me+':'+id);PD.delete(me+':'+id+'-t');if(db){db.ref(picKey(me,id)).remove().catch(()=>{});db.ref(picKey(me,id+'-t')).remove().catch(()=>{});}ui.picDel=null;location.hash='#photos';return;}ui.picDel=id;break;}
+    case 'pscancel':PicSheet.close();return;
+    case 'pssave':PicSheet.save();return;
     case 'skywho':ui.sky=b.dataset.p;break;
     case 'personsky':ui.sky=b.dataset.p;ui.skyBack='#person/'+encodeURIComponent(b.dataset.p);location.hash='#sky';return;
     case 'skytab':ui.skyTab=b.dataset.v;break;
@@ -1726,6 +1826,7 @@ document.addEventListener('input',e=>{
   if(i.startsWith('cur-')){const f=i.slice(4),row=CUR_F.find(x=>x[0]===f);if(!row)return;ui.curQ[f]=v;clearTimeout(window.__ct);window.__ct=setTimeout(async()=>{const q=(ui.curQ[f]||'').trim();if(!q){ui.curRes[f]=null;curPaint(f);return;}ui.curRes[f]='loading';curPaint(f);const r=await mediaSearch(row[2],q);if((ui.curQ[f]||'').trim()!==q)return;ui.curRes[f]=r;curPaint(f);},400);curPaint(f);return;}
   if(i==='shr-url'){ui.shr.url=v;ui.shr.err='';return;}
   if(i==='shr-label'){ui.shr.label=v;return;}
+  if(i==='ps-cap'){if(PicSheet.st)PicSheet.st.cap=v;return;}
   if(i==='brew')return;
   const d=ui.draft;if(!d)return;
   d[i]=v;
@@ -1739,12 +1840,13 @@ function pickDone(){ui.picking=0;if(ui.dirty){ui.dirty=false;render();}}
 document.addEventListener('click',e=>{const l=e.target&&e.target.closest&&e.target.closest('label[for=pf],label[for=cf]');if(l){ui.picking=Date.now();ui.photoErr='';}},true);
 document.addEventListener('cancel',e=>{if(e.target&&(e.target.id==='pf'||e.target.id==='cf'))pickDone();},true);
 document.addEventListener('change',async e=>{
+  if(e.target&&(e.target.id==='ps-cam'||e.target.id==='ps-lib')){const f=e.target.files&&e.target.files[0];e.target.value='';if(f)PicSheet.pick(f);return;}
   if(e.target&&e.target.id==='cf'&&me){const f=e.target.files&&e.target.files[0];e.target.value='';pickDone();if(f)readChart(f);return;}
   if(!e.target||e.target.id!=='pf'||!me)return;
   const f=e.target.files&&e.target.files[0];pickDone();if(!f)return;
   try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};ui.photoErr='';save('photo');render();}catch(x){console.error(x);ui.photoErr='That photo would not load. Try a different one, or a screenshot of it.';render();}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&PicSheet.st){PicSheet.close();return;}if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
 window.addEventListener('hashchange',route);
 let synced=false;function startSyncOnce(){if(synced)return;synced=true;startSync();importFromRound2();}
 function importFromRound2(){ // carry over what we can so nobody has to redo anything
