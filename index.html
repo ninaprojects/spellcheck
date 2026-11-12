@@ -1524,7 +1524,7 @@ const Loc={st:null,
   },
   panel(){
     const st=this.st;if(!st)return '';
-    return `<div class="loc-panel"><div class="loc-head">Where was this?</div><div class="loc-sub" role="status">${esc(st.status)}</div><div class="loc-list">${st.items.map((x,i)=>`<button type="button" class="loc-item" data-act="locpick" data-i="${i}">${PIN_SVG(16)}<span class="loc-item-text"><span class="loc-name">${esc(x.t)}</span>${x.m?`<span class="loc-meta">${esc(x.m)}</span>`:''}</span></button>`).join('')}</div><div class="loc-type"><label class="vh" for="loc-typed">Type a place</label><input id="loc-typed" type="text" maxlength="80" autocomplete="off" placeholder="Or type a place" value="${esc(st.typed)}" data-in="loc-typed"><button type="button" class="link" data-act="locuse">Use this</button></div><button type="button" class="link" data-act="loccancel">Cancel</button></div>`;
+    return `<div class="loc-panel"><div class="loc-head">Where was this?</div><div class="loc-sub" role="status">${esc(st.status)}</div><div class="loc-list">${st.items.map((x,i)=>`<button type="button" class="loc-item" data-act="locpick" data-i="${i}">${PIN_SVG(16)}<span class="loc-item-text"><span class="loc-name">${esc(x.t)}</span>${x.m?`<span class="loc-meta">${esc(x.m)}</span>`:''}</span></button>`).join('')}</div><div class="loc-type"><label class="vh" for="loc-typed">Type a place</label><input id="loc-typed" type="text" maxlength="80" autocomplete="off" placeholder="Or type a place" value="${esc(st.typed)}" data-in="loc-typed"><button type="button" class="link" data-act="locuse">Use this</button></div><button type="button" class="link" data-act="loccancel">Skip location</button></div>`;
   },
   row(text,ctx,editable){
     if(this.st&&this.st.ctx===ctx)return this.panel();
