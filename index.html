@@ -687,7 +687,7 @@ function habitIcon(h,go){return iconEl(iconId(h),go);}
 /* ---------- render ---------- */
 function nav(){
   const t=ui.route;const on=(...r)=>r.includes(t)?' class="on"':'';
-  return `<nav><a href="#today"${on('today','sky',...(ui.src==='habits'?[]:['habit','edit','add']))}>Today</a><a href="#coven"${on('coven','standings')}>Coven</a><a href="#habits"${on('habits',...(ui.src==='habits'?['habit','edit','add']:[]))}>Habits</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
+  return `<nav><a href="#today"${on('today','sky',...(ui.src==='habits'?[]:['habit','edit','add']))}>Today</a><a href="#coven"${on('coven','standings','person')}>Coven</a><a href="#habits"${on('habits',...(ui.src==='habits'?['habit','edit','add']:[]))}>Habits</a><a href="#me"${on('me','connections')}>Me${notifNeedsAction()?'<i class="pdot" aria-label="Notifications are off"></i>':''}</a></nav>`;
 }
 function topbar(){return `<div class="top"><div class="brand">Spell Check</div><a class="avatar" href="#me" aria-label="${esc(me)}" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(me)}</a></div><div class="wipnote" role="status"><b>In progress.</b> We are still polishing this one. Round 2 is safe and still here: <a href="old-app.html">open Round 2</a>.</div>`;}
 function sub(back,right){return `<div class="top"><a class="link" href="${back[0]}">${back[1]}</a>${right||''}</div>`;}
@@ -731,12 +731,12 @@ function viewToday(){
   const chId='_coven_'+wk;const chDone=val(me,chId,t)>=1;
   const ev=weekEvent(t);const spId='_spell_'+wk;const spDone=val(me,spId,t)>=1;
   const showed=PEOPLE.filter(p=>anyShared(p,t));
-  const members=PEOPLE.map(p=>{const d=(val(p,chId,t)>=1);return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div class="av${d?' on':''}">${avatarInner(p)}</div><div class="small">${p}</div></div>`;}).join('');
+  const members=PEOPLE.map(p=>{const d=(val(p,chId,t)>=1);return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><a class="av${d?' on':''}" href="${p===me?'#me':'#person/'+p}" aria-label="${p}'s profile" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(p)}</a><a class="small" href="${p===me?'#me':'#person/'+p}" style="text-decoration:none;color:inherit">${p}</a></div>`;}).join('');
   const pg=todayProgress();
   const nDone=PEOPLE.filter(p=>val(p,chId,t)>=1).length;
   const waiting=PEOPLE.filter(p=>!anyShared(p,t));
   const showedLine=showed.length===4?'All four showed up today.':showed.length===0?'Nobody has shown up yet today. Do one thing to go first.':(showed.includes(me)?`${showed.length} of 4 showed up. Waiting on ${list(waiting)}.`:`${showed.length} of 4 showed up. Do one thing today to join ${list(showed)}.`);
-  const strip=`<div class="strip" role="img" aria-label="${esc(showedLine)}"><div class="avs">${PEOPLE.map(p=>`<div class="av${showed.includes(p)?' on':''}">${avatarInner(p)}</div>`).join('')}</div><div class="small" style="flex:1">${esc(showedLine)}</div></div>`;
+  const strip=`<div class="strip" role="img" aria-label="${esc(showedLine)}"><div class="avs">${PEOPLE.map(p=>`<a class="av${showed.includes(p)?' on':''}" href="${p===me?'#me':'#person/'+p}" aria-label="${p}'s profile" style="text-decoration:none;color:inherit">${avatarInner(p)}</a>`).join('')}</div><div class="small" style="flex:1">${esc(showedLine)}</div></div>`;
   const phase=moonPhaseName(t);
   return topbar()+`<div class="body">
   <div class="date">${longDate(t)}</div>
@@ -1049,8 +1049,8 @@ function feedItem(it){
   // render who's name bold at the start: text contains \u0001 where the name goes
   let html;
   if(it.body)html=it.body;
-  else if(it.text.includes('\u0001'))html=esc(it.text).replace('\u0001','<b>'+esc(it.who)+'</b>');
-  else html='<b>'+esc(it.who)+'</b>'+esc(it.text);
+  else{const nm=PEOPLE.includes(it.who)?`<a href="${it.who===me?'#me':'#person/'+it.who}" style="color:inherit;text-decoration:none"><b>${esc(it.who)}</b></a>`:'<b>'+esc(it.who)+'</b>';
+    html=it.text.includes('\u0001')?esc(it.text).replace('\u0001',nm):nm+esc(it.text);}
   const joinable=it.join&&it.join.groupOwner!==me&&!myHabits(me).some(h=>h.groupId===it.join.groupId);
   const right=it.join?(joinable?`<button class="chip" data-act="join" data-id="${it.join.id}">Join</button>`:`<span class="done">${it.join.groupOwner===me?'Yours':'✓ In'}</span>`):`<div class="rx">${GL.map(g=>{const on=((D.rx[me]||{})[it.id]||{})[g.k];const n=rxCount(it.id,g.k);return `<button class="${on?'on':''}" aria-pressed="${!!on}" aria-label="${g.l}" data-act="rx" data-id="${esc(it.id)}" data-k="${g.k}">${g.g}${n?' '+n:''}</button>`;}).join('')}</div>`;
   return `<div class="feed"><div>${html}${it.bonus?`<div class="bonus">${esc(it.bonus)}</div>`:''}</div><div style="display:flex">${right}</div></div>`;
@@ -1099,7 +1099,7 @@ function viewStandings(){
   return topbar()+`<div class="body">
   <div class="seg"><button data-go="coven">The Tea</button><button class="on">Standings</button></div>
   <div class="seg"><button class="${week?'on':''}" data-act="stand" data-v="week">This week</button><button class="${!week?'on':''}" data-act="stand" data-v="season">Season</button></div>
-  <div class="card" style="padding:0 16px">${rows.map((r,i)=>`<div class="rank"><div class="h2" style="width:18px">${i+1}</div><div class="av on">${initial(r.p)}</div><div style="flex:1"><div class="h2">${r.p}</div><div class="small" style="display:flex;gap:8px;align-items:center">${week?`<span aria-hidden="true">${r.dots.map(d=>`<i class="dot" style="width:8px;height:8px;margin-right:3px;background:${d?'var(--yellow)':'var(--line)'}"></i>`).join('')}</span><span>${r.days} of 7</span>`:`<span>Showed up ${r.days} of ${seasonDays} days</span>`}</div></div><div style="text-align:right"><div class="h2">${r.pts}</div><div class="small">${r.best} day streak</div></div></div>`).join('')}</div>
+  <div class="card" style="padding:0 16px">${rows.map((r,i)=>`<div class="rank"><div class="h2" style="width:18px">${i+1}</div><a class="av on" href="${r.p===me?'#me':'#person/'+r.p}" aria-label="${r.p}'s profile" style="text-decoration:none;color:inherit;overflow:hidden">${avatarInner(r.p)}</a><div style="flex:1"><a class="h2" href="${r.p===me?'#me':'#person/'+r.p}" style="text-decoration:none;color:inherit;display:block">${r.p}</a><div class="small" style="display:flex;gap:8px;align-items:center">${week?`<span aria-hidden="true">${r.dots.map(d=>`<i class="dot" style="width:8px;height:8px;margin-right:3px;background:${d?'var(--yellow)':'var(--line)'}"></i>`).join('')}</span><span>${r.days} of 7</span>`:`<span>Showed up ${r.days} of ${seasonDays} days</span>`}</div></div><div style="text-align:right"><div class="h2">${r.pts}</div><div class="small">${r.best} day streak</div></div></div>`).join('')}</div>
   <div class="h2" style="font-size:15px">${cap}</div>
   <div class="small">Points are just for fun. Showed up counts any day you did one thing. Only shared habits, the coven habit and the spell count, so private habits stay private.</div></div>`+nav();
 }
@@ -1107,16 +1107,17 @@ function viewStandings(){
 /* ---------- Habits tab: Your habits and Overall (both show only you) ---------- */
 const HOME=()=>ui.src==='habits'?'#habits':'#today';
 function schedOn(h,k){return k<=todayK()&&k>=(h.createdDay||k)&&counts(h,k)&&!pausedOn(h,k);}
-function habitCardRow(h){
-  const t=todayK(),s=streak(me,h),b=bestStreak(me,h);
+function habitCardRow(h,p){
+  p=p||me;const own=p===me;
+  const t=todayK(),s=streak(p,h),b=bestStreak(p,h);
   const dots=[];let n=0;
-  for(let i=6;i>=0;i--){const k=addDays(t,-i);if(!schedOn(h,k))dots.push('<i class="o"></i>');else if(isDone(me,h,k)){n++;dots.push('<i class="on"></i>');}else dots.push('<i></i>');}
+  for(let i=6;i>=0;i--){const k=addDays(t,-i);if(!schedOn(h,k))dots.push('<i class="o"></i>');else if(isDone(p,h,k)){n++;dots.push('<i class="on"></i>');}else dots.push('<i></i>');}
   const txt=`${s} now · ${b} best${h.perWeek?' weeks':''}${pausedOn(h,t)?' · Paused':''}`;
-  return `<div class="habit hcard"><div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">${habitIcon(h)}<div style="min-width:0"><button class="name" data-go="habit/${h.id}">${esc(h.name)}</button><div class="tags"><span>${txt}</span></div></div></div><div class="d7" role="img" aria-label="Last 7 days, ${n} done">${dots.join('')}</div></div>`;
+  return `<div class="habit hcard"><div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">${habitIcon(h)}<div style="min-width:0">${own?`<button class="name" data-go="habit/${h.id}">${esc(h.name)}</button>`:`<div class="name">${esc(h.name)}</div>`}<div class="tags"><span>${txt}</span></div></div></div><div class="d7" role="img" aria-label="Last 7 days, ${n} done">${dots.join('')}</div></div>`;
 }
 function habitsPane(hs){
   const arch=Object.values(D.habits[me]||{}).filter(h=>h.archived);
-  return (hs.length?`<div class="card" style="padding:4px 16px">${hs.map(habitCardRow).join('')}</div>`:`<div class="card"><div class="small">No habits yet. Add one and it shows up here.</div></div>`)
+  return (hs.length?`<div class="card" style="padding:4px 16px">${hs.map(h=>habitCardRow(h)).join('')}</div>`:`<div class="card"><div class="small">No habits yet. Add one and it shows up here.</div></div>`)
    +`<a class="pill" href="#add" id="addhabit2">Add a habit</a>`
    +(arch.length?`<div class="card"><div class="label">Archived</div>${arch.map(h=>`<div class="habit"><div><div class="h2">${esc(h.name)}</div><div class="small">${streak(me,h)} day streak saved</div></div><button class="chip" data-act="unarch" data-id="${h.id}">Bring back</button></div>`).join('')}</div>`:'');
 }
@@ -1179,6 +1180,20 @@ function viewMe(){
   <div class="small">Signed in as ${esc(me)}. <button class="link quiet" data-act="switch" style="display:inline-flex">Not you?</button></div>
   <div class="small">Your Round 2 habits, journal, and photos are still there. <a class="link" href="old-app.html" style="min-height:44px">Open Round 2</a></div></div>`+nav();
 }
+function viewPerson(p){
+  const pr=D.prof[p]||{};const b=pr.big3||{};const name=pr.name||p;
+  const b3=['sun','moon','rising'];
+  const hs=sharedHabits(p);
+  const b3html=b3.some(k=>(b[k]||'').trim())
+   ?`<div class="b3">${b3.map(k=>`<div class="b3c"><div class="label">${k[0].toUpperCase()+k.slice(1)}</div>${(b[k]||'').trim()?signBadge(b[k]):'<div class="sbadge x" aria-hidden="true">?</div>'}<div class="b3n">${esc(signOf(b[k])?signOf(b[k])[0]:((b[k]||'').trim()||'Not added'))}</div></div>`).join('')}</div>`
+   :`<div class="small">${esc(name)} has not added her Big 3 yet.</div>`;
+  return sub([ui.pback||'#coven','Back'])+`<div class="body">
+  <div class="mehead"><div class="phbig">${avatarInner(p)}</div><div class="h1">${esc(name)}</div></div>
+  <div class="card">${b3html}</div>
+  <button class="pill" data-act="personsky" data-p="${esc(p)}">See ${esc(name)}'s sky</button>
+  <div><div class="label" style="margin:4px 0 8px">Shared habits</div>${hs.length?`<div class="card" style="padding:4px 16px">${hs.map(h=>habitCardRow(h,p)).join('')}</div>`:`<div class="card"><div class="small">${esc(name)} has not shared any habits yet.</div></div>`}
+  <div class="small" style="margin-top:8px">Only habits ${esc(name)} has shared show up here. Private habits stay private.</div></div></div>`+nav();
+}
 function viewConnections(){
   return sub(['#me','Back'])+`<div class="body"><div><div class="h1" style="font-size:26px">Connections</div><div class="sec" style="margin-top:6px">Connect an app and it can tick habits for you. You pick which habit each one counts toward.</div></div>
   ${['Oura','Strava'].map(n=>`<div class="card"><div class="row"><div class="h2">${n}</div><span class="chip on" style="border-color:var(--line2);color:var(--sec)">Soon</span></div><div class="small">${n==='Oura'?'Sleep and activity from your ring can tick habits like Sleep 8 hours.':'A logged workout can tick habits like Move 30 min.'} Not switched on yet, so tick by hand for now.</div></div>`).join('')}
@@ -1205,7 +1220,11 @@ function viewSetupGateWrap(){return viewSetup();}
 function route(){
   const h=(location.hash||'#today').slice(1);let [r,a]=h.split('/');
   if(r==='journey'){r='habits';try{history.replaceState(null,'','#habits');}catch(x){}}
-  const prev=ui.route;ui.route=r||'today';ui.arg=a||null;
+  const prev=ui.route;const prevHash=ui.lastHash||'#today';ui.lastHash='#'+h;
+  try{if(a)a=decodeURIComponent(a);}catch(x){}
+  ui.route=r||'today';ui.arg=a||null;
+  if(ui.route==='person'&&prev!=='person'&&prev!=='sky')ui.pback=prevHash;
+  if(ui.route!=='sky'){if(prev==='sky'&&ui.skyBack)ui.sky=null;ui.skyBack=null;}
   if(ui.route==='today'||ui.route==='habits')ui.src=ui.route;
   if(prev!==ui.route){ui.confirm=false;if(ui.route!=='add'&&ui.route!=='edit'&&ui.route!=='setup')ui.draft=null;if(ui.route==='edit'&&ui.draft&&ui.draft._id!==a)ui.draft=null;}
   ui.enter=prev!==ui.route;render();window.scrollTo(0,0);
@@ -1244,6 +1263,7 @@ function render(){
       case 'standings':html=viewStandings();break;
       case 'habits':html=viewHabits();break;
       case 'me':html=viewMe();break;
+      case 'person':html=PEOPLE.includes(ui.arg)&&ui.arg!==me?viewPerson(ui.arg):viewMe();break;
       case 'connections':html=viewConnections();break;
       default:html=viewToday();
     }
@@ -1597,8 +1617,9 @@ document.addEventListener('click',e=>{
     case 'join':{const src=findHabit(id);if(!src)return;if(myHabits(me).some(h=>h.groupId===src.h.groupId))return;newHabit({name:src.h.name,type:src.h.type,target:src.h.target||1,unit:src.h.unit||'',step:src.h.step||1,days:src.h.days.slice(),shared:true,preset:src.h.preset||null,groupId:src.h.groupId,groupOwner:src.h.groupOwner});break;}
     case 'stand':ui.standMode=b.dataset.v;break;
     case 'skywho':ui.sky=b.dataset.p;break;
+    case 'personsky':ui.sky=b.dataset.p;ui.skyBack='#person/'+encodeURIComponent(b.dataset.p);location.hash='#sky';return;
     case 'skytab':ui.skyTab=b.dataset.v;break;
-    case 'skyclose':location.hash='#today';return;
+    case 'skyclose':{const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';return;}
     case 'snext':ui.setupStep=Math.min(4,ui.setupStep+1);{const pr=D.prof[me]||(D.prof[me]={});if(ui.setupStep===4||true){pr.setup=true;}save('prof');}break;
     case 'sdone':{const pr=D.prof[me]||(D.prof[me]={});pr.setup=true;save('prof');break;}
     default:return;
@@ -1626,7 +1647,7 @@ document.addEventListener('change',async e=>{
   const f=e.target.files&&e.target.files[0];if(!f)return;
   try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};save('photo');render();}catch(x){console.error(x);setSync('That photo would not load. Try another.');}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.route==='sky')location.hash='#today';});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
 window.addEventListener('hashchange',route);
 let synced=false;function startSyncOnce(){if(synced)return;synced=true;startSync();importFromRound2();}
 function importFromRound2(){ // carry over what we can so nobody has to redo anything
