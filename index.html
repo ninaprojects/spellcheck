@@ -329,6 +329,15 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 #picsheet .two{display:flex;gap:8px}
 #picsheet .two label{flex:1;min-height:48px;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-align:center}
 #picsheet .prev{display:block;width:100%;max-height:300px;object-fit:contain;background:var(--soft)}
+.loc-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:13px;color:var(--sec)}
+.loc-pill{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:500;color:var(--text);max-width:100%;box-sizing:border-box}
+.loc-pill svg{flex:none}.loc-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.loc-actions{display:inline-flex;gap:14px}
+.loc-panel{border:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:6px;width:100%;box-sizing:border-box}
+.loc-head{font-weight:600;font-size:14px;color:var(--text)}.loc-sub{font-size:13px;color:var(--sec)}
+.loc-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 2px;min-height:44px;cursor:pointer;font:inherit;color:inherit;touch-action:manipulation}
+.loc-item-text{display:flex;flex-direction:column;min-width:0}.loc-name{font-weight:500;font-size:14px}.loc-meta{font-size:12px;color:var(--sec)}
+.loc-type{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px}.loc-type input{flex:1;min-width:0}
 @media (prefers-reduced-motion:no-preference){#picsheet .ps{animation:psup .22s ease-out}@keyframes psup{from{transform:translate(-50%,24px);opacity:0}to{transform:translate(-50%,0);opacity:1}}}
 </style>
 </head>
@@ -1064,7 +1073,7 @@ function buildFeed(){
   for(const p of PEOPLE){for(const s of shrOf(p)){const k=s.at?dkey(new Date(s.at)):'';if(!k||k<addDays(t,-13))continue;
     items.push({id:'sh:'+p+':'+s.id,at:k+'s',who:p,body:`<a href="${p===me?'#me':'#person/'+p}" style="color:inherit;text-decoration:none"><b>${esc(p)}</b></a> shared a read.${shrLink(s)}`});}}
   for(const p of PEOPLE){const ix=D.pic[p]||{};for(const id in ix){const m=ix[id];if(!m||!m.sh||!m.day||m.day<addDays(t,-13))continue;
-    items.push({id:'pic:'+p+':'+id,at:m.day+'p',who:p,body:`<a href="${p===me?'#me':'#person/'+p}" style="color:inherit;text-decoration:none"><b>${esc(p)}</b></a> added a photo.<a href="#photo/${encodeURIComponent(p+'.'+id)}"><img class="feedpic" data-pic="${esc(p)}|${esc(id)}" alt="${m.cap?esc(m.cap):'Photo from '+esc(p)}"></a>${m.cap?`<div style="margin-top:6px;overflow-wrap:anywhere">${esc(m.cap)}</div>`:''}`});}}
+    items.push({id:'pic:'+p+':'+id,at:m.day+'p',who:p,body:`<a href="${p===me?'#me':'#person/'+p}" style="color:inherit;text-decoration:none"><b>${esc(p)}</b></a> added a photo.<a href="#photo/${encodeURIComponent(p+'.'+id)}"><img class="feedpic" data-pic="${esc(p)}|${esc(id)}" alt="${m.cap?esc(m.cap):'Photo from '+esc(p)}"></a>${m.cap?`<div style="margin-top:6px;overflow-wrap:anywhere">${esc(m.cap)}</div>`:''}${m.loc?`<div class="loc-row"><span class="loc-pill">${PIN_SVG(16)}<span class="loc-text">${esc(m.loc)}</span></span></div>`:''}`});}}
   items.sort((a,b)=>b.at<a.at?-1:1);
   return items.slice(0,25);
 }
@@ -1332,28 +1341,220 @@ function viewPhoto(arg){
   <img class="pview" data-pic="${esc(p)}|${esc(id)}" alt="${m.cap?esc(m.cap):'Photo from '+esc(p)}">
   <div><div class="h2">${esc(p)}</div><div class="small">${esc(fmtShort(m.day))}</div></div>
   ${m.cap?`<div style="font-size:15px;line-height:1.45;overflow-wrap:anywhere">${esc(m.cap)}</div>`:''}
+  ${Loc.row(m.loc||'','viewer',own)}
   ${rxHtml(eid)}
   ${own?`<button class="link" data-act="picdel" data-id="${esc(id)}" style="align-self:flex-start">${ui.picDel===id?'Tap again to delete':'Delete'}</button>`:''}
   </div>`+nav();
 }
+/* ---------- photo location (ported from Round 2). Only the chosen place NAME is saved. The photo GPS is read in memory and never stored. ---------- */
+const PIN_SVG=s=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.4s-6.8-5.5-6.8-11.3a6.8 6.8 0 0 1 13.6 0c0 5.8-6.8 11.3-6.8 11.3z" fill="#FF6FA8" stroke="#E0457F" stroke-width="1.2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.5" fill="#FFFEFD"/></svg>`;
+function exifGpsFromBuffer(buf){
+  try{
+    const v = new DataView(buf);
+    if(v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return null;
+    let off = 2;
+    while(off + 4 <= v.byteLength){
+      if(v.getUint8(off) !== 0xFF) return null;
+      const marker = v.getUint8(off + 1);
+      if(marker === 0xDA || marker === 0xD9) return null;
+      const len = v.getUint16(off + 2);
+      if(marker === 0xE1 && v.getUint32(off + 4) === 0x45786966 && v.getUint16(off + 8) === 0){
+        return parseTiffGps(v, off + 10);
+      }
+      off += 2 + len;
+    }
+  }catch(e){ /* truncated or odd file, treat as no location */ }
+  return null;
+}
+function parseTiffGps(v, t){
+  const little = v.getUint16(t) === 0x4949;
+  const u16 = (o)=> v.getUint16(o, little);
+  const u32 = (o)=> v.getUint32(o, little);
+  if(u16(t + 2) !== 0x002A) return null;
+  const ifd0 = t + u32(t + 4);
+  let gpsOff = null;
+  const n0 = u16(ifd0);
+  for(let i = 0; i < n0; i++){
+    const e = ifd0 + 2 + i * 12;
+    if(u16(e) === 0x8825){ gpsOff = t + u32(e + 8); break; }
+  }
+  if(gpsOff === null) return null;
+  const n = u16(gpsOff);
+  const tags = {};
+  for(let i = 0; i < n; i++){
+    const e = gpsOff + 2 + i * 12;
+    const tag = u16(e);
+    if(tag === 1 || tag === 3){
+      tags[tag] = String.fromCharCode(v.getUint8(e + 8));
+    } else if(tag === 2 || tag === 4){
+      const p = t + u32(e + 8);
+      const r = [];
+      for(let k = 0; k < 3; k++){ const num = u32(p + k * 8), den = u32(p + k * 8 + 4); r.push(den ? num / den : 0); }
+      tags[tag] = r;
+    }
+  }
+  if(!tags[2] || !tags[4]) return null;
+  let lat = tags[2][0] + tags[2][1] / 60 + tags[2][2] / 3600;
+  let lon = tags[4][0] + tags[4][1] / 60 + tags[4][2] / 3600;
+  if(tags[1] === 'S') lat = -lat;
+  if(tags[3] === 'W') lon = -lon;
+  if(!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) return null;
+  return {lat, lon};
+}
+function readPhotoGps(file){
+  return new Promise((resolve)=>{
+    try{
+      if(!file || !/jpe?g/i.test(file.type || '')){ resolve(null); return; }
+      const fr = new FileReader();
+      fr.onload = ()=> resolve(exifGpsFromBuffer(fr.result));
+      fr.onerror = ()=> resolve(null);
+      fr.readAsArrayBuffer(file.slice(0, 262144));
+    }catch(e){ resolve(null); }
+  });
+}
+function getDeviceCoords(){
+  return new Promise((resolve)=>{
+    if(!navigator.geolocation){ resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p)=> resolve({lat:p.coords.latitude, lon:p.coords.longitude}),
+      ()=> resolve(null),
+      {timeout:8000, maximumAge:60000}
+    );
+  });
+}
+async function reverseCity(lat, lon){
+  try{
+    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+    const d = await res.json();
+    return {city: d.city || d.locality || '', state: d.principalSubdivision || ''};
+  }catch(e){ return {city:'', state:''}; }
+}
+const PLACE_KIND = {
+  fitness_centre:'Gym', sports_centre:'Sports center', swimming_pool:'Pool', park:'Park', garden:'Garden', pitch:'Field',
+  playground:'Playground', dog_park:'Dog park', track:'Track', stadium:'Stadium', nature_reserve:'Nature reserve', marina:'Marina',
+  cafe:'Cafe', restaurant:'Restaurant', bar:'Bar', pub:'Pub', fast_food:'Fast food', ice_cream:'Ice cream', bakery:'Bakery',
+  library:'Library', cinema:'Cinema', theatre:'Theater', arts_centre:'Arts center', community_centre:'Community center',
+  place_of_worship:'Place of worship', marketplace:'Market', university:'University', college:'College', school:'School',
+  museum:'Museum', gallery:'Gallery', viewpoint:'Viewpoint', attraction:'Attraction', artwork:'Artwork', zoo:'Zoo',
+  aquarium:'Aquarium', hotel:'Hotel', theme_park:'Theme park', beach:'Beach', peak:'Peak', bay:'Bay', water:'Water', coworking:'Coworking'
+};
+function placeKind(tags){
+  if(tags.leisure && PLACE_KIND[tags.leisure]) return PLACE_KIND[tags.leisure];
+  if(tags.amenity && PLACE_KIND[tags.amenity]) return PLACE_KIND[tags.amenity];
+  if(tags.tourism && PLACE_KIND[tags.tourism]) return PLACE_KIND[tags.tourism];
+  if(tags.natural && PLACE_KIND[tags.natural]) return PLACE_KIND[tags.natural];
+  if(tags.office && PLACE_KIND[tags.office]) return PLACE_KIND[tags.office];
+  if(tags.shop) return 'Shop';
+  if(tags.historic) return 'Historic site';
+  return '';
+}
+function distMeters(lat1, lon1, lat2, lon2){
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+  const x = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+function fmtDist(m){
+  const ft = m * 3.281;
+  if(ft < 1000) return `${Math.max(10, Math.round(ft / 10) * 10)} ft`;
+  return `${(m / 1609.34).toFixed(1)} mi`;
+}
+// Named places within ~200 m, nearest first. Free OpenStreetMap data, no key needed.
+async function fetchNearbyPlaces(lat, lon){
+  const a = `(around:200,${lat.toFixed(5)},${lon.toFixed(5)})`;
+  const q = `[out:json][timeout:8];(` +
+    `nwr${a}["name"]["amenity"~"^(cafe|restaurant|bar|pub|fast_food|ice_cream|bakery|library|cinema|theatre|arts_centre|community_centre|place_of_worship|marketplace|university|college|school)$"];` +
+    `nwr${a}["name"]["leisure"~"^(park|fitness_centre|sports_centre|swimming_pool|garden|pitch|playground|dog_park|track|stadium|nature_reserve|marina)$"];` +
+    `nwr${a}["name"]["shop"];` +
+    `nwr${a}["name"]["tourism"~"^(attraction|museum|gallery|viewpoint|artwork|zoo|aquarium|hotel|theme_park)$"];` +
+    `nwr${a}["name"]["natural"~"^(beach|peak|bay)$"];` +
+    `nwr${a}["name"]["historic"];` +
+    `nwr${a}["name"]["office"="coworking"];` +
+    `);out center 80;`;
+  const endpoints = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+  for(const url of endpoints){
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=> ctrl.abort(), 9000);
+      const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'data=' + encodeURIComponent(q), signal:ctrl.signal});
+      clearTimeout(timer);
+      if(!res.ok) continue;
+      const data = await res.json();
+      const all = [];
+      (data.elements || []).forEach((el)=>{
+        const tags = el.tags || {};
+        const name = (tags.name || '').trim();
+        if(!name) return;
+        const plat = el.lat !== undefined ? el.lat : (el.center && el.center.lat);
+        const plon = el.lon !== undefined ? el.lon : (el.center && el.center.lon);
+        if(plat === undefined || plon === undefined) return;
+        all.push({name, kind: placeKind(tags), dist: distMeters(lat, lon, plat, plon)});
+      });
+      all.sort((x, y)=> x.dist - y.dist);
+      const seen = {};
+      const places = [];
+      all.forEach((p)=>{ const k = p.name.toLowerCase(); if(!seen[k]){ seen[k] = true; places.push(p); } });
+      return {ok:true, places: places.slice(0, 6)};
+    }catch(e){ console.error('places lookup failed', url, e); }
+  }
+  return {ok:false, places:[]};
+}
+
+
+const Loc={st:null,
+  open(ctx,id){this.st={ctx,id:id||null,status:'Finding places\u2026',items:[],typed:''};this.repaint();this.load();},
+  close(){this.st=null;this.repaint();},
+  repaint(){const st=this.st;if(st&&document.activeElement&&document.activeElement.id==='loc-typed')return;if(PicSheet.st&&(!st||st.ctx==='sheet'))PicSheet.paint();else render();},
+  async load(){
+    const st=this.st;if(!st)return;
+    let coords=null,source='device';
+    if(st.ctx==='sheet'&&PicSheet.st&&PicSheet.st.gps){coords=PicSheet.st.gps;source='photo';}
+    if(!coords)coords=await getDeviceCoords();
+    if(this.st!==st)return;
+    if(!coords){st.status='Couldn\u2019t get a location. You can still type a place below.';this.repaint();return;}
+    const where=source==='photo'?'where this photo was taken':'where you are right now';
+    st.status='Looking near '+where+'\u2026';this.repaint();
+    const [ci,found]=await Promise.all([reverseCity(coords.lat,coords.lon),fetchNearbyPlaces(coords.lat,coords.lon)]);
+    if(this.st!==st)return;
+    const city=ci.city;
+    st.status=found.places.length?'Near '+where:(found.ok?'No named places right here, near '+where+'.':'Couldn\u2019t load nearby places right now.');
+    st.items=found.places.map(p=>({t:p.name,m:[p.kind,fmtDist(p.dist)].filter(Boolean).join(' \u00b7 '),v:city?p.name+', '+city:p.name}));
+    if(city){const full=ci.state?city+', '+ci.state:city;st.items.push({t:'Just the city',m:full,v:full});}
+    this.repaint();
+  },
+  panel(){
+    const st=this.st;if(!st)return '';
+    return `<div class="loc-panel"><div class="loc-head">Where was this?</div><div class="loc-sub" role="status">${esc(st.status)}</div><div class="loc-list">${st.items.map((x,i)=>`<button type="button" class="loc-item" data-act="locpick" data-i="${i}">${PIN_SVG(16)}<span class="loc-item-text"><span class="loc-name">${esc(x.t)}</span>${x.m?`<span class="loc-meta">${esc(x.m)}</span>`:''}</span></button>`).join('')}</div><div class="loc-type"><label class="vh" for="loc-typed">Type a place</label><input id="loc-typed" type="text" maxlength="80" autocomplete="off" placeholder="Or type a place" value="${esc(st.typed)}" data-in="loc-typed"><button type="button" class="link" data-act="locuse">Use this</button></div><button type="button" class="link" data-act="loccancel">Skip location</button></div>`;
+  },
+  row(text,ctx,editable){
+    if(this.st&&this.st.ctx===ctx)return this.panel();
+    if(text)return `<div class="loc-row"><span class="loc-pill">${PIN_SVG(16)}<span class="loc-text">${esc(text)}</span></span>${editable?`<span class="loc-actions"><button type="button" class="link" data-act="locopen" data-ctx="${ctx}">Change</button><button type="button" class="link" data-act="locremove" data-ctx="${ctx}">Remove</button></span>`:''}</div>`;
+    return editable?`<div class="loc-row"><button type="button" class="link" data-act="locopen" data-ctx="${ctx}">Add location</button></div>`:'';
+  },
+  choose(v){
+    const st=this.st;if(!st)return;v=(v||'').trim().slice(0,80);
+    if(st.ctx==='sheet'){if(PicSheet.st)PicSheet.st.loc=v;this.st=null;PicSheet.paint();return;}
+    const m=(D.pic[me]||{})[st.id];this.st=null;if(m){if(v)m.loc=v;else delete m.loc;save('pic');}render();
+  }
+};
 const PicSheet={st:null,
   el(){let e=document.getElementById('picsheet');if(!e){e=document.createElement('div');e.id='picsheet';e.hidden=true;document.body.appendChild(e);}return e;},
-  open(o){this.st={hid:o.hid||null,day:o.day||todayK(),data:null,thumb:null,cap:'',busy:false,err:''};this.paint();const b=this.el().querySelector('label,button');if(b)b.focus&&b.focus();},
-  close(){this.st=null;const e=this.el();e.hidden=true;e.innerHTML='';},
+  open(o){Loc.st=null;this.st={hid:o.hid||null,day:o.day||todayK(),data:null,thumb:null,cap:'',loc:'',gps:null,busy:false,err:''};this.paint();const b=this.el().querySelector('label,button');if(b)b.focus&&b.focus();},
+  close(){this.st=null;Loc.st=null;const e=this.el();e.hidden=true;e.innerHTML='';},
   paint(){
     const st=this.st,e=this.el();if(!st){return;}
     const h=st.hid?(findHabit(st.hid)||{}).h:null;
-    const note=h?(h.shared?'Shared with the coven, because this habit is shared.':'Only you will see this, because this habit is private.'):'Shared with the coven. Location is never saved.';
+    const note=h?(h.shared?'Shared with the coven, because this habit is shared.':'Only you will see this, because this habit is private.'):'Shared with the coven.';
     let main;
     if(st.busy&&!st.data)main='<div class="small" role="status">Getting your photo ready</div>';
     else if(!st.data)main=`<div class="two"><label for="ps-cam">Take photo</label><label for="ps-lib">Choose photo</label></div>${st.err?`<div class="small" role="alert" style="color:var(--text)">${esc(st.err)}</div>`:''}`;
-    else main=`<img class="prev" src="${st.data}" alt="Your photo"><div class="field"><label class="vh" for="ps-cap">Caption</label><input id="ps-cap" type="text" maxlength="140" autocomplete="off" placeholder="A caption, if you want one" value="${esc(st.cap)}" data-in="ps-cap"></div>${st.err?`<div class="small" role="alert" style="color:var(--text)">${esc(st.err)}</div>`:''}<button class="pill" data-act="pssave"${st.busy?' disabled':''}>${st.busy?'Saving':'Save photo'}</button><div class="two"><label for="ps-lib">Choose another</label></div>`;
+    else main=`<img class="prev" src="${st.data}" alt="Your photo"><div class="field"><label class="vh" for="ps-cap">Caption</label><input id="ps-cap" type="text" maxlength="140" autocomplete="off" placeholder="A caption, if you want one" value="${esc(st.cap)}" data-in="ps-cap"></div>${Loc.row(st.loc,'sheet',true)}${st.err?`<div class="small" role="alert" style="color:var(--text)">${esc(st.err)}</div>`:''}<button class="pill" data-act="pssave"${st.busy?' disabled':''}>${st.busy?'Saving':'Save photo'}</button><div class="two"><label for="ps-lib">Choose another</label></div>`;
     e.innerHTML=`<button class="scrim" data-act="pscancel" aria-label="Close"></button><div class="ps" role="dialog" aria-modal="true" aria-label="Add a photo"><div class="grab"></div><div class="label">Add a photo</div>${main}<div class="small">${esc(note)}</div><button class="link" data-act="pscancel" style="align-self:center">Cancel</button><input id="ps-cam" class="vh" type="file" accept="image/*" capture="environment" aria-label="Take a photo"><input id="ps-lib" class="vh" type="file" accept="image/*" aria-label="Choose a photo"></div>`;
     e.hidden=false;
   },
   async pick(f){
     const st=this.st;if(!st||!f)return;st.busy=true;st.err='';this.paint();
-    try{st.data=await fitJpeg(f,1600,.82);st.thumb=await fitJpeg(f,360,.78);}catch(x){console.error(x);st.data=null;st.err='That photo would not load. Try a different one, or a screenshot of it.';}
+    try{st.gps=await readPhotoGps(f);st.data=await fitJpeg(f,1600,.82);st.thumb=await fitJpeg(f,360,.78);}catch(x){console.error(x);st.data=null;st.err='That photo would not load. Try a different one, or a screenshot of it.';}
     st.busy=false;if(this.st===st)this.paint();
   },
   async save(){
@@ -1362,6 +1563,7 @@ const PicSheet={st:null,
     try{await picSet(id,st.data);await picSet(id+'-t',st.thumb||st.data);}catch(x){console.error(x);st.busy=false;st.err='That did not save. Check your connection and try again.';this.paint();return;}
     const f=st.hid?findHabit(st.hid):null;const h=f&&f.p===me?f.h:null;
     (D.pic[me]||(D.pic[me]={}))[id]={day:st.day,hid:st.hid||'',cap:(st.cap||'').trim().slice(0,140),at:Date.now(),sh:h?!!h.shared:true};
+    if(st.loc)D.pic[me][id].loc=st.loc.slice(0,80);
     save('pic');
     if(h&&h.type!=='number'&&!isDone(me,h,st.day)){setVal(h.id,st.day,1);ui.popId=h.id;}
     this.close();render();
@@ -1805,6 +2007,11 @@ document.addEventListener('click',e=>{
     case 'picadd':PicSheet.open({hid:b.dataset.id||null,day:todayK()});return;
     case 'picf':ui.picF=b.dataset.v;break;
     case 'picdel':{const id=b.dataset.id;if(ui.picDel===id){delete (D.pic[me]||{})[id];save('pic');PD.delete(me+':'+id);PD.delete(me+':'+id+'-t');if(db){db.ref(picKey(me,id)).remove().catch(()=>{});db.ref(picKey(me,id+'-t')).remove().catch(()=>{});}ui.picDel=null;location.hash='#photos';return;}ui.picDel=id;break;}
+    case 'locopen':Loc.open(b.dataset.ctx,b.dataset.ctx==='viewer'?(ui.arg||'').slice((ui.arg||'').indexOf('.')+1):null);if(b.dataset.ctx==='viewer')render();return;
+    case 'locpick':{const x=Loc.st&&Loc.st.items[+b.dataset.i];if(x)Loc.choose(x.v);return;}
+    case 'locuse':{if(Loc.st)Loc.choose(Loc.st.typed);return;}
+    case 'loccancel':Loc.close();return;
+    case 'locremove':if(b.dataset.ctx==='sheet'){if(PicSheet.st){PicSheet.st.loc='';PicSheet.paint();}return;}else{const m=(D.pic[me]||{})[(ui.arg||'').slice((ui.arg||'').indexOf('.')+1)];if(m){delete m.loc;save('pic');}break;}
     case 'pscancel':PicSheet.close();return;
     case 'pssave':PicSheet.save();return;
     case 'skywho':ui.sky=b.dataset.p;break;
@@ -1826,6 +2033,7 @@ document.addEventListener('input',e=>{
   if(i.startsWith('cur-')){const f=i.slice(4),row=CUR_F.find(x=>x[0]===f);if(!row)return;ui.curQ[f]=v;clearTimeout(window.__ct);window.__ct=setTimeout(async()=>{const q=(ui.curQ[f]||'').trim();if(!q){ui.curRes[f]=null;curPaint(f);return;}ui.curRes[f]='loading';curPaint(f);const r=await mediaSearch(row[2],q);if((ui.curQ[f]||'').trim()!==q)return;ui.curRes[f]=r;curPaint(f);},400);curPaint(f);return;}
   if(i==='shr-url'){ui.shr.url=v;ui.shr.err='';return;}
   if(i==='shr-label'){ui.shr.label=v;return;}
+  if(i==='loc-typed'){if(Loc.st)Loc.st.typed=v;return;}
   if(i==='ps-cap'){if(PicSheet.st)PicSheet.st.cap=v;return;}
   if(i==='brew')return;
   const d=ui.draft;if(!d)return;
@@ -1846,7 +2054,7 @@ document.addEventListener('change',async e=>{
   const f=e.target.files&&e.target.files[0];pickDone();if(!f)return;
   try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};ui.photoErr='';save('photo');render();}catch(x){console.error(x);ui.photoErr='That photo would not load. Try a different one, or a screenshot of it.';render();}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&PicSheet.st){PicSheet.close();return;}if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&Loc.st){Loc.close();return;}if(e.key==='Escape'&&PicSheet.st){PicSheet.close();return;}if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
 window.addEventListener('hashchange',route);
 let synced=false;function startSyncOnce(){if(synced)return;synced=true;startSync();importFromRound2();}
 function importFromRound2(){ // carry over what we can so nobody has to redo anything
