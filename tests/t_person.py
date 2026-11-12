@@ -43,6 +43,8 @@ with sync_playwright() as pw:
         ck(f'{w} hides the private habit',('Secret thing' not in body))
         ck(f'{w} hides birth details',('Denver' not in body) and ('1990' not in body))
         ck(f'{w} no edit or photo change',page.locator('input[type=file]').count()==0 and 'Change photo' not in body)
+        tops=page.evaluate("(()=>{const f=t=>{const e=[...document.querySelectorAll('#app .label')].find(x=>x.textContent.trim()===t);return e?e.getBoundingClientRect().top:-1;};return {b3:document.querySelector('.b3').getBoundingClientRect().top,sky:document.querySelector('[data-act=personsky]').getBoundingClientRect().top,habits:f('Shared habits'),cur:f('Currently'),reads:f('Shared reads')};})()")
+        ck(f'{w} order: Big 3, sky, habits, Currently, reads',0<tops['b3']<tops['sky']<tops['habits']<tops['cur']<tops['reads'])
         ck(f'{w} habit name is not a link',page.locator('.hcard button.name').count()==0)
         ck(f'{w} no sideways scroll',page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
         page.click('[data-act=personsky]'); page.wait_for_selector('.skybox')
@@ -54,6 +56,12 @@ with sync_playwright() as pw:
         # own avatar goes to Me
         page.click('.strip a.av[href="#me"]'); page.wait_for_selector('.mehead')
         ck(f'{w} own avatar goes to Me',page.evaluate('location.hash')=='#me' and page.locator('input[type=file]').count()>0)
+        # Me has two tabs
+        page.click('.seg button:has-text("Settings")'); page.wait_for_selector('[data-act=birthedit]')
+        ck(f'{w} Settings tab: setup rows, no Big 3 or photo',page.locator('#cf').count()==1 and page.locator('.mrow:has-text("Notifications")').count()==1 and page.locator('.b3').count()==0 and page.locator('#pf').count()==0)
+        page.click('.seg button:has-text("Profile")'); page.wait_for_selector('#pf',state='attached')
+        ck(f'{w} Profile tab: photo, Big 3, no setup rows',page.locator('.b3').count()==1 and page.locator('#cf').count()==0 and page.locator('[data-act=birthedit]').count()==0)
+        ck(f'{w} Profile tab lists shared habits section','Shared habits' in (page.locator('#app').text_content() or ''))
         # direct link to self or a stranger falls back to Me
         page.goto('file://'+os.path.abspath(APP)+'#person/Nina'); page.wait_for_selector('.mehead')
         ck(f'{w} own #person link shows Me',page.locator('#pf').count()==1)

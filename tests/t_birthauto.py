@@ -15,7 +15,7 @@ def run(prof,w=390):
         return r.abort() if u.startswith('http') else r.continue_()
     p.route('**/*',h);p.clock.install(time=datetime.datetime.fromisoformat('2026-11-08T12:00:00'))
     p.add_init_script("localStorage.setItem('h3-whoami','Nina');localStorage.setItem('h3c-prof-Nina',JSON.stringify(%s))"%json.dumps(prof))
-    p.goto('file://'+APP+'#me');p.wait_for_selector('[data-act=birthedit]');p.click('[data-act=birthedit]');p.wait_for_selector('#bd-date');return p,errs
+    p.goto('file://'+APP+'#me/settings');p.wait_for_selector('[data-act=birthedit]');p.click('[data-act=birthedit]');p.wait_for_selector('#bd-date');return p,errs
 def big(p):return json.loads(p.evaluate("localStorage.getItem('h3c-prof-Nina')")).get('big3',{})
 with sync_playwright() as pw:
     b=pw.chromium.launch()

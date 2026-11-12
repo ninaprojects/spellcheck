@@ -1182,12 +1182,14 @@ function viewMe(){
    ?`<div class="grid2" style="grid-template-columns:repeat(3,1fr)">${b3.map(k=>`<div class="field"><label for="b-${k}">${k[0].toUpperCase()+k.slice(1)}</label><input id="b-${k}" type="text" value="${esc(b[k]||'')}" placeholder="Sign" data-in="big-${k}"></div>`).join('')}</div><button class="link" data-act="b3edit" style="align-self:flex-start">Done</button>`
    :`<div class="b3">${b3.map(k=>`<div class="b3c"><div class="label">${k[0].toUpperCase()+k.slice(1)}</div>${(b[k]||'').trim()?signBadge(b[k]):`<button class="b3add" data-act="b3edit" aria-label="Add your ${k} sign">Add</button>`}<div class="b3n">${esc(signOf(b[k])?signOf(b[k])[0]:(b[k]||'').trim())}</div>${houseLine(b[k],b.rising)}</div>`).join('')}</div>${planetGrids(bd,b)}<div class="b3links">${hasPlanets(bd)?`<button class="link" data-act="moreplanets" aria-expanded="${!!ui.morePl}">${ui.morePl?'Show fewer':'Show more planets'}</button>`:''}<button class="link" data-act="b3edit">Edit your big 3</button></div>`;
   const birthSum=[bd.date,bd.time,bd.place].filter(Boolean).join(' · ');
-  return topbar()+`<div class="body">
-  <div class="mehead"><label class="phbig" for="pf" style="cursor:pointer">${avatarInner(me)}</label><input id="pf" class="vh" type="file" accept="image/*" aria-label="Change photo"><div class="h1">${esc(pr.name||me)}</div><label class="link" for="pf">Change photo</label></div>
+  const tab=ui.arg==='settings'?'settings':'profile';const myShared=sharedHabits(me);
+  const profileHtml=`  <div class="mehead"><label class="phbig" for="pf" style="cursor:pointer">${avatarInner(me)}</label><input id="pf" class="vh" type="file" accept="image/*" aria-label="Change photo"><div class="h1">${esc(pr.name||me)}</div><label class="link" for="pf">Change photo</label></div>
   ${chartCard()}
   <div class="card">${b3html}</div>
+  <div><div class="label" style="margin:4px 0 8px">Shared habits</div>${myShared.length?`<div class="card" style="padding:4px 16px">${myShared.map(h=>habitCardRow(h,me)).join('')}</div>`:`<div class="card"><div class="small">Nothing shared yet. Share a habit from its page and it shows here and in The Tea.</div></div>`}</div>
   ${curCard(me)}
-  ${shrCard(me)}
+  ${shrCard(me)}`;
+  const settingsHtml=`${chartCard()}
   <div class="card" style="padding:4px 16px">
    <label class="mrow" for="cf" style="cursor:pointer"><div><div class="h2">Birth chart</div><div class="small">Upload a Co-Star screenshot and we fill in your Big 3.</div></div><span class="link" aria-hidden="true">Upload</span></label><input id="cf" class="vh" type="file" accept="image/*" aria-label="Upload a birth chart screenshot">
    <button class="mrow" data-act="birthedit" aria-expanded="${!!ui.birthOpen}"><div><div class="h2">Birth details</div><div class="small">${esc(birthSum||'Date, time and place. Makes your sky more yours.')}</div></div><span class="link" aria-hidden="true">${ui.birthOpen?'Close':(birthSum?'Edit':'Add')}</span></button>
@@ -1197,7 +1199,10 @@ function viewMe(){
    <a class="mrow" href="#connections"><div><div class="h2">Connections</div><div class="small">Oura, Strava and Apple Health.</div></div><span class="link" aria-hidden="true">Open</span></a>
   </div>
   <div class="small">Signed in as ${esc(me)}. <button class="link quiet" data-act="switch" style="display:inline-flex">Not you?</button></div>
-  <div class="small">Your Round 2 habits, journal, and photos are still there. <a class="link" href="old-app.html" style="min-height:44px">Open Round 2</a></div></div>`+nav();
+  <div class="small">Your Round 2 habits, journal, and photos are still there. <a class="link" href="old-app.html" style="min-height:44px">Open Round 2</a></div>`;
+  return topbar()+`<div class="body">
+  <div class="seg"><button class="${tab==='settings'?'':'on'}" data-go="me">Profile</button><button class="${tab==='settings'?'on':''}" data-go="me/settings">Settings${notifNeedsAction()?'<i class="pdot" aria-label="Needs attention"></i>':''}</button></div>
+  ${tab==='settings'?settingsHtml:profileHtml}</div>`+nav();
 }
 function viewPerson(p){
   const pr=D.prof[p]||{};const b=pr.big3||{};const name=pr.name||p;
@@ -1209,11 +1214,11 @@ function viewPerson(p){
   return sub([ui.pback||'#coven','Back'])+`<div class="body">
   <div class="mehead"><div class="phbig">${avatarInner(p)}</div><div class="h1">${esc(name)}</div></div>
   <div class="card">${b3html}</div>
-  ${curCard(p)}
   <button class="pill" data-act="personsky" data-p="${esc(p)}">See ${esc(name)}'s sky</button>
-  ${shrCard(p)}
   <div><div class="label" style="margin:4px 0 8px">Shared habits</div>${hs.length?`<div class="card" style="padding:4px 16px">${hs.map(h=>habitCardRow(h,p)).join('')}</div>`:`<div class="card"><div class="small">${esc(name)} has not shared any habits yet.</div></div>`}
-  <div class="small" style="margin-top:8px">Only habits ${esc(name)} has shared show up here. Private habits stay private.</div></div></div>`+nav();
+  <div class="small" style="margin-top:8px">Only habits ${esc(name)} has shared show up here. Private habits stay private.</div></div>
+  ${curCard(p)}
+  ${shrCard(p)}</div>`+nav();
 }
 /* ---------- Currently (reading, watching, listening) and shared reads ---------- */
 const MEDIA_BASE='https://spellcheck.nnirema.workers.dev';
@@ -1270,7 +1275,7 @@ function shrCard(p){
   return `<div class="card"><div class="label">Shared reads</div>${form}${items}</div>`;
 }
 function viewConnections(){
-  return sub(['#me','Back'])+`<div class="body"><div><div class="h1" style="font-size:26px">Connections</div><div class="sec" style="margin-top:6px">Connect an app and it can tick habits for you. You pick which habit each one counts toward.</div></div>
+  return sub(['#me/settings','Back'])+`<div class="body"><div><div class="h1" style="font-size:26px">Connections</div><div class="sec" style="margin-top:6px">Connect an app and it can tick habits for you. You pick which habit each one counts toward.</div></div>
   ${['Oura','Strava'].map(n=>`<div class="card"><div class="row"><div class="h2">${n}</div><span class="chip on" style="border-color:var(--line2);color:var(--sec)">Soon</span></div><div class="small">${n==='Oura'?'Sleep and activity from your ring can tick habits like Sleep 8 hours.':'A logged workout can tick habits like Move 30 min.'} Not switched on yet, so tick by hand for now.</div></div>`).join('')}
   <div class="card"><div class="row"><div class="h2">Apple Health</div><span class="chip on" style="border-color:var(--line2);color:var(--sec)">Incoming</span></div>
    <div class="small">Apple does not let apps like this one read Health directly, so this one is still being worked out.</div>
@@ -1645,7 +1650,7 @@ document.addEventListener('click',e=>{
     case 'b3use':{const pr=D.prof[me]||(D.prof[me]={});const c=birthChart(pr.birth);if(!c)return;const bg=pr.big3||(pr.big3={});if(c.sun.length===1)bg.sun=c.sun[0];if(c.moon.length===1)bg.moon=c.moon[0];if(c.rising)bg.rising=c.rising;save('prof');break;}
     case 'birthhide':try{localStorage.setItem('h3-birthhint:'+me,'1');}catch(x){}break;
     case 'notime':{const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});bd.noTime=!bd.noTime;if(bd.noTime)delete bd.time;save('prof');break;}
-    case 'birthgo':{ui.birthOpen=true;if(location.hash==='#me'){render();}else{location.hash='#me';}setTimeout(()=>{const x=document.getElementById('bd-date');if(x){x.scrollIntoView({block:'center'});x.focus({preventScroll:true});}},80);return;}
+    case 'birthgo':{ui.birthOpen=true;if(location.hash==='#me/settings'){render();}else{location.hash='#me/settings';}setTimeout(()=>{const x=document.getElementById('bd-date');if(x){x.scrollIntoView({block:'center'});x.focus({preventScroll:true});}},80);return;}
     case 'placepick':{const p=(ui.placeRes||[])[+id];if(!p)return;const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});bd.place=p.label;bd.placeLat=Math.round(p.lat*100)/100;bd.placeLon=Math.round(p.lon*100)/100;bd.placeTz=p.tz;ui.placeRes=[];save('prof');break;}
     case 'placechange':{const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});delete bd.placeLat;delete bd.placeLon;delete bd.placeTz;save('prof');setTimeout(()=>{const x=document.getElementById('bd-place');if(x){x.focus();x.select();}},0);break;}
 
