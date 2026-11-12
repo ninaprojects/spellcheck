@@ -1112,6 +1112,7 @@ export async function run(env, now) {
 //             more, the streak line goes out instead of the nudge.
 //   h3vote    Sunday 6pm to 9:59pm Pacific: next week's coven habit vote is still open for her.
 //   h3result  Monday 8am to 11:59am Pacific: the coven habit for this week, if anyone voted.
+//   h3recap   Sunday 5pm to 9:59pm Pacific: the week's recap for the coven (regular, perfect or quiet week).
 //   social    every run: friend showed up, all four showed up, milestones, reactions, brew answers, shared reads,
 //             Currently, new group habits.
 // All wording lives in push-copy.json. The brew question and the sky headline come from the app itself
@@ -1147,11 +1148,14 @@ export const H3_FALLBACK = {
   CM: [{ id: 'CM7_1', title: 'Milestone alert ✦', body: '{who} hit 7 days on {habit}. Nobody panic.', tags: ['d7'] }, { id: 'CM14_1', title: 'Milestone alert ✦', body: 'Two weeks of {habit} for {who}. The rest of us are taking notes.', tags: ['d14'] }, { id: 'CM30_1', title: 'Milestone alert ✦', body: '{who} just hit 30 days on {habit}. We are not worthy.', tags: ['d30'] }],
   MP: [{ id: 'MP7a', title: 'Seven days of {habit} ✦', body: 'A whole week. The coven is losing it.', tags: ['d7'] }, { id: 'MP14a', title: 'Two weeks of {habit} ✦', body: 'Fourteen days straight. Honestly, ENERGY.', tags: ['d14'] }, { id: 'MP30a', title: 'Thirty days of {habit} ✦', body: 'A full month. Iconic behavior, truly.', tags: ['d30'] }],
   ST: [{ id: 'ST1', title: 'Your streak is glowing ✦', body: '{n} days and counting. One small thing makes it {n1}.' }],
+  RC: [{ id: 'RCa1', title: 'The week, in receipts ✦', body: 'All four of us showed up {days} days this week. {brews} brew answers and {rx} reactions later, we are thriving.', tags: ['regular'] },
+    { id: 'RCb1', title: 'A perfect week ✦', body: 'All four of us showed up all seven days. Come admire us, we\'ll wait.', tags: ['perfect'] },
+    { id: 'RCc2', title: 'Rest era ✦', body: 'We took it easy this week, and that counts. New week tomorrow, same coven.', tags: ['quiet'] }],
   CB: [{ id: 'CB1', title: 'Welcome back ✦', body: 'The coven kept your seat warm. One small thing and you are back.' }]
 };
 // Groups where a line must match its own tag (a reaction, a field, a milestone). If the copy file loses every line
 // for one tag, the built-in lines for that tag fill in.
-const TAGGED = { RX: ['heart', 'spell', 'moon'], CU: ['reading', 'watching', 'listening'], CM: ['d7', 'd14', 'd30'], MP: ['d7', 'd14', 'd30'] };
+const TAGGED = { RC: ['regular', 'perfect', 'quiet'], RX: ['heart', 'spell', 'moon'], CU: ['reading', 'watching', 'listening'], CM: ['d7', 'd14', 'd30'], MP: ['d7', 'd14', 'd30'] };
 const okTitle = t => typeof t === 'string' && t.length > 0 && t.length <= 40 && /[✦♡☾]$/.test(t);
 // Keeps only well-formed lines: a short id, titles ending in the star (or a reaction symbol), bodies under 130
 // characters, no links, no em or en dashes. Anything else is dropped. A group left empty falls back to the built-in lines.
@@ -1334,6 +1338,36 @@ export function h3Showed(habits, log, k, votesBy) {
 }
 function anyDone(log, k) { const l = log[k] || {}; return Object.keys(l).some(id => !!l[id]); }
 
+// Sunday recap numbers for the week ending on date (Monday to Sunday): days all four showed up (shared habits, the
+// coven habit or the moon spell, never private habits), brew answers, and reactions on that week's posts (reactions
+// carry no time, so they are counted by the date of the post they are on).
+export async function h3RecapStats(date) {
+  const ws = h3Add(date, -h3Wd(date));
+  const days7 = [0, 1, 2, 3, 4, 5, 6].map(i => h3Add(ws, i));
+  const habitsBy = {}, logBy = {}, votesBy = {}, qaBy = {}, rxBy = {};
+  for (const p of PEOPLE) {
+    habitsBy[p] = Object.values((await readKey('h3-habits-' + p)) || {}).filter(h => h && !h.archived);
+    logBy[p] = (await readKey('h3-log-' + p)) || {};
+    votesBy[p] = (await readKey('h3-vote-' + p)) || {};
+    qaBy[p] = (await readKey('h3-qa-' + p)) || {};
+    rxBy[p] = (await readKey('h3-rx-' + p)) || {};
+  }
+  const days = days7.filter(k => PEOPLE.every(p => h3Showed(habitsBy[p], logBy[p], k, votesBy))).length;
+  const brews = PEOPLE.reduce((n, p) => n + days7.filter(k => qaBy[p][k]).length, 0);
+  const inWeek = id => {
+    const s = String(id), parts = s.split(':');
+    let k = '';
+    if (parts[0] === 'f') k = parts[3] || '';
+    else if (parts[0] === 'qa') k = parts[1] || '';
+    else if (parts[0] === 'sp') k = s.slice(-10);
+    else if (parts[0] === 'cur') k = h3Date(new Date(parts.slice(2).join(':')));
+    return k >= days7[0] && k <= days7[6];
+  };
+  let rx = 0;
+  for (const p of PEOPLE) for (const [post, ks] of Object.entries(rxBy[p] || {})) if (inWeek(post)) for (const [k, on] of Object.entries(ks || {})) if (on && RX_GLYPH[k]) rx++;
+  return { days, brews, rx };
+}
+
 // Reads every h3 record in two calls (the photos and avatars are skipped: they are big and never needed here) and
 // fills the per-run cache, so the jobs below never read inside a per-person loop. Returns false if it failed, and the
 // social job then sits the run out rather than spending the call budget on single reads.
@@ -1404,6 +1438,7 @@ export async function habitsRun(env, now, opts = {}) {
   if (ptHour >= 19 && ptHour < 22) jobs.push('h3nudge');
   if (H3_JOBS_ON.vote && dow === 'Sun' && ptHour >= 18 && ptHour < 22) jobs.push('h3vote');
   if (H3_JOBS_ON.result && dow === 'Mon' && ptHour >= 8 && ptHour < 12) jobs.push('h3result');
+  if (dow === 'Sun' && ptHour >= 17 && ptHour < 22) jobs.push('h3recap');
   for (const job of jobs) {
     await guard(job, async () => {
       let rec = st.sched[job];
@@ -1417,6 +1452,8 @@ export async function habitsRun(env, now, opts = {}) {
         winner = h3Winner(votes, date);
         if (!winner) { console.log('Nobody voted for the week of', date, ', no result push.'); return; }
       }
+      let recap = null;
+      if (job === 'h3recap') recap = await h3RecapStats(date);
       let brewQ = null;
       if (job === 'h3brew') {
         for (const p of PEOPLE) { const s = await schedOf(p); if (s.brew && s.brew[date]) { brewQ = s.brew[date]; break; } }
@@ -1483,6 +1520,12 @@ export async function habitsRun(env, now, opts = {}) {
             changed = true;
             msg = h3Fill(line, { name: person }, date + person);
           }
+        } else if (job === 'h3recap') {
+          const kind = recap.days === 7 ? 'perfect' : recap.days < 2 ? 'quiet' : 'regular';
+          const pool = copy.RC.filter(l => (l.tags || []).includes(kind));
+          const line = pickFresh(pool.length ? pool : copy.RC, mem.RC, date + 'RC');
+          take('RC', line);
+          msg = h3Fill(line, { name: person, days: recap.days, brews: recap.brews, rx: recap.rx }, date);
         } else if (job === 'h3vote') {
           const nextWeek = h3Add(date, 7 - h3Wd(date));
           const v = (await readKey('h3-vote-' + person)) || {};

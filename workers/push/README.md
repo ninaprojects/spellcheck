@@ -13,6 +13,7 @@ Round 2 ended Oct 31. From Nov 1 the Round 2 jobs below are skipped entirely (`s
 - Noon to 9:59pm Pacific, the brew question (titles BT), skipped once she has answered.
 - 7:00pm Pacific, evening nudge (E) when a habit due today is open. If one of those has a streak of 3 or more, the streak line (ST) replaces it.
 - Sunday 6pm, vote reminder (V) if she has not voted. Monday 8am, the result (R) if anyone voted.
+- Sunday 5pm, the recap (RC) to all four: a regular, perfect (all four showed up all 7 days) or quiet (under 2 full-coven days) week line, with the days all four showed up, brew answers, and reactions on that week's posts. Private habits never count.
 - Every run (the social job): friend showed up (IN, once per friend per day, shared habits, the coven habit or the moon spell only, never private habits); all four showed up (ALL, once a day, replaces the last friend's push); milestones at 7, 14 and 30 days (MP to her for any daily habit, CM to the coven for shared ones, the same line as the Tea post); reactions (RX, held about a minute, to the post's owner); brew answers (QA, to people who answered earlier); shared reads (SR); Currently updates (CU, same line as the Tea post); new group habits (GH, same line as the Tea post).
 
 How it reads data: two key-range reads (`orderBy="$key"`) fetch every `h3-*` record except photos and avatars, so the jobs never read inside a per-person loop. If that read fails, the social job sits the run out and the scheduled jobs fall back to single reads.
