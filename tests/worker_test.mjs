@@ -1203,7 +1203,7 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   const cuId = 'cur:Carolina:' + at1;
   const cuTitle = toWho(appPick(CUR_LINES.reading, cuId)).replace('{who}', 'Carolina') + ' ✦';
   check('Currently: to the other three, same line the Tea post shows', cu.length === 3 && cu.every(x => x.title === cuTitle), { cu, cuTitle });
-  const gh = pushes.filter(x => x.title === 'New group habit ✦');
+  const gh = pushes.filter(x => titlesOf(COPY.GH[0]).includes(x.title));
   check('group habit: to the other three, same line the Tea post shows', gh.length === 3 && gh.every(x => x.body === fillIn(toWho(appPick(L_GROUP, 'g1')), { who: 'Lauren', habit: 'Sunday reset' })), gh);
   check('social: a busy minute stays under the call budget', W.callsUsed() < 46, W.callsUsed());
 

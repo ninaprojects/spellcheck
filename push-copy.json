@@ -733,22 +733,42 @@
   "GH": [
     {
       "id": "GH1",
-      "title": "New group habit ✦",
+      "title": "New club just dropped ✦",
+      "titles": [
+        "New club just dropped ✦",
+        "Recruitment season ✦",
+        "You've been summoned ✦"
+      ],
       "body": "{who} started {habit}. Peer pressure, but make it healthy."
     },
     {
       "id": "GH2",
-      "title": "New group habit ✦",
+      "title": "New club just dropped ✦",
+      "titles": [
+        "New club just dropped ✦",
+        "Recruitment season ✦",
+        "You've been summoned ✦"
+      ],
       "body": "{who} wants a {habit} club. Membership is free and mildly mandatory."
     },
     {
       "id": "GH3",
-      "title": "New group habit ✦",
+      "title": "New club just dropped ✦",
+      "titles": [
+        "New club just dropped ✦",
+        "Recruitment season ✦",
+        "You've been summoned ✦"
+      ],
       "body": "{who} started {habit}. Join before it gets awkward."
     },
     {
       "id": "GH4",
-      "title": "New group habit ✦",
+      "title": "New club just dropped ✦",
+      "titles": [
+        "New club just dropped ✦",
+        "Recruitment season ✦",
+        "You've been summoned ✦"
+      ],
       "body": "Group habit alert. {who} started {habit} and your presence is requested."
     }
   ],

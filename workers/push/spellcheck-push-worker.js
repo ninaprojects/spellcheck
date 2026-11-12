@@ -1141,7 +1141,7 @@ export const H3_FALLBACK = {
   QA: [{ id: 'QA1', title: '{who} spilled ✦', body: '{answer}' }],
   SR: [{ id: 'SR1', title: '{who} read this and thought of us ✦', body: '{label}' }],
   CU: [{ id: 'CUr1', title: '{who} opened a new chapter ✦', body: '{value}', tags: ['reading'] }, { id: 'CUw1', title: '{who} hit play on something new ✦', body: '{value}', tags: ['watching'] }, { id: 'CUl1', title: '{who}\'s soundtrack just changed ✦', body: '{value}', tags: ['listening'] }],
-  GH: [{ id: 'GH1', title: 'New group habit ✦', body: '{who} started {habit}. Peer pressure, but make it healthy.' }],
+  GH: [{ id: 'GH1', title: 'New club just dropped ✦', body: '{who} started {habit}. Peer pressure, but make it healthy.' }],
   CM: [{ id: 'CM7_1', title: 'Milestone alert ✦', body: '{who} hit 7 days on {habit}. Nobody panic.', tags: ['d7'] }, { id: 'CM14_1', title: 'Milestone alert ✦', body: 'Two weeks of {habit} for {who}. The rest of us are taking notes.', tags: ['d14'] }, { id: 'CM30_1', title: 'Milestone alert ✦', body: '{who} just hit 30 days on {habit}. We are not worthy.', tags: ['d30'] }],
   MP: [{ id: 'MP7a', title: 'Seven days of {habit} ✦', body: 'A whole week. The coven is losing it.', tags: ['d7'] }, { id: 'MP14a', title: 'Two weeks of {habit} ✦', body: 'Fourteen days straight. Honestly, ENERGY.', tags: ['d14'] }, { id: 'MP30a', title: 'Thirty days of {habit} ✦', body: 'A full month. Iconic behavior, truly.', tags: ['d30'] }],
   ST: [{ id: 'ST1', title: 'Your streak is glowing ✦', body: '{n} days and counting. One small thing makes it {n1}.' }],
