@@ -1183,7 +1183,7 @@ function viewMe(){
    :`<div class="b3">${b3.map(k=>`<div class="b3c"><div class="label">${k[0].toUpperCase()+k.slice(1)}</div>${(b[k]||'').trim()?signBadge(b[k]):`<button class="b3add" data-act="b3edit" aria-label="Add your ${k} sign">Add</button>`}<div class="b3n">${esc(signOf(b[k])?signOf(b[k])[0]:(b[k]||'').trim())}</div>${houseLine(b[k],b.rising)}</div>`).join('')}</div>${planetGrids(bd,b)}<div class="b3links">${hasPlanets(bd)?`<button class="link" data-act="moreplanets" aria-expanded="${!!ui.morePl}">${ui.morePl?'Show fewer':'Show more planets'}</button>`:''}<button class="link" data-act="b3edit">Edit your big 3</button></div>`;
   const birthSum=[bd.date,bd.time,bd.place].filter(Boolean).join(' · ');
   const tab=ui.arg==='settings'?'settings':'profile';const myShared=sharedHabits(me);
-  const profileHtml=`  <div class="mehead"><label class="phbig" for="pf" style="cursor:pointer">${avatarInner(me)}</label><input id="pf" class="vh" type="file" accept="image/*" aria-label="Change photo"><div class="h1">${esc(pr.name||me)}</div><label class="link" for="pf">Change photo</label></div>
+  const profileHtml=`  <div class="mehead"><label class="phbig" for="pf" style="cursor:pointer">${avatarInner(me)}</label><input id="pf" class="vh" type="file" accept="image/*" aria-label="Change photo"><div class="h1">${esc(pr.name||me)}</div><label class="link" for="pf">Change photo</label>${ui.photoErr?`<div class="small" role="alert" style="color:var(--text)">${esc(ui.photoErr)}</div>`:''}</div>
   ${chartCard()}
   <div class="card">${b3html}</div>
   <div><div class="label" style="margin:4px 0 8px">Shared habits</div>${myShared.length?`<div class="card" style="padding:4px 16px">${myShared.map(h=>habitCardRow(h,me)).join('')}</div>`:`<div class="card"><div class="small">Nothing shared yet. Share a habit from its page and it shows here and in The Tea.</div></div>`}</div>
@@ -1327,6 +1327,7 @@ async function placeSearch(q){
   }catch(e){if(e&&e.name==='AbortError')return;box.innerHTML='<div class="small pnone">Search is not available right now. What you typed is saved. Come back later to pick the exact place.</div>';}
 }
 function render(){
+  if(ui.picking&&Date.now()-ui.picking<120000){ui.dirty=true;return;}
   const act=document.activeElement;const keep=act&&act.dataset&&act.dataset.in?{id:act.id,s:act.selectionStart}:null;
   let html;
   if(!me)html=viewGate();
@@ -1734,11 +1735,14 @@ document.addEventListener('input',e=>{
   if(i==='step')d.stepTouched=true;
   if(i==='name'){const btn=document.querySelector('[data-act=create]');if(btn)btn.disabled=!v.trim();}
 });
+function pickDone(){ui.picking=0;if(ui.dirty){ui.dirty=false;render();}}
+document.addEventListener('click',e=>{const l=e.target&&e.target.closest&&e.target.closest('label[for=pf],label[for=cf]');if(l){ui.picking=Date.now();ui.photoErr='';}},true);
+document.addEventListener('cancel',e=>{if(e.target&&(e.target.id==='pf'||e.target.id==='cf'))pickDone();},true);
 document.addEventListener('change',async e=>{
-  if(e.target&&e.target.id==='cf'&&me){const f=e.target.files&&e.target.files[0];e.target.value='';if(f)readChart(f);return;}
+  if(e.target&&e.target.id==='cf'&&me){const f=e.target.files&&e.target.files[0];e.target.value='';pickDone();if(f)readChart(f);return;}
   if(!e.target||e.target.id!=='pf'||!me)return;
-  const f=e.target.files&&e.target.files[0];if(!f)return;
-  try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};save('photo');render();}catch(x){console.error(x);setSync('That photo would not load. Try another.');}
+  const f=e.target.files&&e.target.files[0];pickDone();if(!f)return;
+  try{const d=await squareJpeg(f,512);D.photo[me]={d,at:Date.now()};ui.photoErr='';save('photo');render();}catch(x){console.error(x);ui.photoErr='That photo would not load. Try a different one, or a screenshot of it.';render();}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.route==='sky'){const bk=ui.skyBack;ui.skyBack=null;location.hash=bk||'#today';}});
 window.addEventListener('hashchange',route);
