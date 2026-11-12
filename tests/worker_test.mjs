@@ -1064,5 +1064,76 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('morning: Monday sends a habits line and the result to each person', PEOPLE.every(p => pushes.filter(x => x.to === p).length === 2), pushes.map(x => x.to + ':' + x.title));
 }
 
+
+// ===== habit tracker comments (h3-cmt) =====
+{
+  const NOW = '2026-11-12T20:00:00Z';
+  const ms = (iso, mins = 0) => new Date(iso).getTime() - mins * 60000;
+  const runC = async (iso) => { pushes = []; return W.h3CommentsRun(env, at(iso), { fresh: true }); };
+  resetWorld();
+  put('h3-cmt-Lauren', { 'pic:Kellye:k1': [{ id: 'c0', t: 'old one', at: ms(NOW, 30) }] });
+  await runC(NOW);
+  check('h3 comments: first run marks existing comments as seen, sends nothing', pushes.length === 0, pushes);
+  put('h3-cmt-Lauren', { 'pic:Kellye:k1': [{ id: 'c0', t: 'old one', at: ms(NOW, 30) }, { id: 'c1', t: 'the shoulders on this', at: ms(NOW, 1) }] });
+  await runC(NOW);
+  check('h3 comments: the photo owner hears about a new comment', pushes.length === 1 && pushes[0].to === 'Kellye', pushes);
+  check('h3 comments: Round 2 owner wording with the photo noun', pushes[0] && pushes[0].title === 'Lauren has opinions about your photo' && pushes[0].body === 'the shoulders on this', pushes[0]);
+  check('h3 comments: push opens that post', pushes[0] && pushes[0].target === 'post:pic:Kellye:k1', pushes[0]);
+  await runC(NOW);
+  check('h3 comments: never sent twice', pushes.length === 0, pushes);
+  put('h3-cmt-Carolina', { 'pic:Kellye:k1': [{ id: 'c2', t: 'stealing it, see you never', at: ms(NOW, 0) }] });
+  await runC(NOW);
+  const toL = pushes.find(x => x.to === 'Lauren'), toK = pushes.find(x => x.to === 'Kellye');
+  check('h3 comments: earlier commenter and owner both hear, the author does not', pushes.length === 2 && toL && toK && !pushes.some(x => x.to === 'Carolina'), pushes);
+  check('h3 comments: earlier commenter gets the stay-out-of-it line', toL && toL.title === 'Carolina couldn’t stay out of it' && toL.body === 'On Kellye’s photo: stealing it, see you never', toL);
+  // a comment on your own post sends nothing
+  put('h3-cmt-Nina', { 'f:Nina:h1:2026-11-12': [{ id: 'c3', t: 'me again', at: ms(NOW, 0) }] });
+  await runC(NOW);
+  check('h3 comments: commenting on your own post sends nothing', pushes.length === 0, pushes);
+  // check-in noun, switch off, old news
+  put('h3-cmt-Kellye', { 'f:Nina:h1:2026-11-12': [{ id: 'c4', t: 'proud of you', at: ms(NOW, 0) }], 'sh:Lauren:s1': [{ id: 'c5', t: 'reading this tonight', at: ms(NOW, 0) }], 'pic:Carolina:z': [{ id: 'c6', t: 'ancient', at: ms(NOW, 600) }] });
+  put('recal-notif-prefs:Lauren', { reactions: false });
+  await runC(NOW);
+  check('h3 comments: check-in noun', pushes.length === 1 && pushes[0].to === 'Nina' && pushes[0].title === 'Kellye has opinions about your check-in', pushes);
+  check('h3 comments: Reactions and comments switch off means no push', !pushes.some(x => x.to === 'Lauren'), pushes);
+  check('h3 comments: comments older than 6 hours do not push', !pushes.some(x => x.to === 'Carolina'), pushes);
+  // several at once
+  put('h3-cmt-Lauren', { 'pic:Kellye:k1': [{ id: 'c0', t: 'old one', at: ms(NOW, 30) }, { id: 'c1', t: 'the shoulders on this', at: ms(NOW, 1) }, { id: 'c7', t: 'one', at: ms(NOW, 0) }, { id: 'c8', t: 'two', at: ms(NOW, 0) }] });
+  await runC(NOW);
+  const k = pushes.filter(x => x.to === 'Kellye');
+  check('h3 comments: several at once are one rowdy push', k.length === 1 && k[0].title === 'The comments are getting rowdy' && k[0].body === '2 new on your photo. Go see who said what.', pushes);
+  // group habit uses the stored owner; brew answers have no owner
+  put('h3-cmt-Nina', { 'g:abc': [{ id: 'c9', t: 'in', at: ms(NOW, 0), o: 'Carolina' }], 'qa:2026-11-12': [{ id: 'c10', t: 'same', at: ms(NOW, 0), o: 'Lauren' }] });
+  await runC(NOW);
+  check('h3 comments: group habit goes to its owner', pushes.some(x => x.to === 'Carolina' && x.title === 'Nina has opinions about your group habit'), pushes);
+  check('h3 comments: brew answers have no owner, so nobody new hears', !pushes.some(x => x.to === 'Lauren'), pushes);
+  put('h3-cmt-Kellye', { 'qa:2026-11-12': [{ id: 'c11', t: 'ha', at: ms(NOW, -1) }] });
+  await runC(NOW);
+  check('h3 comments: earlier brew commenter hears On the brew answers', pushes.some(x => x.to === 'Nina' && x.body === 'On the brew answers: ha'), pushes);
+  // junk values do not break it
+  put('h3-cmt-Carolina', { 'pic:Kellye:k1': 'nope', x: [null, 5, { id: 'q' }] });
+  let threw = false; try { await runC(NOW); } catch (e) { threw = true; }
+  check('h3 comments: junk records are skipped', !threw, threw);
+  // budget: Monday 8am with every job, then comments for everyone
+  const MORN = { Mon: '2026-11-09T16:05:00Z' };
+  resetWorld();
+  W.H3_JOBS_ON.result = true;
+  const habit = (o) => Object.assign({ id: 'h', name: 'Read', type: 'yesno', target: 1, days: [1, 1, 1, 1, 1, 1, 1], archived: false }, o);
+  for (const p of PEOPLE) { put('h3-habits-' + p, { r1: habit({ id: 'r1' }), j: habit({ id: 'j', name: 'Journal', preset: 'journal' }) }); put('h3-vote-' + p, { '2026-11-09': 'walk' }); }
+  put('h3-cmt-push-state', { init: true, seen: [] });
+  const mon = new Date(MORN.Mon).getTime();
+  for (const p of PEOPLE) put('h3-cmt-' + p, { ['pic:' + PEOPLE[(PEOPLE.indexOf(p) + 1) % 4] + ':x']: [{ id: 'b' + p, t: 'hi', at: mon - 60000 }] });
+  pushes = [];
+  await W.run(env, at(MORN.Mon)); await W.habitsRun(env, at(MORN.Mon)); await W.h3CommentsRun(env, at(MORN.Mon));
+  W.H3_JOBS_ON.result = false;
+  check('h3 comments: Monday 8am with every job plus comments stays under the 50 call limit', W.callsUsed() < 50, W.callsUsed());
+  const firstMin = pushes.filter(x => /opinions/.test(x.title)).length;
+  const next = new Date(new Date(MORN.Mon).getTime() + 60000).toISOString();
+  await W.run(env, at(next)); await W.habitsRun(env, at(next)); await W.h3CommentsRun(env, at(next));
+  const cp = pushes.filter(x => /opinions/.test(x.title));
+  check('h3 comments: on a busy minute nothing is lost, each comment push goes out once by the next minute', PEOPLE.every(p => cp.filter(x => x.to === p).length === 1), { firstMin, sent: cp.map(x => x.to) });
+  check('h3 comments: the next minute stays under the call limit too', W.callsUsed() < 50, W.callsUsed());
+}
+
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);
