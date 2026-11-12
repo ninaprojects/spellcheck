@@ -1190,6 +1190,11 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   put('h3-rx-Lauren', { [post]: { moon: true } });
   await runH(plus(TUE_2PM, 610)); put('h3-rx-Lauren', {}); await runH(plus(TUE_2PM, 680));
   check('reactions: a quick tap and untap never sends', pushes.length === 0, pushes);
+  put('recal-notif-prefs:Nina', { reactions: false });
+  put('h3-rx-Carolina', { [post]: { spell: true } });
+  await runH(plus(TUE_2PM, 690)); await runH(plus(TUE_2PM, 760));
+  check('reactions: the Reactions and comments switch turns them off', pushes.length === 0, pushes);
+  put('recal-notif-prefs:Nina', {});
 
   // shared read, Currently, group habit
   const at1 = '2026-11-17T22:15:00.000Z';

@@ -1680,14 +1680,15 @@ async function socialEvents(st, date, now, prefsOf) {
       const what = posts.length === 1 ? 'your ' + items[0].noun : `${posts.length} of your posts`;
       msg = { title: `${joinNames(uniq(items.map(i => i.reactor)))} reacted ${uniq(items.map(i => RX_GLYPH[i.k])).join(' ')}`, body: `On ${what}. The coven sees you, and it’s being weird about how good you are.` };
     }
-    events.push({ to: [owner], msg, job: 'reaction', activity: true, target });
+    events.push({ to: [owner], msg, job: 'reaction', pref: 'reactions', target });
   }
 
-  // Build the outbox: one push per person per event, respecting her Coven activity switch and the call budget.
+  // Build the outbox: one push per person per event, respecting her switches (Coven activity, or Reactions and comments for reactions) and the call budget.
   const outbox = [];
   for (const e of events) for (const person of uniq(e.to)) {
     if (!active(person)) continue;
     if (e.activity && !(await prefsOf(person)).activity) continue;
+    if (e.pref && (await prefsOf(person))[e.pref] === false) continue; // reactions use the Reactions and comments switch, like comments
     const tok = await readRaw('recal-fcm-token:' + person);
     if (!tok) continue;
     outbox.push({ person, tok, job: 'h3' + e.job, msg: e.target ? { ...e.msg, target: e.target } : e.msg });
