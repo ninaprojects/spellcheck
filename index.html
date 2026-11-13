@@ -825,7 +825,7 @@ function brewCard(t){
   else if(mine){body=`<div style="font-size:16px;line-height:1.4">${esc(mine.t)}</div><div class="row">${con}<button class="link" data-act="brewopen" style="color:#fff;text-decoration-color:#FFC94F">Edit</button></div>`;}
   else body=`<div class="row">${con}<button class="pill" data-act="brewopen" style="width:auto;padding:0 22px;min-height:44px;white-space:nowrap">Spill it</button></div>`;
   const m=moonSvg(t);
-  return `<div class="card brewcard"><div class="brewmoon" style="opacity:${(.35+.65*m.ill).toFixed(2)};box-shadow:0 0 30px 8px rgba(255,201,79,${(.28*m.ill).toFixed(2)})">${m.svg}</div>${BREW_STARS}<div class="label">Today's brew</div><div class="skytag">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:23px;line-height:1.22;margin-right:50px">${esc(q)}</div>${body}</div>`;
+  return `<div class="card brewcard"><div class="brewmoon" style="opacity:${(.35+.65*m.ill).toFixed(2)};box-shadow:0 0 30px 8px rgba(255,201,79,${(.28*m.ill).toFixed(2)})">${m.svg}</div>${BREW_STARS}<div class="label">Today's brew</div><div class="skytag">${esc(skyTag(t))}</div><div style="font-family:'Noto Serif Display',Georgia,serif;font-weight:600;font-size:20px;line-height:1.22;margin-right:50px">${esc(q)}</div>${body}</div>`;
 }
 /* Moon sign at noon Pacific (20:00 UTC), from the main terms of the Moon's longitude. Checked against a published ingress table. */
 function moonLon(k){const [y,m0,d]=k.split('-').map(Number);let Y=y,m=m0;if(m<=2){Y--;m+=12;}const A=Math.floor(Y/100),B=2-A+Math.floor(A/4);const jd=Math.floor(365.25*(Y+4716))+Math.floor(30.6001*(m+1))+d+20/24+B-1524.5;const T=(jd-2451545)/36525,r=Math.PI/180,sn=x=>Math.sin(x*r);
