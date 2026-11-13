@@ -1351,5 +1351,24 @@ check('someone without notifications is skipped, the others still hear', sentTo(
   check('recap: stays under the call budget', W.callsUsed() < 46, W.callsUsed());
 }
 
+
+// --- one-time push to Lauren for her birth details (Nov 13, 2026) ---
+{
+  const runH = async (iso) => { pushes = []; return W.habitsRun(env, at(iso), { fresh: true }); };
+  const isIt = x => x.title === W.ONE_OFF_LAUREN.msg.title;
+  resetWorld();
+  await runH('2026-11-13T15:20:00Z'); // 7:20am Pacific
+  check('one-off Lauren: nothing before 7:30am', !pushes.some(isIt), pushes);
+  await runH('2026-11-13T15:31:00Z'); // 7:31am Pacific
+  check('one-off Lauren: goes to Lauren only, once, at 7:30', pushes.filter(isIt).length === 1 && pushes.find(isIt).to === 'Lauren', pushes);
+  check('one-off Lauren: no em dashes', !/[–—]/.test(W.ONE_OFF_LAUREN.msg.title + W.ONE_OFF_LAUREN.msg.body));
+  await runH('2026-11-13T15:36:00Z');
+  check('one-off Lauren: never repeats', !pushes.some(isIt), pushes);
+  resetWorld(); await runH('2026-11-14T15:31:00Z');
+  check('one-off Lauren: other days, nothing', !pushes.some(isIt), pushes);
+  resetWorld(); put('recal-notif-prefs:Lauren', { activity: false }); await runH('2026-11-13T15:31:00Z');
+  check('one-off Lauren: respects her Coven activity switch', !pushes.some(isIt), pushes);
+  check('one-off Lauren: stays under the call budget', W.callsUsed() < 46, W.callsUsed());
+}
 console.log('\n' + results.length + ' checks, ' + results.filter(x => !x).length + ' failed');
 process.exit(results.every(Boolean) ? 0 : 1);
