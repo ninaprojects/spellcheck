@@ -1402,6 +1402,14 @@ export function h3PostInfo(id, habitsBy) {
 }
 const RX_GLYPH = { heart: '♡', spell: '✦', moon: '☾' };
 
+
+// One-time push (Nina, Nov 13, 2026): ask Lauren for her birth details so Read your sky can use her chart.
+// Goes out once, from 7:30am to 11:59am Pacific on that date only, under her Coven activity switch.
+export const ONE_OFF_LAUREN = {
+  date: '2026-11-13', person: 'Lauren',
+  msg: { title: 'The universe filed a missing person report ✦', body: 'Your chart is the only one we can\u2019t find. Add your birth date and city in Spell Check and we\u2019ll call off the search party.' }
+};
+
 export async function habitsRun(env, now, opts = {}) {
   if (opts.fresh) resetRun(); // tests only. In production it shares the call counter of the run() just before it.
   const date = h3Date(now);
@@ -1552,6 +1560,19 @@ export async function habitsRun(env, now, opts = {}) {
       await send(outbox);
     });
   }
+
+  const oneOffWindow = (ptHour === 7 && pacificMinute(now) >= 30) || (ptHour >= 8 && ptHour < 12);
+  if (date === ONE_OFF_LAUREN.date && oneOffWindow) await guard('oneOffLauren', async () => {
+    st.oneOff = st.oneOff || {};
+    if (st.oneOff.laurenBirth) return;
+    const who = ONE_OFF_LAUREN.person;
+    if (!(await prefsOf(who)).activity) { console.log(who, 'has Coven activity off, one-time push skipped.'); st.oneOff.laurenBirth = 'off'; changed = true; return; }
+    const tok = await readRaw('recal-fcm-token:' + who);
+    if (!tok) { console.log('No device token for', who, ', one-time push skipped.'); st.oneOff.laurenBirth = 'no-token'; changed = true; return; }
+    st.oneOff.laurenBirth = 'sent';
+    try { await saveState(); } catch (e) { delete st.oneOff.laurenBirth; console.error('oneOffLauren could not save state, not sending:', e && e.message); return; }
+    await send([{ person: who, msg: { ...ONE_OFF_LAUREN.msg }, tok, job: 'oneOffLauren' }]);
+  });
 
   if (fetched) await guard('h3social', async () => {
     const r = await socialEvents(st, date, now, prefsOf);
