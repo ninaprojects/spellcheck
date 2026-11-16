@@ -771,6 +771,16 @@ function habitRow(h){
   return `<div><div class="habit" style="border-bottom:0"><div style="display:flex;align-items:center;gap:12px;min-width:0">${habitIcon(h,ui.popId===h.id)}<div style="min-width:0"><button class="name" data-go="habit/${h.id}">${esc(h.name)}</button><div class="tags"><span>${line}</span>${tag}</div>${h.preset==='show'&&!paused?`<button class="link showlink" data-act="showopen" data-id="${h.id}">Take the stage</button>`:''}${h.preset==='ootd'&&!paused&&!rest?(picToday(h.id)?'<div class="small">Photo added</div>':`<button class="link showlink" data-act="picadd" data-id="${h.id}">Add photo</button>`):''}</div></div>${ctl}</div>${bar}</div>`;
 }
 
+/* Big 3 card (approved Nov 13 2026): on Today while her Sun, Moon and Rising are all empty. "Not now" hides it for
+   3 days on this phone. Two approved lines rotate by day. */
+const B3_LINES=[['The stars are asking about you','Add your Big 3 and your daily sky and sky pushes switch on. We have so much to tell you.'],['Tell us your signs','Your Sun, Moon and Rising unlock your daily sky. We promise to be extremely weird about it.']];
+function b3HintOff(){try{const t=+localStorage.getItem('h3-b3hint:'+me)||0;return Date.now()-t<3*864e5;}catch(e){return false;}}
+function b3HintCard(){
+  const b=(D.prof[me]||{}).big3||{};
+  if(!me||b3HintOff()||(b.sun||b.moon||b.rising))return '';
+  const [h,body]=pick(B3_LINES,me+todayK());
+  return `<div class="card" id="b3hint"><div class="h2">${esc(h)}</div><div class="small">${esc(body)}</div><div style="display:flex;gap:16px;align-items:center"><button type="button" class="link" data-act="b3go">Add your Big 3</button><button type="button" class="link" data-act="b3hide">Not now</button></div></div>`;
+}
 function birthHintOff(){try{return localStorage.getItem('h3-birthhint:'+me)==='1';}catch(e){return false;}}
 function birthHintCard(){
   const pr=D.prof[me]||{};const b=pr.big3||{};const bd=pr.birth||{};
@@ -794,7 +804,7 @@ function viewToday(){
   <div class="date">${longDate(t)}</div>
   ${strip}
   ${skyCardToday(t,phase)}
-  ${birthHintCard()}
+  ${b3HintCard()}${birthHintCard()}
   ${brewCard(t)}
   <div class="card"><div class="hhead"><div class="h2">Your habits</div>${pg.n?`<span class="small" aria-live="polite">${pg.d} of ${pg.n} done today</span>`:''}</div>
    ${pg.n&&pg.d===pg.n?`<div class="alldone">${ui.burst&&Date.now()-ui.burst<2500?'<div class="burst" aria-hidden="true">'+[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return `<i style="--dx:${Math.round(Math.cos(a)*60)}px;--dy:${Math.round(Math.sin(a)*40)}px"></i>`;}).join('')+'</div>':''}${esc(allDoneLine(t))}</div>`:''}
@@ -2007,6 +2017,8 @@ document.addEventListener('click',e=>{
     case 'birthedit':ui.birthOpen=!ui.birthOpen;break;
     case 'moreplanets':ui.morePl=!ui.morePl;break;
     case 'b3use':{const pr=D.prof[me]||(D.prof[me]={});const c=birthChart(pr.birth);if(!c)return;const bg=pr.big3||(pr.big3={});if(c.sun.length===1)bg.sun=c.sun[0];if(c.moon.length===1)bg.moon=c.moon[0];if(c.rising)bg.rising=c.rising;save('prof');break;}
+    case 'b3hide':try{localStorage.setItem('h3-b3hint:'+me,String(Date.now()));}catch(x){}break;
+    case 'b3go':{ui.b3edit=true;if(location.hash==='#me'){render();}else{location.hash='#me';}setTimeout(()=>{const x=document.getElementById('b-sun');if(x){x.scrollIntoView({block:'center'});x.focus({preventScroll:true});}},80);break;}
     case 'birthhide':try{localStorage.setItem('h3-birthhint:'+me,'1');}catch(x){}break;
     case 'notime':{const pr=D.prof[me]||(D.prof[me]={});const bd=pr.birth||(pr.birth={});bd.noTime=!bd.noTime;if(bd.noTime)delete bd.time;save('prof');break;}
     case 'birthgo':{ui.birthOpen=true;if(location.hash==='#me/settings'){render();}else{location.hash='#me/settings';}setTimeout(()=>{const x=document.getElementById('bd-date');if(x){x.scrollIntoView({block:'center'});x.focus({preventScroll:true});}},80);return;}
