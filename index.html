@@ -350,13 +350,12 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 @media (prefers-reduced-motion:no-preference){#picsheet .ps{animation:psup .22s ease-out}@keyframes psup{from{transform:translate(-50%,24px);opacity:0}to{transform:translate(-50%,0);opacity:1}}}
 
 /* Read your sky, In your chart today (Nina, Nov 16): attached Moon house tab, serif planet rows, timeline with a Moon-phase mark, Next up card */
-.tc .tctab{align-self:stretch;margin:6px -6px -4px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;text-align:left;background:rgba(227,245,248,.85);border-top:1px dashed var(--ol)}
-.tc.new .tctab,.tc.teal .tctab{background:rgba(255,255,255,.1)}
-.tctab-ic{flex:none;width:24px;height:24px;color:#1F7A90;margin-top:1px}.tctab-ic svg{width:100%;height:100%}
-.tc.new .tctab-ic,.tc.teal .tctab-ic{color:var(--tag)}
-.tctab-k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#1F7A90;margin-bottom:2px}
-.tc.new .tctab-k,.tc.teal .tctab-k{color:var(--tag)}
-.tctab-t{font-size:14px;line-height:1.4;color:var(--ink2)}
+.tc.hastab{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 52%,color-mix(in srgb,var(--bg2) 82%,var(--bd) 18%) 100%)}
+.tc .tctab{align-self:stretch;margin-top:8px;padding:8px 6px 2px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.tc .tctab::before{content:"";position:absolute;top:0;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,var(--ol),transparent)}
+.tctab-k{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:16px;line-height:1.2;color:var(--tag);margin:4px 0 3px}
+.tctab-k::before{content:"\263D\FE0E\00a0";}
+.tctab-t{font-size:14px;line-height:1.45;color:var(--ink2);max-width:34ch}
 .pchart{display:flex;flex-direction:column}
 .prow{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
 .pchart .skylab+.prow{border-top:0;padding-top:6px}
@@ -381,7 +380,7 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .pnk{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--sec)}
 .pnt{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:18px;line-height:1.2}
 .pnd{font-size:12px;color:var(--sec);white-space:nowrap}
-@media (prefers-color-scheme:dark){.tc .tctab{background:rgba(27,50,56,.55)}.tctab-ic,.tctab-k{color:#7FD0E3}
+@media (prefers-color-scheme:dark){
  .pc-sun{color:#F2CC6A}.pc-merc{color:#9DB4FF}.pc-ven{color:#F29BD3}.pc-mars{color:#FFB07F}.pc-air{color:#7FD0E3}
  .pt-sun{background:#3A3120}.pt-merc{background:#222B48}.pt-ven{background:#40243A}.pt-mars{background:#40291B}.pt-air{background:#1B3238}}
 </style>
@@ -1111,7 +1110,7 @@ function skyPop(){
   const ev=skyEvent(t);const hh=natal.Rising?bcHouse(moon,natal.Rising):null;
   let tab='';
   if(hh){const txt=(ev?houseText(ev,moon,hh,who,t):null)||skyRowLine('Rising',natal,moon,who,t);
-    if(txt)tab=`<div class="tctab"><span class="tctab-ic" aria-hidden="true">${skyIcon('Moon')}</span><div><div class="tctab-k">${ev?esc(ev)+' in ':''}${cap1(poss)} ${bcOrd(hh)} house</div><div class="tctab-t">${esc(txt)}</div></div></div>`;}
+    if(txt)tab=`<div class="tctab"><div><div class="tctab-k">${poss} ${bcOrd(hh)} house</div><div class="tctab-t">${esc(txt)}</div></div></div>`;}
   const card=`<div class="tc ${kind}${tab?' hastab':''}">${skyMoonEl(t)}<span class="tag">${esc(skyTagToday(t))}</span><div class="mood">${esc(has?fcS.headline:skyVibe(t))}</div>${tab}</div>`;
   /* In your chart today: up to 3 planet rows (serif headline, line, timeline with a Moon-phase mark), or a quiet line
      plus a Next up card. */

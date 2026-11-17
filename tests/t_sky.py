@@ -28,7 +28,7 @@ with sync_playwright() as pw:
     ck('four people tabs',p.locator('.skybox .who button').count()==4)
     ck('one scroll: no tabs',p.locator('.skybox .tabs').count()==0 and p.locator('[data-act=skytab]').count()==0)
     ck('no Big 3 rows above the chart section (they repeated the Moon card)',p.locator('.skybox .srow .st').count()==0 and p.locator('.skybox .skylab:has-text("In your chart today")').count()==1)
-    ck('the Moon card has an attached house tab naming her 11th house',p.locator('.skybox .tc .tctab-k:has-text("Your 11th house")').count()==1)
+    ck('the Moon card has an attached house tab naming her 11th house',p.locator('.skybox .tc .tctab-k:text-is("your 11th house")').count()==1)
     ck('no separate Moon rows any more (Nina, Nov 16)',p.locator('.skybox .srow').count()==0 and p.locator('.skybox .chipx').count()==0)
     ck('no old paragraph in the pop-out',p.locator('.skybox .tc .para').count()==0)
     ck('coming up three',p.locator('.skybox .up').count()==3)
@@ -62,18 +62,18 @@ with sync_playwright() as pw:
     ck('the house is counted from Rising (Moon sign to house)',p.evaluate("bcHouse('Aquarius','Sagittarius')===3&&bcHouse('Sagittarius','Sagittarius')===1"))
     # a Full Moon day: the card names the house, so there is no separate Moon house row
     q=new('2026-11-24');q.goto('file://'+APP+'#sky');q.wait_for_selector('.skybox')
-    ck('Full Moon day: the tab names the Full Moon house',q.locator('.skybox .tctab-k:has-text("Full Moon in Your")').count()==1)
+    ck('Full Moon day: the house reads "your 7th house", without repeating Full Moon',q.text_content('.skybox .tctab-k')=='your 7th house')
     ck('Full Moon day: the tab line is an approved Full Moon house line',q.evaluate("Object.values(HOUSE_LINES['Full Moon']).flat().includes(document.querySelector('.skybox .tctab-t').textContent)"))
     # a New Moon day
     q=new('2026-11-08');q.goto('file://'+APP+'#sky');q.wait_for_selector('.skybox')
-    ck('New Moon day: the tab names the New Moon house',q.locator('.skybox .tctab-k:has-text("New Moon in Your")').count()==1)
+    ck('New Moon day: the house section is there, the event lives in the heading only',q.locator('.skybox .tctab-k').count()==1 and 'Moon' not in q.text_content('.skybox .tctab-k'))
     # no Rising: no house row, the Moon row stays
     r=new('2026-11-06');r.add_init_script("localStorage.setItem('h3c-prof-Nina',JSON.stringify({setup:true,name:'Nina',big3:{sun:'Aquarius',moon:'Aquarius'}}));")
     r.goto('file://'+APP+'#sky');r.wait_for_selector('.skybox')
     ck('no Rising: no house tab',r.locator('.skybox .tctab').count()==0)
     # badges: signs and planets are drawn, with one stroke width
     p.goto('file://'+APP+'#sky');p.wait_for_selector('.skybox')
-    ck('sky icons share one stroke width',p.evaluate("(()=>{const s=new Set([...document.querySelectorAll('.skybox .tctab-ic svg,.skybox .sbadge svg')].map(e=>e.getAttribute('stroke-width')));return s.size===1&&[...s][0]==='1.6'})()"))
+    ck('sky icons share one stroke width',p.evaluate("['Sun','Moon','Mercury','Venus','Mars'].every(n=>/stroke-width=.1\\.6./.test(skyIcon(n)))"))
     ck('all 12 signs and 5 planets have a drawing',p.evaluate("['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces','Sun','Moon','Mercury','Venus','Mars'].every(n=>skyIcon(n).includes('<path')||skyIcon(n).includes('<circle'))"))
     b.close()
 print(f't_sky.py: {checks} checks, {fails} failed');sys.exit(1 if fails else 0)
