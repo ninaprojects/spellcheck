@@ -1,4 +1,4 @@
-"""Sky: calm Today card, event colours, Read your sky pop-out (one scroll, Moon rows, people, dismiss). Planet rows: t_skyrows.py. Firebase blocked, clock pinned."""
+"""Sky: calm Today card, event colours, Read your sky pop-out (one scroll, the Moon card with its house tab, people, dismiss). Planet rows: t_skyrows.py. Firebase blocked, clock pinned."""
 import os, sys, datetime
 from playwright.sync_api import sync_playwright
 APP=os.path.abspath(os.environ.get('SPELLCHECK_HABITS', os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','index.html')))
@@ -28,12 +28,13 @@ with sync_playwright() as pw:
     ck('four people tabs',p.locator('.skybox .who button').count()==4)
     ck('one scroll: no tabs',p.locator('.skybox .tabs').count()==0 and p.locator('[data-act=skytab]').count()==0)
     ck('no Big 3 rows above the chart section (they repeated the Moon card)',p.locator('.skybox .srow .st').count()==0 and p.locator('.skybox .skylab:has-text("In your chart today")').count()==1)
-    ck('the Moon house row names the house',p.locator('.skybox .chipx:has-text("Moon · in your 11th house")').count()==1)
+    ck('the Moon card has an attached house tab naming her 11th house',p.locator('.skybox .tc .tctab-k:text-is("your 11th house")').count()==1)
+    ck('no separate Moon rows any more (Nina, Nov 16)',p.locator('.skybox .srow').count()==0 and p.locator('.skybox .chipx').count()==0)
     ck('no old paragraph in the pop-out',p.locator('.skybox .tc .para').count()==0)
     ck('coming up three',p.locator('.skybox .up').count()==3)
     p.click('[data-act=skywho][data-p=Kellye]')
     ck('no-chart person gets add box',p.locator('.addbox').count()==1)
-    ck('card not clipped',p.evaluate("(()=>{const c=document.querySelector('.skybox .tc').getBoundingClientRect();const r=document.querySelector('.skybox .srow,.skybox .addbox').getBoundingClientRect();return r.top>=c.bottom-1})()"))
+    ck('card not clipped',p.evaluate("(()=>{const c=document.querySelector('.skybox .tc').getBoundingClientRect();const r=document.querySelector('.skybox .pchart,.skybox .addbox').getBoundingClientRect();return r.top>=c.bottom-1})()"))
     p.click('.skyscrim',position={'x':5,'y':5});p.wait_for_timeout(300)
     ck('tap outside closes',p.locator('.skybox').count()==0 and p.url.endswith('#today'))
     p.goto('file://'+APP+'#sky');p.wait_for_selector('.skybox');p.keyboard.press('Escape');p.wait_for_timeout(300)
@@ -45,37 +46,34 @@ with sync_playwright() as pw:
     ck('sign relations',p.evaluate("skyRel('Aquarius','Libra')==='element'&&skyRel('Aries','Aries')==='same'&&skyRel('Aries','Libra')==='opposite'&&skyRel('Aries','Cancer')==='tense'&&skyRel('Aries','Gemini')==='friendly'&&skyRel('Aries','Taurus')==='quiet'"))
     ck('today headline comes from the bank for her Sun sign and the Moon sign',p.evaluate("SKY_HEAD.Aquarius.Libra.includes(forecastFor('Nina',todayK()).headline)"))
     p.goto('file://'+APP+'#sky');p.wait_for_selector('.skybox');p.click('[data-act=skywho][data-p=Nina]')
-    sds=p.evaluate("[...document.querySelectorAll('.skybox .srow .sd')].map(e=>e.textContent)")
-    ck('first row: the Moon meets her Moon, from the approved list',sds[0] in p.evaluate("SKY_ROWS.Moon.element") and p.evaluate("(()=>{const c=document.querySelector('.skybox .srow .chipx').textContent;return SKY_VERB.trine.some(v=>c==='Moon '+v+' your Moon')})()"))
-    ck('second row: the Moon house, from the 11th house list',sds[1] in p.evaluate("SKY_ROWS.Rising['11']"))
-    ck('no birth date: one row asks for it, with the Add birth details link',p.locator('.skybox .skyquiet:has-text("Add your birth date and place") [data-act=birthgo]').count()==1)
+    ck('the house tab line is from the approved 11th house list',p.text_content('.skybox .tctab-t') in p.evaluate("SKY_ROWS.Rising['11']"))
+    ck('no birth date: a line asks for it, with the Add birth details link',p.locator('.skybox .skyquiet:has-text("Add your birth date and place") [data-act=birthgo]').count()==1)
     p.screenshot(path='/tmp/sky_rows.png')
     p.keyboard.press('Escape');p.wait_for_timeout(300)
     for w in (360,430):
         q=new('2026-11-06',w);q.goto('file://'+APP+'#sky');q.wait_for_selector('.skybox')
         ck(f'{w} no sideways scroll',q.evaluate('document.documentElement.scrollWidth<=innerWidth'))
         ck(f'{w} people row one line',q.evaluate("new Set([...document.querySelectorAll('.skybox .who button,.skybox .sbh .link')].map(e=>Math.round(e.getBoundingClientRect().top))).size===1"))
-        ck(f'{w} badges are drawn at one size',q.evaluate("(()=>{const s=[...document.querySelectorAll('.skybox .srow .sbadge svg')].map(e=>Math.round(e.getBoundingClientRect().width));return s.length>=2&&new Set(s).size===1})()"))
-        ck(f'{w} chart section does not overflow',q.evaluate("[...document.querySelectorAll('.skybox .srow')].every(e=>e.getBoundingClientRect().right<=innerWidth)"))
+        ck(f'{w} the house tab fits inside the card',q.evaluate("(()=>{const c=document.querySelector('.skybox .tc').getBoundingClientRect(),t=document.querySelector('.skybox .tctab').getBoundingClientRect();return t.left>=c.left&&t.right<=c.right&&t.bottom<=c.bottom})()"))
+        ck(f'{w} chart section does not overflow',q.evaluate("[...document.querySelectorAll('.skybox .pchart>*')].every(e=>e.getBoundingClientRect().right<=innerWidth)"))
     # houses: data, chips, lines, aspect, event line, no-Rising fallback
     ck('house lines complete (Venus 59, New Moon 33, Sun 37, Mercury 36, Mars 37, Full Moon 38)',p.evaluate("(()=>{const c={Venus:59,'New Moon':33,Sun:37,Mercury:36,Mars:37,'Full Moon':38};return Object.keys(c).every(k=>{const h=HOUSE_LINES[k];return h&&Object.keys(h).length===12&&Object.values(h).flat().length===c[k]&&Object.values(h).every(a=>a.length>=1)})})()"))
     ck('house lines: no em dashes, no exclamation points, under 110 characters',p.evaluate("Object.values(HOUSE_LINES).every(h=>Object.values(h).flat().every(l=>!/[\\u2014\\u2013!]/.test(l)&&l.length<=110)||false)"))
     ck('the house is counted from Rising (Moon sign to house)',p.evaluate("bcHouse('Aquarius','Sagittarius')===3&&bcHouse('Sagittarius','Sagittarius')===1"))
     # a Full Moon day: the card names the house, so there is no separate Moon house row
     q=new('2026-11-24');q.goto('file://'+APP+'#sky');q.wait_for_selector('.skybox')
-    ck('Full Moon day: card has the house line',q.locator('.skybox .tc .rxtag:has-text("Full Moon in your")').count()==1 and 'house' in q.inner_text('.skybox .tc .rxtag').lower())
-    ck('Full Moon day: no Moon house row',q.locator('.skybox .chipx:has-text("Moon · in your")').count()==0)
+    ck('Full Moon day: the house reads "your 7th house", without repeating Full Moon',q.text_content('.skybox .tctab-k')=='your 7th house')
+    ck('Full Moon day: the tab line is an approved Full Moon house line',q.evaluate("Object.values(HOUSE_LINES['Full Moon']).flat().includes(document.querySelector('.skybox .tctab-t').textContent)"))
     # a New Moon day
     q=new('2026-11-08');q.goto('file://'+APP+'#sky');q.wait_for_selector('.skybox')
-    ck('New Moon day: card has the house line',q.locator('.skybox .tc .rxtag:has-text("New Moon in your")').count()==1)
+    ck('New Moon day: the house section is there, the event lives in the heading only',q.locator('.skybox .tctab-k').count()==1 and 'Moon' not in q.text_content('.skybox .tctab-k'))
     # no Rising: no house row, the Moon row stays
     r=new('2026-11-06');r.add_init_script("localStorage.setItem('h3c-prof-Nina',JSON.stringify({setup:true,name:'Nina',big3:{sun:'Aquarius',moon:'Aquarius'}}));")
     r.goto('file://'+APP+'#sky');r.wait_for_selector('.skybox')
-    ck('no Rising: no house row',r.locator('.skybox .chipx:has-text("house")').count()==0)
-    ck('no Rising: the Moon meets your Moon row stays',r.locator('.skybox .chipx:has-text("your Moon")').count()==1)
+    ck('no Rising: no house tab',r.locator('.skybox .tctab').count()==0)
     # badges: signs and planets are drawn, with one stroke width
     p.goto('file://'+APP+'#sky');p.wait_for_selector('.skybox')
-    ck('sign and planet badges share one stroke width',p.evaluate("(()=>{const s=new Set([...document.querySelectorAll('.skybox .sbadge svg')].map(e=>e.getAttribute('stroke-width')));return s.size===1&&[...s][0]==='1.6'})()"))
+    ck('sky icons share one stroke width',p.evaluate("['Sun','Moon','Mercury','Venus','Mars'].every(n=>/stroke-width=.1\\.6./.test(skyIcon(n)))"))
     ck('all 12 signs and 5 planets have a drawing',p.evaluate("['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces','Sun','Moon','Mercury','Venus','Mars'].every(n=>skyIcon(n).includes('<path')||skyIcon(n).includes('<circle'))"))
     b.close()
 print(f't_sky.py: {checks} checks, {fails} failed');sys.exit(1 if fails else 0)

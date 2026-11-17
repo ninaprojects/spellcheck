@@ -348,6 +348,41 @@ nav a .pdot{position:absolute;top:12px;margin-left:18px}
 .feed.pulse{animation:fpulse 2.4s ease-out}@keyframes fpulse{0%,40%{background:var(--ptint)}100%{background:transparent}}
 @media (prefers-reduced-motion:reduce){.feed.pulse{animation:none;background:var(--ptint)}}
 @media (prefers-reduced-motion:no-preference){#picsheet .ps{animation:psup .22s ease-out}@keyframes psup{from{transform:translate(-50%,24px);opacity:0}to{transform:translate(-50%,0);opacity:1}}}
+
+/* Read your sky, In your chart today (Nina, Nov 16): attached Moon house tab, serif planet rows, timeline with a Moon-phase mark, Next up card */
+.tc.hastab{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 45%,color-mix(in srgb,var(--bg2) 55%,var(--bd) 45%) 100%)}
+.tc .tctab{align-self:stretch;margin-top:8px;padding:8px 6px 2px;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative}
+.tc .tctab::before{content:"";position:absolute;top:0;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,var(--ol),transparent)}
+.tctab-k{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:16px;line-height:1.2;color:var(--tag);margin:4px 0 3px}
+.tctab-k::before{content:"\263D\FE0E\00a0";}
+.tctab-t{font-size:14px;line-height:1.45;color:var(--ink2);max-width:34ch}
+.pchart{display:flex;flex-direction:column}
+.prow{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.pchart .skylab+.prow{border-top:0;padding-top:6px}
+.prow .sbadge,.pnext .sbadge{width:34px;height:34px;font-size:17px;margin:0}
+.pmain{min-width:0;display:flex;flex-direction:column;gap:5px}
+.ptitle{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:21px;line-height:1.15}
+.pbody{font-size:14px;line-height:1.45}
+.ptl{display:flex;align-items:center;gap:12px;margin-top:6px}
+.pc-sun{color:#9A6F00}.pc-merc{color:#3F5BB0}.pc-ven{color:#A63D86}.pc-mars{color:#B8561F}.pc-air{color:#1F7A90}
+.skybar{position:relative;flex:1;min-width:60px;height:3px;border-radius:2px;background:var(--line)}
+.skybar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:currentColor;opacity:.5}
+.skybar .pm{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:var(--bg);transform:translate(-50%,-50%);display:grid;place-items:center}
+.skybar .pm svg{width:18px;height:18px;display:block;overflow:visible}
+.pwhen{flex:none;white-space:nowrap;font-size:11.5px;color:var(--sec);display:flex;gap:6px;align-items:baseline}
+.pwhen em{font-family:'Instrument Serif',Georgia,serif;font-size:15px;color:var(--text)}
+.pquiet{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:20px;line-height:1.25;padding-top:6px}
+.pquiet.sans{font-family:inherit;font-style:normal;font-size:14px;line-height:1.45}
+.pnext{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;margin-top:12px}
+.pnext .sbadge{width:28px;height:28px;font-size:14px;background:var(--bg)}
+.pt-sun{background:#FFF0C9}.pt-merc{background:#E6EDFF}.pt-ven{background:#FBE6F3}.pt-mars{background:#FFE6D3}.pt-air{background:#E3F5F8}
+.pnx{display:flex;flex-direction:column;min-width:0;flex:1}
+.pnk{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--sec)}
+.pnt{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-size:18px;line-height:1.2}
+.pnd{font-size:12px;color:var(--sec);white-space:nowrap}
+@media (prefers-color-scheme:dark){
+ .pc-sun{color:#F2CC6A}.pc-merc{color:#9DB4FF}.pc-ven{color:#F29BD3}.pc-mars{color:#FFB07F}.pc-air{color:#7FD0E3}
+ .pt-sun{background:#3A3120}.pt-merc{background:#222B48}.pt-ven{background:#40243A}.pt-mars{background:#40291B}.pt-air{background:#1B3238}}
 </style>
 </head>
 <body>
@@ -1060,33 +1095,42 @@ function planetRows(who,k,natal){
   const rest=[];['Venus','Mars','Mercury','Sun'].forEach((pl,pi)=>{const ps=planetSign(pl,k);if(!ps)return;const r=mk(pl,pl,ps,pi+1);if(r)rest.push(r);});
   rest.sort((x,y)=>x.rank-y.rank);return out.concat(rest).slice(0,3);
 }
+/* Point names in tags (Nina, Nov 16): plain words, so "Sun prods your Sun" never happens. */
+const SKY_PT={Sun:'spark',Moon:'heart',Rising:'vibe'};
+function skyPhaseMark(ph){const lit=ph==='peak'?'<circle cx="7" cy="7" r="5.5" fill="currentColor"/>':ph==='building'?'<path d="M7 1.5a5.5 5.5 0 0 1 0 11a3 5.5 0 0 0 0-11z" fill="currentColor"/>':'<path d="M7 1.5a5.5 5.5 0 0 0 0 11a3 5.5 0 0 1 0-11z" fill="currentColor"/>';
+  return `<svg viewBox="0 0 14 14" width="18" height="18" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1"/>${lit}</svg>`;}
 function skyPop(){
   const t=todayK();const who=ui.sky||me;const own=who===me;const natal=natalOf(who);const has=Object.keys(natal).length>0;
   const moon=moonSign(t);const kind=skyKind(t);
   const fcS=forecastFor(who,t);
   const poss=own?'your':esc(who)+'’s';
-  const ev=skyEvent(t);const evH=ev&&natal.Rising?bcHouse(moon,natal.Rising):null;
-  const card=`<div class="tc ${kind}">${skyMoonEl(t)}<span class="tag">${esc(skyTagToday(t))}</span><div class="mood">${esc(has?fcS.headline:skyVibe(t))}</div>${evH?`<span class="rxtag">${ev} in ${poss} ${bcOrd(evH)} house</span>`:''}</div>`;
-  /* In your chart today (layout locked Nov 11): Moon meets your Moon, the Moon's house (not on New or Full Moon days,
-     when the house is in the card), then planet rows with until dates, or a quiet line plus the next hit. */
-  const REL={same:'conjunction',friendly:'sextile',tense:'square',element:'trine',opposite:'opposition'};
-  const mrows=[];
-  if(natal.Moon){const rel=skyRel(natal.Moon,moon);const txt=skyRowLine('Moon',natal,moon,who,t);if(txt)mrows.push({pl:'Moon',chip:REL[rel]?'Moon '+skyVerb(REL[rel],who+'|moon',t)+' '+poss+' Moon':'Moon in '+moon+' · '+poss+' Moon',txt});}
-  if(natal.Rising&&!ev){const hh=bcHouse(moon,natal.Rising);const txt=skyRowLine('Rising',natal,moon,who,t);if(hh&&txt)mrows.push({pl:'Moon',chip:'Moon · in '+poss+' '+bcOrd(hh)+' house',txt});}
+  const pn=pt=>poss+' '+SKY_PT[pt];
+  /* The Moon card carries the Moon's house in an attached tab (Nina, Nov 16), every day. On New and Full Moon days
+     the tab uses the approved lunation house line. No Rising: no tab. */
+  const ev=skyEvent(t);const hh=natal.Rising?bcHouse(moon,natal.Rising):null;
+  let tab='';
+  if(hh){const txt=(ev?houseText(ev,moon,hh,who,t):null)||skyRowLine('Rising',natal,moon,who,t);
+    if(txt)tab=`<div class="tctab"><div><div class="tctab-k">${poss} ${bcOrd(hh)} house</div><div class="tctab-t">${esc(txt)}</div></div></div>`;}
+  const card=`<div class="tc ${kind}${tab?' hastab':''}">${skyMoonEl(t)}<span class="tag">${esc(skyTagToday(t))}</span><div class="mood">${esc(has?fcS.headline:skyVibe(t))}</div>${tab}</div>`;
+  /* In your chart today: up to 3 planet rows (serif headline, line, timeline with a Moon-phase mark), or a quiet line
+     plus a Next up card. */
   const nd=natalDeg(who);
   const pr=nd?skyPlanetRows(who,t):[];
   const md=x=>parse(x).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  const untilTxt=r=>r.until===t?'last day today':'until '+md(r.until);
-  const prow=r=>`<div class="srow"><div class="sbadge pl-${PLANET_TINT[r.pl]}" aria-hidden="true">${skyIcon(r.pl)}</div><div><span class="chipx">${esc(r.chip)}</span><div class="sd">${esc(r.txt)}</div></div></div>`;
-  let prows=pr.map(r=>prow({pl:r.pl,chip:`${r.pl} ${skyVerb(r.asp,who+'|'+r.pl+'|'+r.pt,t)} ${poss} ${r.pt} · ${untilTxt(r)}`,txt:r.txt})).join('');
+  const span=r=>Math.max(1,Math.round((parse(r.until)-parse(r.start))/864e5));
+  const pos=r=>r.until===r.start?1:Math.min(1,Math.max(0,Math.round((parse(t)-parse(r.start))/864e5)/span(r)));
+  const phw={building:'coming up',peak:'peak today',easing:'winding down'};
+  const tint=pl=>PLANET_TINT[pl];
+  let prows=pr.map(r=>`<div class="prow"><div class="sbadge pl-${tint(r.pl)}" aria-hidden="true">${skyIcon(r.pl)}</div><div class="pmain"><div class="ptitle">${esc(r.pl)} ${esc(skyVerb(r.asp,who+'|'+r.pl+'|'+r.pt,t))} ${pn(r.pt)}</div><div class="pbody">${esc(r.txt)}</div>
+    <div class="ptl pc-${tint(r.pl)}"><div class="skybar"><i style="width:${Math.round(pos(r)*100)}%"></i><span class="pm" style="left:${Math.round(pos(r)*100)}%">${skyPhaseMark(r.phase)}</span></div><div class="pwhen"><em>${phw[r.phase]}</em><span aria-hidden="true">·</span>${r.until===t?'ends today':'until '+esc(md(r.until))}</div></div></div></div>`).join('');
   if(!pr.length){
     if(nd){const nx=skyNextHit(who,t);
-      prows=`<div class="srow skyquiet"><div class="sd">${esc(fcPick(FC.QUIET,who+'|'+t+'|quietrow'))}${nx?`<div class="asp skynext">Next up: ${esc(nx.pl)} meets ${poss} ${esc(nx.pt)}, ${esc(md(nx.day))}</div>`:''}</div></div>`;}
-    else if(has)prows=`<div class="srow skyquiet"><div class="sd">${own?'Add your birth date and place and we can read how today’s planets meet your whole chart. No birth time? That is fine.':esc(who)+' has not added her chart yet.'}${own?'<div><button type="button" class="link" data-act="birthgo">Add birth details</button></div>':''}</div></div>`;
+      prows=`<div class="pquiet">${esc(fcPick(FC.QUIET,who+'|'+t+'|quietrow'))}</div>${nx?`<div class="pnext pt-${tint(nx.pl)} skynext"><span class="sbadge pl-${tint(nx.pl)}" aria-hidden="true">${skyIcon(nx.pl)}</span><div class="pnx"><span class="pnk">Next up</span><span class="pnt">${esc(nx.pl)} ${esc(skyVerb(nx.asp,who+'|'+nx.pl+'|'+nx.pt,nx.day))} ${pn(nx.pt)}</span></div><span class="pnd">${esc(md(nx.day))}</span></div>`:''}`;}
+    else if(has)prows=`<div class="pquiet skyquiet sans">${own?'Add your birth date and place and we can read how today’s planets meet your whole chart. No birth time? That is fine.':esc(who)+' has not added her chart yet.'}${own?'<div><button type="button" class="link" data-act="birthgo">Add birth details</button></div>':''}</div>`;
   }
   const up=skyUpcoming(t);
   return `<button class="skyscrim" data-act="skyclose" aria-label="Close"></button><div class="skybox" role="dialog" aria-modal="true" aria-label="Your sky"><div class="sbh"><div class="who">${PEOPLE.map(p=>`<button class="${who===p?'on':''}" data-act="skywho" data-p="${p}">${p}</button>`).join('')}</div><button class="link" data-act="skyclose">Close</button></div><div class="scroll">${card}
-   ${has||nd?`<div><div class="skylab">In your chart today</div>${mrows.map(prow).join('')}${prows}</div>`:''}
+   ${has||nd?`<div class="pchart"><div class="skylab">In your chart today</div>${prows}</div>`:''}
    <div><div class="skylab">Coming up</div>${up.map(e=>`<div class="up">${esc(e.name)}<span>${fmtShort(e.k)}</span></div>`).join('')}</div>
    ${has?'':`<div class="addbox">${own?'Your sky is built from your Sun, Moon and Rising. Add your birth details to see how today’s planets meet your chart.':esc(who)+' has not added her chart yet.'}${own?'<button type="button" class="link" data-act="birthgo">Add birth details</button>':''}</div>`}
   </div></div>`;
@@ -1283,7 +1327,7 @@ function overallPane(hs){
     let tot=0,dn=0,k=h.createdDay||t;
     while(k<=t){if(schedOn(h,k)){tot++;if(isDone(me,h,k))dn++;}k=addDays(k,1);}
     const sm=h.perWeek?`${dn} check-in${dn===1?'':'s'}`:`${dn} of ${tot} day${tot===1?'':'s'}`;
-    const bar=h.perWeek?'':`<div class="pbar"><i style="width:${tot?Math.round(dn/tot*100):0}%"></i></div>`;
+    const bar=h.perWeek?'':`<div class="skybar"><i style="width:${tot?Math.round(dn/tot*100):0}%"></i></div>`;
     return `<div class="orow"><div class="oh"><span class="h2" style="font-size:14px">${esc(h.name)}</span><span class="small">${sm}</span></div>${bar}</div>`;
   }).join('');
   return `<div class="stats3"><div class="stat"><b>${checkins}</b><span>check-ins this month</span></div><div class="stat"><b>${top.b}</b><span>longest streak</span><span class="sn">${esc(top.h.name)}</span></div><div class="stat"><b>${full}</b><span>days with every habit done</span></div></div>
