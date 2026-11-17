@@ -934,6 +934,10 @@ function skyHits(who,k){
       out.push({pl,pt,asp,phase,start,until});}}
   return out;
 }
+/* Tag verbs (picked by Nina, Nov 16, 2026, copy library "Sky tag words"): plain words instead of trine, sextile and square.
+   Each tag rotates through its aspect's list by day, starting at a spot seeded by the row, so neighbours rarely match. */
+const SKY_VERB={"conjunction": ["meets", "joins", "links arms with", "amps up", "turns up", "lights up", "twinsies with", "spotlights", "fires up"], "sextile": ["nudges", "opens a door for", "saves a seat for", "passes notes to", "texts", "holds the door for", "waves over", "makes room for"], "square": ["pushes on", "pokes", "nags", "tests", "ruffles", "prods", "lights a fire under"], "trine": ["flows with", "clicks with", "vibes with", "dances with", "harmonizes with", "cheers on", "matches the energy of"], "opposition": ["tugs at", "bickers with", "spars with", "side-eyes", "talks back to", "butts heads with", "plays tug of war with", "throws a pillow at"]};
+function skyVerb(asp,seed,k){const L=SKY_VERB[asp];if(!L)return asp;let h=0;for(const ch of String(seed)){h=(h*31+ch.codePointAt(0))>>>0;}return L[(h+Math.round(parse(k)/864e5))%L.length];}
 function skyPool(r){return PLANET_POOL[[r.pl,r.asp,r.pt,r.phase].join('-').toLowerCase()]||null;}
 /* Rotate through the pool day by day, starting at a spot seeded by person, row and stretch, so a line never repeats on back-to-back days. */
 function skyRowText(who,r,k){const L=skyPool(r);if(!L||!L.length)return null;let h=0;for(const ch of who+'|'+r.pl+r.asp+r.pt+r.start){h=(h*31+ch.codePointAt(0))>>>0;}
@@ -1067,14 +1071,14 @@ function skyPop(){
      when the house is in the card), then planet rows with until dates, or a quiet line plus the next hit. */
   const REL={same:'conjunction',friendly:'sextile',tense:'square',element:'trine',opposite:'opposition'};
   const mrows=[];
-  if(natal.Moon){const rel=skyRel(natal.Moon,moon);const txt=skyRowLine('Moon',natal,moon,who,t);if(txt)mrows.push({pl:'Moon',chip:'Moon · '+(REL[rel]?REL[rel]:'in '+moon)+' · '+poss+' Moon',txt});}
+  if(natal.Moon){const rel=skyRel(natal.Moon,moon);const txt=skyRowLine('Moon',natal,moon,who,t);if(txt)mrows.push({pl:'Moon',chip:REL[rel]?'Moon '+skyVerb(REL[rel],who+'|moon',t)+' '+poss+' Moon':'Moon in '+moon+' · '+poss+' Moon',txt});}
   if(natal.Rising&&!ev){const hh=bcHouse(moon,natal.Rising);const txt=skyRowLine('Rising',natal,moon,who,t);if(hh&&txt)mrows.push({pl:'Moon',chip:'Moon · in '+poss+' '+bcOrd(hh)+' house',txt});}
   const nd=natalDeg(who);
   const pr=nd?skyPlanetRows(who,t):[];
   const md=x=>parse(x).toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const untilTxt=r=>r.until===t?'last day today':'until '+md(r.until);
   const prow=r=>`<div class="srow"><div class="sbadge pl-${PLANET_TINT[r.pl]}" aria-hidden="true">${skyIcon(r.pl)}</div><div><span class="chipx">${esc(r.chip)}</span><div class="sd">${esc(r.txt)}</div></div></div>`;
-  let prows=pr.map(r=>prow({pl:r.pl,chip:`${r.pl} · ${r.asp} · ${poss} ${r.pt} · ${untilTxt(r)}`,txt:r.txt})).join('');
+  let prows=pr.map(r=>prow({pl:r.pl,chip:`${r.pl} ${skyVerb(r.asp,who+'|'+r.pl+'|'+r.pt,t)} ${poss} ${r.pt} · ${untilTxt(r)}`,txt:r.txt})).join('');
   if(!pr.length){
     if(nd){const nx=skyNextHit(who,t);
       prows=`<div class="srow skyquiet"><div class="sd">${esc(fcPick(FC.QUIET,who+'|'+t+'|quietrow'))}${nx?`<div class="asp skynext">Next up: ${esc(nx.pl)} meets ${poss} ${esc(nx.pt)}, ${esc(md(nx.day))}</div>`:''}</div></div>`;}
