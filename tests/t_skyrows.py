@@ -16,7 +16,7 @@ def init(birth=BIRTH,big3={'sun':'Aquarius','moon':'Aquarius','rising':'Sagittar
             "localStorage.setItem('h3c-prof-Kellye',%s);") % (json.dumps(json.dumps(prof)),json.dumps(json.dumps(dict(prof,name='Kellye'))))
 # Reference longitudes from astronomy-engine (geocentric, true ecliptic of date) at noon Pacific
 TRUTH={"2026-11-16":{"Sun":234.477,"Mercury":215.909,"Venus":203.018,"Mars":146.141},"2027-03-01":{"Sun":341.002,"Mercury":321.083,"Venus":300.666,"Mars":146.843},"2027-08-20":{"Sun":147.583,"Mercury":156.872,"Venus":150.016,"Mars":202.114}}
-CHIP=re.compile(r'^(Sun|Mercury|Venus|Mars) · (conjunction|sextile|square|trine|opposition) · (your|Kellye’s) (Sun|Moon|Rising) · (until [A-Z][a-z]{2} \d{1,2}|last day today)$')
+CHIP=re.compile(r'^(Sun|Mercury|Venus|Mars) ([a-z’ -]+) (your|Kellye’s) (Sun|Moon|Rising) · (until [A-Z][a-z]{2} \d{1,2}|last day today)$')
 with sync_playwright() as pw:
     b=pw.chromium.launch()
     def new(date,w=390,script=None):
@@ -64,7 +64,12 @@ with sync_playwright() as pw:
     # the pop-out on a day with rows
     q=new(rowday['k']);q.goto('file://'+APP+'#sky');q.wait_for_selector('.skybox')
     chips=q.evaluate("[...document.querySelectorAll('.skybox .chipx')].map(e=>e.textContent).filter(t=>!t.startsWith('Moon'))")
-    ck(rowday['k']+': planet chips read Planet · aspect · your point · until date',len(chips)==len(rowday['rows']) and all(CHIP.match(c) for c in chips),chips)
+    ck(rowday['k']+': planet chips read Planet verb your point · until date',len(chips)==len(rowday['rows']) and all(CHIP.match(c) for c in chips),chips)
+    verbs=p.evaluate('SKY_VERB')
+    ck(rowday['k']+': each chip verb comes from its aspect list',all(CHIP.match(c).group(2) in verbs[r['asp']] for c,r in zip(chips,rowday['rows'])),(chips,rowday['rows']))
+    ck(rowday['k']+': no aspect jargon in any chip',not any(re.search(r'\b(trine|sextile|square|opposition|conjunction)\b',c,re.I) for c in q.evaluate("[...document.querySelectorAll('.skybox .chipx')].map(e=>e.textContent)")))
+    ck('tag verbs rotate: the same row changes word across a week',p.evaluate("new Set([0,1,2,3,4,5,6].map(i=>skyVerb('trine','Nina|Mars|Sun',addDays(todayK(),i)))).size>=5"))
+    ck('tag verbs: the five lists Nina picked, no duplicates across aspects',(lambda v:sum(len(x) for x in v.values())==39 and len(set(w for x in v.values() for w in x))==39)(verbs))
     ck(rowday['k']+': Moon rows come first, then planet rows',q.evaluate("(()=>{const c=[...document.querySelectorAll('.skybox .chipx')].map(e=>e.textContent);const i=c.findIndex(t=>!t.startsWith('Moon'));return i>0&&c.slice(i).every(t=>!t.startsWith('Moon'))})()"))
     ck(rowday['k']+': no quiet line on a day with rows',q.locator('.skybox .skyquiet').count()==0)
     ck(rowday['k']+': no astrology words in the planet lines',not any(re.search(r'\b(trine|sextile|square|opposition|conjunction|retrograde)\b',t,re.I) for t in q.evaluate("[...document.querySelectorAll('.skybox .srow .sd')].map(e=>e.textContent)")))

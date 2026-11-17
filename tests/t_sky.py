@@ -45,7 +45,7 @@ with sync_playwright() as pw:
     ck('today headline comes from the bank for her Sun sign and the Moon sign',p.evaluate("SKY_HEAD.Aquarius.Libra.includes(forecastFor('Nina',todayK()).headline)"))
     p.goto('file://'+APP+'#sky');p.wait_for_selector('.skybox');p.click('[data-act=skywho][data-p=Nina]')
     sds=p.evaluate("[...document.querySelectorAll('.skybox .srow .sd')].map(e=>e.textContent)")
-    ck('first row: the Moon meets her Moon, from the approved list',sds[0] in p.evaluate("SKY_ROWS.Moon.element") and 'Moon · trine · your Moon' in p.text_content('.skybox .srow >> nth=0'))
+    ck('first row: the Moon meets her Moon, from the approved list',sds[0] in p.evaluate("SKY_ROWS.Moon.element") and p.evaluate("(()=>{const c=document.querySelector('.skybox .srow .chipx').textContent;return SKY_VERB.trine.some(v=>c==='Moon '+v+' your Moon')})()"))
     ck('second row: the Moon house, from the 11th house list',sds[1] in p.evaluate("SKY_ROWS.Rising['11']"))
     ck('no birth date: one row asks for it, with the Add birth details link',p.locator('.skybox .skyquiet:has-text("Add your birth date and place") [data-act=birthgo]').count()==1)
     p.screenshot(path='/tmp/sky_rows.png')
