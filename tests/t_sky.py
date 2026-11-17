@@ -40,6 +40,7 @@ with sync_playwright() as pw:
     ck('escape closes',p.locator('.skybox').count()==0)
     ck('approved headline bank is complete (12 signs x 12 moons x 7, minus the bag line retired Nov 16)',p.evaluate("Object.keys(SKY_HEAD).length===12&&Object.values(SKY_HEAD).every(m=>Object.keys(m).length===12&&Object.values(m).every(l=>l.length>=6))&&Object.values(SKY_HEAD).flatMap(m=>Object.values(m)).flat().length===1007&&!JSON.stringify(SKY_HEAD).includes('hold your bag')"))
     ck('approved row sentences are complete (18 Sun, 18 Moon, 24 Rising)',p.evaluate("Object.values(SKY_ROWS.Sun).flat().length===18&&Object.values(SKY_ROWS.Moon).flat().length===18&&Object.values(SKY_ROWS.Rising).flat().length===24"))
+    ck('no Today headline starts with Today, and no retired words (Nina, Nov 16)',p.evaluate("(()=>{const L=Object.values(SKY_HEAD).flatMap(m=>Object.values(m)).flat();return !L.some(l=>/^Today\\b/.test(l))&&!L.some(l=>/main character|\\bera\\b/i.test(l))})()"))
     ck('no em dashes in the sky copy',p.evaluate("!/\\u2014/.test(JSON.stringify([SKY_HEAD,SKY_ROWS]))"))
     ck('sign relations',p.evaluate("skyRel('Aquarius','Libra')==='element'&&skyRel('Aries','Aries')==='same'&&skyRel('Aries','Libra')==='opposite'&&skyRel('Aries','Cancer')==='tense'&&skyRel('Aries','Gemini')==='friendly'&&skyRel('Aries','Taurus')==='quiet'"))
     ck('today headline comes from the bank for her Sun sign and the Moon sign',p.evaluate("SKY_HEAD.Aquarius.Libra.includes(forecastFor('Nina',todayK()).headline)"))
